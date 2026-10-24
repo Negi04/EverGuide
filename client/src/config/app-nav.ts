@@ -20,13 +20,7 @@ export type AppNavItem = {
 
 export const appNav: AppNavItem[] = [
   { label: 'Dashboard', to: '/app', icon: LayoutDashboard },
-  {
-    label: 'AI Guide',
-    to: '/app/guide',
-    icon: Sparkles,
-    phase: 3,
-    description: 'Ask questions and get answers grounded in cited sources.',
-  },
+  { label: 'AI Guide', to: '/app/guide', icon: Sparkles },
   {
     label: 'Career Studio',
     to: '/app/career',

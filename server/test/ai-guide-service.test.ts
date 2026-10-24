@@ -39,11 +39,11 @@ async function runTurn(
 const doneEvent = (events: ChatStreamEvent[]) => events.find((e) => e.type === 'done')
 
 describe('a grounded answer', () => {
-  it('streams start, deltas and done in order', async () => {
+  it('streams start, deltas and done, then follow-up suggestions', async () => {
     const { events } = await runTurn({
       chat: fakeChat({ parts: ['Track spending ', 'first [1].'] }),
     })
-    expect(events.map((e) => e.type)).toEqual(['start', 'delta', 'delta', 'done'])
+    expect(events.map((e) => e.type)).toEqual(['start', 'delta', 'delta', 'done', 'followups'])
   })
 
   it('stores only citations that map to retrieved sources', async () => {
@@ -71,9 +71,10 @@ describe('a grounded answer', () => {
   })
 
   it('still answers when follow-up suggestions fail', async () => {
-    const { events } = await runTurn({ chat: fakeChat({ followUps: new Error('quota') }) })
-    const done = doneEvent(events)
-    expect(done?.type === 'done' && done.followUps).toEqual([])
+    const { events, error } = await runTurn({ chat: fakeChat({ followUps: new Error('quota') }) })
+    expect(error).toBeNull()
+    expect(doneEvent(events)).toBeDefined()
+    expect(events.some((e) => e.type === 'followups')).toBe(false)
   })
 })
 
@@ -148,5 +149,54 @@ describe('conversation access', () => {
     await expect(service.deleteConversation(bob, conversation.id)).rejects.toMatchObject({
       status: 404,
     })
+  })
+})
+
+describe('cancellation', () => {
+  it('refunds and stores nothing when the user left before the turn started', async () => {
+    const fake = createFakeStore()
+    const chat = fakeChat()
+    const service = createAiGuideService(fake.store, fakeRetriever([source(1)]), chat, options)
+    const conversation = await service.createConversation(alice, 'finance')
+    const turn = await service.prepareTurn(alice, conversation.id, 'How do I budget?')
+    expect(fake.usage[0]?.status).toBe('reserved')
+
+    const controller = new AbortController()
+    controller.abort()
+    await expect(turn.run(() => {}, controller.signal)).rejects.toThrow()
+
+    expect(fake.usage[0]?.status).toBe('failed')
+    expect(fake.messages).toHaveLength(0)
+    expect(chat.calls).toHaveLength(0)
+  })
+
+  it('does not start generating if the user leaves during the search', async () => {
+    const fake = createFakeStore()
+    const chat = fakeChat()
+    const controller = new AbortController()
+    const retriever = {
+      async search() {
+        controller.abort() // user presses Stop while sources are being retrieved
+        return [source(1)]
+      },
+    }
+    const service = createAiGuideService(fake.store, retriever, chat, options)
+    const conversation = await service.createConversation(alice, 'finance')
+    const turn = await service.prepareTurn(alice, conversation.id, 'How do I budget?')
+    await expect(turn.run(() => {}, controller.signal)).rejects.toThrow()
+
+    expect(chat.calls).toHaveLength(0)
+    expect(fake.usage[0]?.status).toBe('failed')
+    expect(fake.messages).toHaveLength(0)
+  })
+})
+
+describe('citation order', () => {
+  it('lists citations by number, whatever order the answer used them in', async () => {
+    const { events } = await runTurn({
+      chat: fakeChat({ parts: ['Second idea [2]. First idea [1].'] }),
+    })
+    const done = events.find((e) => e.type === 'done')
+    expect(done?.type === 'done' && done.message.citations.map((c) => c.number)).toEqual([1, 2])
   })
 })

@@ -14,7 +14,7 @@ const page = (load: () => Promise<{ default: ComponentType }>) => async () => ({
   Component: (await load()).default,
 })
 
-const builtAppPages = new Set(['/app', '/app/settings'])
+const builtAppPages = new Set(['/app', '/app/settings', '/app/guide'])
 
 export const routes: RouteObject[] = [
   {
@@ -68,6 +68,21 @@ export const routes: RouteObject[] = [
                 children: [
                   { index: true, lazy: page(() => import('@/pages/app/dashboard-page')) },
                   { path: 'settings', lazy: page(() => import('@/pages/app/settings-page')) },
+                  {
+                    path: 'guide',
+                    handle: { fullBleed: true },
+                    lazy: page(() => import('@/pages/guide/guide-layout')),
+                    children: [
+                      {
+                        index: true,
+                        lazy: page(() => import('@/pages/guide/new-conversation-page')),
+                      },
+                      {
+                        path: ':conversationId',
+                        lazy: page(() => import('@/pages/guide/conversation-page')),
+                      },
+                    ],
+                  },
                   ...appNav
                     .filter((item) => !builtAppPages.has(item.to))
                     .map((item) => ({

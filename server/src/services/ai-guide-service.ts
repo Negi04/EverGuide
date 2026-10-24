@@ -142,7 +142,12 @@ export function createAiGuideService(
         async run(emit, signal) {
           const startedAt = Date.now()
           const created: string[] = []
+          let answerText = ''
           try {
+            // The user may already have left (e.g. pressed Stop while the allowance was
+            // being reserved). Every cancellation goes through the catch below, which
+            // refunds the allowance and removes anything stored.
+            signal.throwIfAborted()
             const userMessage = await store.insertMessage({
               conversationId,
               userId: ctx.userId,
@@ -170,7 +175,7 @@ export function createAiGuideService(
                 metadata: { safety: 'crisis_screen' },
               })
               emit({ type: 'delta', text: CRISIS_RESPONSE })
-              emit({ type: 'done', message, usage: await getUsage(ctx), followUps: [] })
+              emit({ type: 'done', message, usage: await getUsage(ctx) })
               return
             }
 
@@ -179,9 +184,15 @@ export function createAiGuideService(
               0,
               -1,
             )
+            const retrievalStartedAt = Date.now()
             const sources = await retriever.search(content)
+            const retrievalMs = Date.now() - retrievalStartedAt
+            // Searching isn't cancellable, so check before starting the (paid) generation.
+            signal.throwIfAborted()
             const deadline = AbortSignal.any([signal, AbortSignal.timeout(answerTimeoutMs)])
 
+            const generationStartedAt = Date.now()
+            let firstTokenMs: number | null = null
             let raw = ''
             let tokens = { inputTokens: 0, outputTokens: 0 }
             for await (const part of chat.streamAnswer({
@@ -191,6 +202,7 @@ export function createAiGuideService(
               signal: deadline,
             })) {
               if (part.type === 'text') {
+                firstTokenMs ??= Date.now() - generationStartedAt
                 raw += part.text
                 emit({ type: 'delta', text: part.text })
               } else {
@@ -198,8 +210,10 @@ export function createAiGuideService(
               }
             }
             if (!raw.trim()) throw new Error('The model returned an empty answer')
+            const generationMs = Date.now() - generationStartedAt
 
             const { text, used } = resolveCitations(raw, sources.length)
+            answerText = text
             const message = await store.insertMessage({
               conversationId,
               userId: ctx.userId,
@@ -215,28 +229,36 @@ export function createAiGuideService(
                   topSimilarity: sources[0]?.similarity ?? null,
                   threshold: options.minSimilarity,
                 },
-                latencyMs: Date.now() - startedAt,
+                // Where the time goes, for spotting slow searches or slow models.
+                timings: {
+                  retrievalMs,
+                  firstTokenMs,
+                  generationMs,
+                  totalMs: Date.now() - startedAt,
+                },
               },
             })
             created.push(message.id)
 
-            const citations = used.flatMap((number) => {
-              const source = sources[number - 1]
-              return source
-                ? [
-                    {
-                      number,
-                      title: source.title,
-                      sourceName: source.sourceName,
-                      sourceUrl: source.sourceUrl,
-                      excerpt: source.content.slice(0, 1200),
-                      similarity: source.similarity,
-                      chunkId: source.chunkId,
-                      documentId: source.documentId,
-                    },
-                  ]
-                : []
-            })
+            const citations = [...used]
+              .sort((a, b) => a - b)
+              .flatMap((number) => {
+                const source = sources[number - 1]
+                return source
+                  ? [
+                      {
+                        number,
+                        title: source.title,
+                        sourceName: source.sourceName,
+                        sourceUrl: source.sourceUrl,
+                        excerpt: source.content.slice(0, 1200),
+                        similarity: source.similarity,
+                        chunkId: source.chunkId,
+                        documentId: source.documentId,
+                      },
+                    ]
+                  : []
+              })
             await store.insertCitations(message.id, ctx.userId, citations)
             if (reservationId)
               await store.completeUsage(reservationId, {
@@ -245,15 +267,6 @@ export function createAiGuideService(
                 ...tokens,
               })
 
-            // Follow-up suggestions are a nice-to-have: never fail the answer because of them.
-            const followUps = await chat
-              .suggestFollowUps({
-                question: content,
-                answer: text,
-                signal: AbortSignal.timeout(8_000),
-              })
-              .catch(() => [])
-
             emit({
               type: 'done',
               message: {
@@ -261,7 +274,6 @@ export function createAiGuideService(
                 citations: citations.map(({ chunkId: _chunk, documentId: _doc, ...c }) => c),
               },
               usage: await getUsage(ctx),
-              followUps,
             })
           } catch (error) {
             // Undo the half-finished turn: refund the allowance and remove stored messages,
@@ -270,6 +282,18 @@ export function createAiGuideService(
             for (const id of created.reverse()) await store.deleteMessage(id).catch(() => {})
             throw error
           }
+
+          // The answer is saved. Follow-up suggestions are a nice-to-have: sent afterwards so
+          // they never delay the answer, and failures are ignored.
+          if (crisis || signal.aborted) return
+          const questions = await chat
+            .suggestFollowUps({
+              question: content,
+              answer: answerText,
+              signal: AbortSignal.any([signal, AbortSignal.timeout(8_000)]),
+            })
+            .catch(() => [])
+          if (questions.length > 0) emit({ type: 'followups', questions })
         },
       }
     },

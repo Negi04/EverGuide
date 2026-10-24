@@ -79,6 +79,14 @@ export function registerAiRoutes(
     createRateLimiter(answerLimit),
     ...guarded,
     async (req, res) => {
+      // Watch for the user leaving (Stop, closed tab) from the very first moment: a
+      // disconnect can arrive while the allowance is still being checked, and a listener
+      // added later would never hear about it.
+      const controller = new AbortController()
+      res.on('close', () => {
+        if (!res.writableFinished) controller.abort()
+      })
+
       const conversationId = idParam(req.params.id, 'Conversation')
       const { content } = parse(sendMessageSchema, req.body)
       const turn = await guide().prepareTurn(userContext(req), conversationId, content)
@@ -92,11 +100,6 @@ export function registerAiRoutes(
       })
       res.flushHeaders()
 
-      // If the user closes the tab, stop generating (and paying for) the answer.
-      const controller = new AbortController()
-      res.on('close', () => {
-        if (!res.writableFinished) controller.abort()
-      })
       const emit = (event: ChatStreamEvent) => {
         if (!res.writableEnded)
           res.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`)

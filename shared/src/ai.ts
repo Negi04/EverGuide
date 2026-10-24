@@ -7,7 +7,11 @@ export const conversationCreateSchema = z.object({
 
 export const conversationUpdateSchema = z
   .object({
-    title: z.string().trim().min(1, 'Please enter a title.').max(120, 'Keep the title under 120 characters.'),
+    title: z
+      .string()
+      .trim()
+      .min(1, 'Please enter a title.')
+      .max(120, 'Keep the title under 120 characters.'),
     domain: z.enum(guidanceDomains),
   })
   .partial()
@@ -71,5 +75,7 @@ export type AiUsage = { used: number; limit: number; periodEnd: string }
 export type ChatStreamEvent =
   | { type: 'start'; userMessage: ChatMessage; conversation: ConversationSummary }
   | { type: 'delta'; text: string }
-  | { type: 'done'; message: ChatMessage; usage: AiUsage; followUps: string[] }
+  | { type: 'done'; message: ChatMessage; usage: AiUsage }
+  /** Sent after `done`, so suggestions never delay the answer. */
+  | { type: 'followups'; questions: string[] }
   | { type: 'error'; code: string; message: string }

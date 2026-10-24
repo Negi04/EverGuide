@@ -1,6 +1,6 @@
 import { LogOut, Menu } from 'lucide-react'
 import { useState } from 'react'
-import { Link, NavLink, Outlet } from 'react-router'
+import { Link, NavLink, Outlet, useMatches } from 'react-router'
 import { Logo } from '@/components/brand/logo'
 import { Button } from '@/components/ui/button'
 import {
@@ -65,6 +65,10 @@ function UserPanel() {
 /** Signed-in application shell. Only rendered behind RequireAuth and RequireOnboarding. */
 export function AppLayout() {
   const [menuOpen, setMenuOpen] = useState(false)
+  // Routes can ask for the full window (no padding) through their `handle`.
+  const fullBleed = useMatches().some(
+    (match) => (match.handle as { fullBleed?: boolean } | undefined)?.fullBleed,
+  )
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[16rem_1fr]">
@@ -81,7 +85,7 @@ export function AppLayout() {
         <UserPanel />
       </aside>
 
-      <div className="flex min-w-0 flex-col">
+      <div className={cn('flex min-w-0 flex-col', fullBleed && 'h-dvh')}>
         <header className="flex h-16 items-center justify-between gap-4 border-b border-border bg-surface px-4 sm:px-6 lg:hidden">
           <Link to="/" aria-label="EverGuide home" className="rounded-md">
             <Logo />
@@ -104,7 +108,14 @@ export function AppLayout() {
           </Sheet>
         </header>
 
-        <main id="main" tabIndex={-1} className="flex-1 px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
+        <main
+          id="main"
+          tabIndex={-1}
+          className={cn(
+            'flex-1',
+            fullBleed ? 'flex min-h-0 flex-col' : 'px-4 py-8 sm:px-6 lg:px-10 lg:py-10',
+          )}
+        >
           <Outlet />
         </main>
       </div>

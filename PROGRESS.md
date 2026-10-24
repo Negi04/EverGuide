@@ -5,9 +5,9 @@
 
 ## Current status
 
-- **Active phase:** Phase 3: AI Guide with RAG (branch `phase-3-ai-guide`). Database, knowledge base and chat API are done and verified; workspace UI next.
+- **Active phase:** Phase 3 complete (built and verified on branch `phase-3-ai-guide`). Wrap-up quiz in progress.
 - **Last updated:** 2026-10-24
-- **Next step:** Build the AI Guide workspace UI (step 4), then the Phase 3 wrap-up.
+- **Next step:** User reviews and merges `phase-3-ai-guide` via a pull request, then Phase 4 (Career Studio + Mentor marketplace).
 
 ---
 
@@ -48,10 +48,11 @@
 - [x] Retrieval evaluation (`kb:eval`): hit@1 20/20, MRR 1.0; threshold 0.60 chosen from measured similarities
 - [x] Chat API: retrieve → threshold → grounded Gemini streaming (SSE) → only real citations stored
 - [x] Safety layer: system-prompt rules, crisis screen with helplines (no model call, no allowance used)
-- [ ] Workspace UI (history, rename/delete/search, citations, copy, retry, feedback)
+- [x] Workspace UI (history, rename/delete/search, streaming, citations + source panel, copy, retry, stop, feedback, follow-ups, usage); dashboard shows recent conversations and usage
 - [x] Server-enforced monthly usage limits (atomic, refunded on failure)
 - [x] Tests: citation correctness, conversation isolation, usage limits (91 server unit, 15 integration incl. 8 real-AI, 50 RLS checks)
-- [ ] Phase wrap-up ritual
+- [x] Phase wrap-up: explanation, company practices, `docs/learning/phase-3.md`
+- [ ] Phase 3 quiz with user
 
 ### Phase 4 — Career Studio & Mentor Marketplace
 - [ ] Roadmap goals + milestones
@@ -79,7 +80,11 @@
 
 ## Phase log
 
-### Phase 3 (in progress)
+### Phase 3 — complete (2026-10-24)
+- **2026-10-24 (workspace UI):** `client/src/lib/sse.ts` (stream parser, handles split events and multi-byte characters), `lib/api.ts` (`streamMessage` + conversation endpoints), `hooks/use-ai.ts`, `pages/guide/` (layout with history sidebar, new-conversation page with starter questions, conversation page, streaming hook, safe Markdown renderer, source panel, composer). The AI Guide route is full-height (`handle.fullBleed`). The dashboard shows recent conversations and an AI usage meter.
+  - **Verified:** typecheck, lint, unit tests 186/186 (client 76, server 94, shared 16), integration 15/15, real-browser E2E (Chrome → Vite → API → Gemini + pgvector) **20/20**: grounded answer citing "Budgeting basics", source panel, follow-ups, off-topic marked not grounded, Stop restores the question and refunds, history and titles, reload persistence, feedback, usage 2/30, mobile no overflow, delete. Database left with only the knowledge base.
+  - Bugs found by real-browser testing and fixed: (1) Stop re-submitted the question: React reused the button and flipped `type` to submit mid-click; fixed with distinct `key`s. (2) Server kept generating and charging after an early Stop: the disconnect arrived before the `close` listener was attached; now listened for from the first line, and the turn checks cancellation between steps. (3) Follow-ups delayed `done`: now a separate `followups` event, 19.3 s → ~8.5 s. (4) Sidebar title refresh, citation order, and "5 sources" overstating 1 guide.
+  - Performance budget fixed: Vite's per-chunk warning missed total growth after code splitting; `client/scripts/check-bundle-size.mjs` now fails the build if first-load JS > 185 kB gzip (currently 175.4 kB). Verified that it fails.
 - **2026-10-24 (database):** Migration `20261024000002_ai_guide.sql`. Users can read but never write messages, citations or usage; a composite FK `(conversation_id, user_id)` ties messages to the conversation owner; `reserve_ai_message` takes a per-user advisory lock so concurrent requests can't exceed the limit; only `approved` documents are searchable. `db:verify` now has **50/50** checks, including 10 concurrent reservations against a limit of 3 → exactly 3 granted.
 - **2026-10-24 (knowledge base):** 10 AI-drafted guides in `database/knowledge/` (labelled pending expert review), chunked by section (50 chunks). Found that `gemini-embedding-2` merges a batch of texts into ONE embedding; switched to `gemini-embedding-001` (normalised in code) and added a test so a count mismatch can never be stored. Ingestion is idempotent (checksum of model + file). Evaluation: hit@1 20/20, hit@3 20/20, MRR 1.000; correct ≥ 0.670, off-topic ≤ 0.535, so `RAG_MIN_SIMILARITY` = 0.60 (the old default 0.5 would have "grounded" off-topic questions). Caveat: questions were written alongside the guides, so the set is easy.
 - **2026-10-24 (chat API):** `server/src/rag/` (safety, prompt, citations, retriever), `lib/gemini.ts` (embedder + streaming chat + JSON follow-ups), `services/ai-store.ts` (repository), `services/ai-guide-service.ts` (turn orchestration: allowance → store question → retrieve → stream → resolve citations → store answer + citations → complete usage; on failure refund and delete), `routes/ai.ts` (SSE). Verified: typecheck, lint, 91/91 unit tests, 15/15 integration tests (8 with real Gemini + pgvector: grounded answer cites "Budgeting basics", off-topic answer not grounded, crisis reply uses no allowance, privacy between users, feedback rules, allowance enforced, deletion). No leftover data.
@@ -164,6 +169,10 @@
 | 2026-10-24 | Answers stream via SSE over a POST with fetch (not EventSource) | EventSource can't send an Authorization header or a POST body | Client parses the stream itself |
 | 2026-10-24 | Invalid citation markers are stripped server-side before saving | Every citation shown must map to a retrieved chunk | The streamed text may briefly show a marker that disappears when the answer finishes |
 | 2026-10-24 | Keyword-based crisis screen, biased towards false positives | Simple, fast, no model call; missing someone at risk is worse than a false alarm | Needs a classifier and professional review before launch |
+| 2026-10-24 | Follow-up suggestions sent as a separate SSE event after `done` | A second model call shouldn't delay the answer | Stream stays open a few seconds longer |
+| 2026-10-24 | Answers keep streaming when the user navigates away; only Stop cancels | Better UX; avoids the StrictMode double-mount cancelling the first question | Background work continues until finished |
+| 2026-10-24 | Grounding label counts guides, not passages | "5 sources" from one guide overstated the evidence | — |
+| 2026-10-24 | Bundle budget on total first-load JS (185 kB gzip), enforced after build | Per-chunk limits miss growth once code is split | Build fails if exceeded |
 | 2026-10-24 | Light theme only for now | Focus on one polished theme first; semantic tokens make dark mode a later remap | No dark mode yet |
 
 ---
