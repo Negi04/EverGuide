@@ -5,9 +5,9 @@
 
 ## Current status
 
-- **Active phase:** Phase 2 complete (built, verified, quizzed) on branch `phase-2-backend`. Waiting for the go-ahead on Phase 3.
+- **Active phase:** Phase 3: AI Guide with RAG (branch `phase-3-ai-guide`). Database, knowledge base and chat API are done and verified; workspace UI next.
 - **Last updated:** 2026-10-24
-- **Next step:** Phase 3 (AI Guide with RAG). Before starting: the user adds `GEMINI_API_KEY` to `.env`. Before real users: configure custom SMTP in Supabase.
+- **Next step:** Build the AI Guide workspace UI (step 4), then the Phase 3 wrap-up.
 
 ---
 
@@ -43,13 +43,14 @@
 - [x] Phase 2 quiz with user (2026-10-24: 3/4; Phase 2 concepts all correct; code splitting still needs work)
 
 ### Phase 3 — AI Guide with RAG
-- [ ] Migrations: conversations, messages, knowledge_documents, knowledge_chunks (pgvector), ai_usage, ai_feedback
-- [ ] Ingestion pipeline (extract → chunk → embed → store), separate from chat
-- [ ] Chat API: retrieve → threshold → grounded Gemini streaming → real citations
-- [ ] Safety layer (disclaimers, crisis escalation)
+- [x] Migrations: conversations, messages, message_citations, knowledge_documents, knowledge_chunks (pgvector, HNSW), ai_usage (+ atomic `reserve_ai_message`), ai_feedback (`20261024000002_ai_guide.sql`, applied by the user 2026-10-24)
+- [x] Ingestion pipeline (Markdown → chunk → embed → store), separate from chat; 10 AI-drafted starter guides, 50 chunks
+- [x] Retrieval evaluation (`kb:eval`): hit@1 20/20, MRR 1.0; threshold 0.60 chosen from measured similarities
+- [x] Chat API: retrieve → threshold → grounded Gemini streaming (SSE) → only real citations stored
+- [x] Safety layer: system-prompt rules, crisis screen with helplines (no model call, no allowance used)
 - [ ] Workspace UI (history, rename/delete/search, citations, copy, retry, feedback)
-- [ ] Server-enforced usage limits
-- [ ] Tests: citation correctness, conversation isolation, usage limits
+- [x] Server-enforced monthly usage limits (atomic, refunded on failure)
+- [x] Tests: citation correctness, conversation isolation, usage limits (91 server unit, 15 integration incl. 8 real-AI, 50 RLS checks)
 - [ ] Phase wrap-up ritual
 
 ### Phase 4 — Career Studio & Mentor Marketplace
@@ -77,6 +78,12 @@
 ---
 
 ## Phase log
+
+### Phase 3 (in progress)
+- **2026-10-24 (database):** Migration `20261024000002_ai_guide.sql`. Users can read but never write messages, citations or usage; a composite FK `(conversation_id, user_id)` ties messages to the conversation owner; `reserve_ai_message` takes a per-user advisory lock so concurrent requests can't exceed the limit; only `approved` documents are searchable. `db:verify` now has **50/50** checks, including 10 concurrent reservations against a limit of 3 → exactly 3 granted.
+- **2026-10-24 (knowledge base):** 10 AI-drafted guides in `database/knowledge/` (labelled pending expert review), chunked by section (50 chunks). Found that `gemini-embedding-2` merges a batch of texts into ONE embedding; switched to `gemini-embedding-001` (normalised in code) and added a test so a count mismatch can never be stored. Ingestion is idempotent (checksum of model + file). Evaluation: hit@1 20/20, hit@3 20/20, MRR 1.000; correct ≥ 0.670, off-topic ≤ 0.535, so `RAG_MIN_SIMILARITY` = 0.60 (the old default 0.5 would have "grounded" off-topic questions). Caveat: questions were written alongside the guides, so the set is easy.
+- **2026-10-24 (chat API):** `server/src/rag/` (safety, prompt, citations, retriever), `lib/gemini.ts` (embedder + streaming chat + JSON follow-ups), `services/ai-store.ts` (repository), `services/ai-guide-service.ts` (turn orchestration: allowance → store question → retrieve → stream → resolve citations → store answer + citations → complete usage; on failure refund and delete), `routes/ai.ts` (SSE). Verified: typecheck, lint, 91/91 unit tests, 15/15 integration tests (8 with real Gemini + pgvector: grounded answer cites "Budgeting basics", off-topic answer not grounded, crisis reply uses no allowance, privacy between users, feedback rules, allowance enforced, deletion). No leftover data.
+  - Observed: the free-tier Supabase Auth cold start took 11.4 s and tripped the 10 s client timeout once; it was fine on rerun.
 
 ### Phase 2 — complete (2026-10-24)
 - **2026-10-24 (client + finish):**
@@ -151,6 +158,12 @@
 | 2026-10-24 | Route guards perform post-login redirects; pages don't navigate themselves | One place decides where signed-in users go; avoids races | — |
 | 2026-10-24 | Account deletion lands on `/account-deleted`, which signs out after rendering | Avoids the guard redirecting to login mid-transition; clearer UX | Extra page |
 | 2026-10-24 | Main bundle budget 600 kB (`chunkSizeWarningLimit`) | Current main chunk is framework + auth that every page needs | Raise only after investigating growth |
+| 2026-10-24 | Embeddings: gemini-embedding-001, 768 dims, normalised in code | embedding-2 merges batched inputs; 768 fits pgvector HNSW (≤ 2000 dims) | Re-embed everything if the model changes (checksum includes model) |
+| 2026-10-24 | Chat: gemini-2.5-flash, thinking off, temperature 0.3 | Stable GA model; fast, low cost; low temperature for grounded answers | Configurable via `GEMINI_CHAT_MODEL` |
+| 2026-10-24 | Similarity threshold 0.60 from `kb:eval` | Measured gap between correct (≥ 0.670) and off-topic (≤ 0.535) | Tune with real usage metrics and feedback |
+| 2026-10-24 | Answers stream via SSE over a POST with fetch (not EventSource) | EventSource can't send an Authorization header or a POST body | Client parses the stream itself |
+| 2026-10-24 | Invalid citation markers are stripped server-side before saving | Every citation shown must map to a retrieved chunk | The streamed text may briefly show a marker that disappears when the answer finishes |
+| 2026-10-24 | Keyword-based crisis screen, biased towards false positives | Simple, fast, no model call; missing someone at risk is worse than a false alarm | Needs a classifier and professional review before launch |
 | 2026-10-24 | Light theme only for now | Focus on one polished theme first; semantic tokens make dark mode a later remap | No dark mode yet |
 
 ---
@@ -160,6 +173,8 @@
 | Service | Status | Needed by |
 |---|---|---|
 | Gemini API key | User has it; **not yet in `.env`** (`GEMINI_API_KEY` empty) | Phase 3 |
+| Helpline numbers in the crisis response and stress guide (112, Tele-MANAS 14416) | **Verify with an authoritative source** | Before launch |
+| Expert review of the AI-drafted knowledge base | Not started | Before launch |
 | Custom SMTP for Supabase Auth emails (e.g. Resend, Postmark, SendGrid) | Not configured. Supabase's built-in sender is for testing only (heavily rate-limited) | Before real users |
 | Supabase Auth URL configuration (Site URL + redirect URLs) | Set by user for `http://localhost:5173` | Add production URLs at deploy |
 | Supabase dev project (URL, publishable key, secret key) | ✅ Configured in `.env` / `client/.env.local`. The Supabase connector in Claude is linked to a different account, so migrations are run by the user in the SQL Editor. | Phase 2 |

@@ -7,6 +7,7 @@ export type ApiErrorCode =
   | 'not_found'
   | 'payload_too_large'
   | 'rate_limited'
+  | 'quota_exceeded'
   | 'service_unavailable'
   | 'internal_error'
 
