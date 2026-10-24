@@ -5,9 +5,9 @@
 
 ## Current status
 
-- **Active phase:** Phase 1 complete (built, verified, quizzed). Waiting for the go-ahead on Phase 2.
+- **Active phase:** Phase 2: Backend, Database, Auth & Onboarding (in progress on branch `phase-2-backend`)
 - **Last updated:** 2026-10-24
-- **Next step:** Phase 2. User creates a Supabase project (URL, anon key, service role key), then build the Express server, migrations, and auth.
+- **Next step:** Build the Express server (env validation, logging, security headers, error handling, `/health`), then client auth with Supabase.
 
 ---
 
@@ -31,7 +31,7 @@
 
 ### Phase 2 — Backend, Database, Auth & Onboarding
 - [ ] Express server: env validation, request IDs, pino, helmet, CORS, rate limiting, error handler, `/health`
-- [ ] Migrations: profiles, user_preferences, user_roles, audit_events, notifications, contact_messages + RLS (written locally 2026-10-24: `20261024000001_identity_and_onboarding.sql`; awaiting user review, not yet applied)
+- [x] Migrations: profiles, user_preferences, user_roles, audit_events, notifications, contact_messages + RLS (`20261024000001_identity_and_onboarding.sql`, applied 2026-10-24 by the user via the SQL Editor; `npm run db:verify` 26/26 passed)
 - [ ] Server-side JWT verification + DB-backed role checks
 - [ ] Client auth: register, login, logout, email verification, reset, session, protected routes
 - [ ] Onboarding wizard
@@ -74,6 +74,11 @@
 ---
 
 ## Phase log
+
+### Phase 2 (in progress)
+- **2026-10-24:** Reviewed the user's Gemini schema (see decisions log). Wrote migration `database/migrations/20261024000001_identity_and_onboarding.sql`: 6 tables, signup trigger, `updated_at` triggers, `has_role()` helper, RLS on every table, column-level grants.
+- **2026-10-24:** Supabase dev project created by the user (region chosen by the user). Keys are in `.env` (server) and `client/.env.local` (client), both git-ignored. The user ran the migration in the SQL Editor.
+- **2026-10-24:** Added `database/tests/verify-rls.mjs` (`npm run db:verify`): creates 2 temporary users, attempts cross-user reads/writes, privilege escalation, protected-column edits and invalid values, then deletes the users. **Result: 26/26 passed**, run twice.
 
 ### Phase 1 — complete (2026-10-24)
 **Built**
@@ -126,7 +131,7 @@
 | Service | Status | Needed by |
 |---|---|---|
 | Gemini API key | Available (user has it) | Phase 3 |
-| Supabase project (URL, anon key, service role key) | **Not created yet** | Phase 2 |
+| Supabase dev project (URL, publishable key, secret key) | ✅ Configured in `.env` / `client/.env.local`. The Supabase connector in Claude is linked to a different account, so migrations are run by the user in the SQL Editor. | Phase 2 |
 | Razorpay (key id/secret, webhook secret, plan IDs) | Not configured | Phase 6 |
 | Cloudinary | Not configured | Phase 5 |
 | n8n instance + webhook secret | Not configured | Phase 6 |
@@ -139,4 +144,6 @@
 - Phase 1 (1/4): understood server-side validation. Revisit: why design tokens exist (maintainability, not speed); code splitting (performance, not SEO); why unknown facts are `null` (honesty, not a provider rule). Re-check these in the Phase 2 quiz.
 
 ## Open questions / backlog
+- Root `package.json` has `@supabase/ssr` and `@supabase/supabase-js` (added by the user). `@supabase/ssr` is for SSR frameworks such as Next.js and isn't needed in a Vite SPA; `supabase-js` belongs in the `client` and `server` workspaces. Waiting on the user's decision.
+- Next migration: `revoke execute on function public.has_role from public, anon` (harmless today, since it returns false for anonymous callers, but tighter).
 - Pricing for Pro/Premium plans: not decided. The pricing UI reads from config and says "coming soon" until it's set.

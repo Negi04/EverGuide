@@ -2,7 +2,7 @@
   "name": "everguide",
   "private": true,
   "version": "0.1.0",
-  "description": "EverGuide — Guidance for a Brighter Tomorrow.",
+  "description": "EverGuide \u2014 Guidance for a Brighter Tomorrow.",
   "workspaces": [
     "client",
     "shared"
@@ -17,9 +17,14 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "db:verify": "node database/tests/verify-rls.mjs .env"
   },
   "devDependencies": {
     "prettier": "^3.9.10"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.118.0"
   }
 }
