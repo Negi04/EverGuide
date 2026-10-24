@@ -5,7 +5,7 @@
 
 ## Current status
 
-- **Active phase:** Phase 2 complete (built and verified on branch `phase-2-backend`). Wrap-up quiz in progress.
+- **Active phase:** Phase 2 complete (built, verified, quizzed) on branch `phase-2-backend`. Waiting for the go-ahead on Phase 3.
 - **Last updated:** 2026-10-24
 - **Next step:** Phase 3 (AI Guide with RAG). Before starting: the user adds `GEMINI_API_KEY` to `.env`. Before real users: configure custom SMTP in Supabase.
 
@@ -40,7 +40,7 @@
 - [ ] Dashboard notifications panel (deferred: needs a notifications endpoint; no notifications are produced yet)
 - [x] Tests: auth middleware, authorization boundaries (36 server unit tests, 6 real-DB integration tests, 26 RLS checks)
 - [x] Phase wrap-up: explanation, company practices, `docs/learning/phase-2.md`
-- [ ] Phase 2 quiz with user
+- [x] Phase 2 quiz with user (2026-10-24: 3/4; Phase 2 concepts all correct; code splitting still needs work)
 
 ### Phase 3 — AI Guide with RAG
 - [ ] Migrations: conversations, messages, knowledge_documents, knowledge_chunks (pgvector), ai_usage, ai_feedback
@@ -172,7 +172,8 @@
 ---
 
 ## Learning focus (from quizzes)
-- Phase 1 (1/4): understood server-side validation. Revisit: why design tokens exist (maintainability, not speed); code splitting (performance, not SEO); why unknown facts are `null` (honesty, not a provider rule). Re-check these in the Phase 2 quiz.
+- Phase 1 (1/4): understood server-side validation. Revisit: why design tokens exist (maintainability, not speed); code splitting (performance, not SEO); why unknown facts are `null` (honesty, not a provider rule). Re-checked in Phase 2.
+- Phase 2 (3/4): correct on defence in depth (user-scoped client + RLS), account enumeration and 401 vs 503. Missed again: why the main bundle matters (every visitor downloads it; route chunks load on demand; critical path). Ask about it again in Phase 3.
 
 ## Open questions / backlog
 - Dashboard notifications panel + `GET /me/notifications` (nothing produces notifications until Phase 4/6).
