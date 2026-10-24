@@ -15,10 +15,13 @@
     "lint": "oxlint --deny-warnings",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:integration": "vitest run --config vitest.integration.config.ts"
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "kb:ingest": "tsx --env-file-if-exists=../.env scripts/ingest-knowledge.ts",
+    "kb:eval": "tsx --env-file-if-exists=../.env scripts/eval-retrieval.ts"
   },
   "dependencies": {
     "@everguide/shared": "^0.1.0",
+    "@google/genai": "^2.31.0",
     "@supabase/supabase-js": "^2.118.0",
     "cors": "^2.8.6",
     "express": "^5.3.0",

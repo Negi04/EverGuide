@@ -4,7 +4,9 @@ import { EmptyState } from '@/components/common/empty-state'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { domainLabels, goalLabels } from '@/config/onboarding'
+import { useConversations, useUsage } from '@/hooks/use-ai'
 import { useMe } from '@/hooks/use-me'
+import { formatRelative } from '@/lib/format'
 import { usePageTitle } from '@/hooks/use-page-title'
 
 export default function DashboardPage() {
@@ -78,9 +80,9 @@ export default function DashboardPage() {
             Plan and usage
           </h2>
           <p className="mt-3 font-display text-2xl font-semibold text-ink">Free</p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Every account is on the Free plan until paid plans launch. AI usage will appear here
-            when the AI Guide opens.
+          <AiUsageMeter />
+          <p className="mt-3 text-sm text-muted-foreground">
+            Every account is on the Free plan until paid plans launch.
           </p>
           <Button variant="outline" size="sm" className="mt-4" asChild>
             <Link to="/pricing">View plans</Link>
@@ -90,9 +92,7 @@ export default function DashboardPage() {
         <EmptyState icon={Target} title="No roadmap yet">
           <p>Goals with milestones and dates arrive with the Career Studio.</p>
         </EmptyState>
-        <EmptyState icon={MessagesSquare} title="No conversations yet">
-          <p>Your recent AI Guide conversations will be listed here.</p>
-        </EmptyState>
+        <RecentConversations />
         <EmptyState icon={CalendarDays} title="No upcoming sessions">
           <p>
             Sessions you book with mentors will appear here, shown in{' '}
@@ -101,5 +101,82 @@ export default function DashboardPage() {
         </EmptyState>
       </div>
     </div>
+  )
+}
+
+function AiUsageMeter() {
+  const { data: usage } = useUsage()
+  if (!usage) return null
+  const percent =
+    usage.limit === 0 ? 100 : Math.min(100, Math.round((usage.used / usage.limit) * 100))
+  return (
+    <div className="mt-3">
+      <p className="text-sm text-foreground">
+        {usage.used} of {usage.limit} AI Guide answers used this month
+      </p>
+      <div
+        className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-muted"
+        role="progressbar"
+        aria-label="AI Guide answers used this month"
+        aria-valuemin={0}
+        aria-valuemax={usage.limit}
+        aria-valuenow={usage.used}
+      >
+        <div className="h-full bg-primary" style={{ width: `${percent}%` }} />
+      </div>
+    </div>
+  )
+}
+
+function RecentConversations() {
+  const conversations = useConversations()
+  const recent = conversations.data?.slice(0, 3) ?? []
+
+  if (conversations.isPending) {
+    return (
+      <div className="h-40 rounded-lg bg-surface-muted motion-safe:animate-pulse" aria-hidden />
+    )
+  }
+  if (recent.length === 0) {
+    return (
+      <EmptyState
+        icon={MessagesSquare}
+        title="No conversations yet"
+        action={
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/app/guide">Ask the AI Guide</Link>
+          </Button>
+        }
+      >
+        <p>Your recent AI Guide conversations will be listed here.</p>
+      </EmptyState>
+    )
+  }
+  return (
+    <section
+      aria-labelledby="recent-title"
+      className="rounded-lg border border-border bg-surface p-6"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <h2 id="recent-title" className="text-lg font-semibold text-ink">
+          Recent conversations
+        </h2>
+        <Link to="/app/guide" className="text-sm font-medium text-primary hover:underline">
+          View all
+        </Link>
+      </div>
+      <ul className="mt-4 divide-y divide-border">
+        {recent.map((conversation) => (
+          <li key={conversation.id}>
+            <Link to={`/app/guide/${conversation.id}`} className="block py-3 hover:text-primary">
+              <span className="block truncate text-sm font-medium">{conversation.title}</span>
+              <span className="text-xs text-muted-foreground">
+                {formatRelative(conversation.lastMessageAt)}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }

@@ -7,11 +7,11 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: {
-    // Performance budget for the main chunk (measured 2026-10-24: 546 kB, 162 kB gzipped).
-    // It is mostly React, React Router, TanStack Query and Supabase Auth, which every page
-    // needs. Pages are lazy-loaded. If this warning fires, find what grew before raising it.
+    // Per-chunk warning only; the real budget (total first-load JS) is enforced by
+    // scripts/check-bundle-size.mjs after every build.
     chunkSizeWarningLimit: 600,
   },
+
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

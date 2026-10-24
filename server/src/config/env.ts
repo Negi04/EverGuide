@@ -10,6 +10,9 @@ const origins = z
   )
   .pipe(z.array(z.url()).min(1, 'List at least one allowed origin.'))
 
+// Treat empty values (e.g. `GEMINI_CHAT_MODEL=`) as unset so defaults apply.
+const blankToUndefined = (value: unknown) => (value === '' ? undefined : value)
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(1).max(65_535).default(4000),
@@ -20,6 +23,25 @@ const envSchema = z.object({
   SUPABASE_URL: z.url(),
   SUPABASE_ANON_KEY: z.string().min(20, 'Must be the project publishable (anon) key.'),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(20, 'Must be the project secret (service role) key.'),
+  // AI Guide. Without a key the rest of the API still works and AI endpoints return 503.
+  GEMINI_API_KEY: z.preprocess(blankToUndefined, z.string().min(20).optional()),
+  GEMINI_CHAT_MODEL: z.preprocess(blankToUndefined, z.string().default('gemini-2.5-flash')),
+  GEMINI_EMBEDDING_MODEL: z.preprocess(
+    blankToUndefined,
+    z.string().default('gemini-embedding-001'),
+  ),
+  AI_FREE_MONTHLY_MESSAGES: z.preprocess(
+    blankToUndefined,
+    z.coerce.number().int().min(0).default(30),
+  ),
+  // Chosen from `npm run kb:eval` (2026-10-24): correct documents scored ≥ 0.670,
+  // off-topic questions ≤ 0.535 with gemini-embedding-001 at 768 dims. Re-run after
+  // changing the model or knowledge base.
+  RAG_MIN_SIMILARITY: z.preprocess(blankToUndefined, z.coerce.number().min(0).max(1).default(0.6)),
+  RAG_MATCH_COUNT: z.preprocess(
+    blankToUndefined,
+    z.coerce.number().int().min(1).max(10).default(5),
+  ),
 })
 
 export type Config = {
@@ -29,6 +51,14 @@ export type Config = {
   trustProxy: number
   logLevel: z.infer<typeof envSchema>['LOG_LEVEL']
   supabase: { url: string; anonKey: string; serviceRoleKey: string }
+  ai: {
+    apiKey: string | null
+    chatModel: string
+    embeddingModel: string
+    monthlyMessageLimit: number
+    minSimilarity: number
+    matchCount: number
+  }
 }
 
 /**
@@ -55,6 +85,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       url: e.SUPABASE_URL,
       anonKey: e.SUPABASE_ANON_KEY,
       serviceRoleKey: e.SUPABASE_SERVICE_ROLE_KEY,
+    },
+    ai: {
+      apiKey: e.GEMINI_API_KEY ?? null,
+      chatModel: e.GEMINI_CHAT_MODEL,
+      embeddingModel: e.GEMINI_EMBEDDING_MODEL,
+      monthlyMessageLimit: e.AI_FREE_MONTHLY_MESSAGES,
+      minSimilarity: e.RAG_MIN_SIMILARITY,
+      matchCount: e.RAG_MATCH_COUNT,
     },
   }
 }

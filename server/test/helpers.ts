@@ -67,6 +67,7 @@ export function buildTestApp(overrides: Partial<AppDeps> = {}) {
         calls.deleteAccount.push(userId)
       },
     },
+    aiGuide: null,
     contact: {
       submit: async (message) => {
         calls.contact.push(message)

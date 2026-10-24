@@ -66,8 +66,24 @@ Base path `/api/v1`. Every error has the shape `{ "error": { "code", "message", 
 | PATCH | `/api/v1/me/profile` | Bearer | Update name / time zone |
 | PUT | `/api/v1/me/onboarding` | Bearer | Save onboarding answers |
 | DELETE | `/api/v1/me` | Bearer | Delete the account (body `{"confirm":"DELETE"}`) |
+| GET | `/api/v1/conversations?q=` | Bearer | List or search the user's AI Guide conversations |
+| POST | `/api/v1/conversations` | Bearer | Start a conversation (`{"domain"}`) |
+| GET / PATCH / DELETE | `/api/v1/conversations/:id` | Bearer | Read with messages and citations / rename / delete |
+| POST | `/api/v1/conversations/:id/messages` | Bearer | Ask a question; the answer **streams as server-sent events** (`start`, `delta`, `done`, `error`) |
+| PUT | `/api/v1/messages/:id/feedback` | Bearer | Rate an AI answer |
+| GET | `/api/v1/ai/usage` | Bearer | AI answers used this month and the limit |
 
 Production build: `npm run build -w @everguide/server` bundles the server into `server/dist/server.js` (run with `node dist/server.js`).
+
+## AI Guide (RAG)
+
+Knowledge documents live in `database/knowledge/*.md` (front matter + Markdown). The pipeline:
+
+1. `npm run kb:ingest -w @everguide/server`: chunk each document by section, embed with Gemini (768 dims), store in pgvector. Unchanged documents are skipped.
+2. `npm run kb:eval -w @everguide/server`: retrieval quality (hit@1, hit@3, MRR) on `database/knowledge/eval-questions.json`, and the similarity gap used to set `RAG_MIN_SIMILARITY`.
+3. At question time the API embeds the question, retrieves approved chunks above the threshold, asks Gemini to answer only from those numbered sources, streams the answer, and stores only citations that match retrieved sources.
+
+The starter documents are AI-drafted and **must be reviewed or replaced before real users**.
 
 ## Authentication
 
