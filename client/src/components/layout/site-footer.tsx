@@ -34,7 +34,10 @@ export function SiteFooter() {
               <ul className="mt-4 space-y-2.5">
                 {group.items.map((item) => (
                   <li key={item.label}>
-                    <Link to={item.to} className="text-sm text-ink-muted transition-colors hover:text-white">
+                    <Link
+                      to={item.to}
+                      className="text-sm text-ink-muted transition-colors hover:text-white"
+                    >
                       {item.label}
                     </Link>
                   </li>

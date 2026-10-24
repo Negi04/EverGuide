@@ -1,6 +1,20 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
-import { afterEach } from 'vitest'
+import { afterEach, beforeEach, vi } from 'vitest'
+import { fakeApi, resetFakeApi } from './fake-api'
+import { resetFakeSupabase } from './fake-supabase'
+
+// No test talks to a real Supabase project or API server.
+vi.mock('@/lib/supabase', () => import('./fake-supabase'))
+vi.mock('@/lib/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/api')>()),
+  api: fakeApi,
+}))
+
+beforeEach(() => {
+  resetFakeSupabase()
+  resetFakeApi()
+})
 
 afterEach(() => {
   cleanup()

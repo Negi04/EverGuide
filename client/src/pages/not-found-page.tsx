@@ -8,7 +8,9 @@ export default function NotFoundPage() {
   return (
     <section className="container-page flex min-h-[60vh] flex-col items-start justify-center py-20">
       <p className="eyebrow">404</p>
-      <h1 className="mt-3 text-4xl font-semibold text-ink sm:text-5xl">This page took a different path.</h1>
+      <h1 className="mt-3 text-4xl font-semibold text-ink sm:text-5xl">
+        This page took a different path.
+      </h1>
       <p className="mt-4 max-w-xl text-lg text-muted-foreground">
         The page you were looking for doesn’t exist or has moved.
       </p>

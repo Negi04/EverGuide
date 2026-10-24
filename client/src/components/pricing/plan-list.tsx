@@ -36,7 +36,9 @@ export function PlanList() {
             ))}
           </ul>
           <Button className="mt-8" variant={plan.highlighted ? 'primary' : 'outline'} asChild>
-            <Link to="/register">{plan.id === 'free' ? 'Start free' : `Join with ${plan.name}`}</Link>
+            <Link to="/register">
+              {plan.id === 'free' ? 'Start free' : `Join with ${plan.name}`}
+            </Link>
           </Button>
         </li>
       ))}

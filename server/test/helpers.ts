@@ -7,7 +7,10 @@ import type { UserContext } from '../src/services/profile-service.ts'
 export const ALLOWED_ORIGIN = 'http://localhost:5173'
 // Shaped like a JWT (three dot-separated segments); the fake auth service accepts only this.
 export const VALID_TOKEN = 'header.payload.signature'
-export const testUser: AuthUser = { id: '11111111-1111-4111-8111-111111111111', email: 'asha@example.com' }
+export const testUser: AuthUser = {
+  id: '11111111-1111-4111-8111-111111111111',
+  email: 'asha@example.com',
+}
 
 export function baseMe(): Me {
   return {
@@ -17,7 +20,13 @@ export function baseMe(): Me {
     avatarUrl: null,
     timezone: 'Asia/Kolkata',
     roles: ['user'],
-    preferences: { lifeStage: null, primaryGoals: [], targetCareer: null, preferredDomains: [], skillLevel: null },
+    preferences: {
+      lifeStage: null,
+      primaryGoals: [],
+      targetCareer: null,
+      preferredDomains: [],
+      skillLevel: null,
+    },
     onboardingCompletedAt: null,
   }
 }
@@ -29,6 +38,7 @@ export function buildTestApp(overrides: Partial<AppDeps> = {}) {
     getMe: [] as UserContext[],
     updateProfile: [] as { ctx: UserContext; input: ProfileUpdate }[],
     saveOnboarding: [] as { ctx: UserContext; input: Onboarding }[],
+    deleteAccount: [] as string[],
   }
 
   const deps: AppDeps = {
@@ -50,6 +60,11 @@ export function buildTestApp(overrides: Partial<AppDeps> = {}) {
       saveOnboarding: async (ctx, input) => {
         calls.saveOnboarding.push({ ctx, input })
         return { ...baseMe(), onboardingCompletedAt: '2026-10-24T00:00:00.000Z' }
+      },
+    },
+    accounts: {
+      deleteAccount: async (userId) => {
+        calls.deleteAccount.push(userId)
       },
     },
     contact: {

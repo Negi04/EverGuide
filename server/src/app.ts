@@ -11,6 +11,7 @@ import { createRateLimiter } from './middleware/rate-limit.ts'
 import { contactRouter } from './routes/contact.ts'
 import { healthRouter } from './routes/health.ts'
 import { meRouter } from './routes/me.ts'
+import type { AccountService } from './services/account-service.ts'
 import type { AuthService } from './services/auth-service.ts'
 import type { ContactService } from './services/contact-service.ts'
 import type { ProfileService } from './services/profile-service.ts'
@@ -23,6 +24,7 @@ export type AppDeps = {
   logger: Logger
   auth: AuthService
   profiles: ProfileService
+  accounts: AccountService
   contact: ContactService
   checkDatabase: () => Promise<boolean>
   rateLimits?: { api: LimitOptions; contact: LimitOptions }
@@ -48,7 +50,8 @@ export function createApp(deps: AppDeps) {
       logger: deps.logger,
       genReqId: (req, res) => {
         const incoming = req.headers['x-request-id']
-        const id = typeof incoming === 'string' && SAFE_REQUEST_ID.test(incoming) ? incoming : randomUUID()
+        const id =
+          typeof incoming === 'string' && SAFE_REQUEST_ID.test(incoming) ? incoming : randomUUID()
         res.setHeader('X-Request-Id', id)
         return id
       },
@@ -57,7 +60,12 @@ export function createApp(deps: AppDeps) {
       autoLogging: { ignore: (req) => req.url?.startsWith('/health') ?? false },
       // Log what helps debugging, not every header: smaller logs, less risk of leaking data.
       serializers: {
-        req: (req) => ({ id: req.id, method: req.method, url: req.url, remoteAddress: req.remoteAddress }),
+        req: (req) => ({
+          id: req.id,
+          method: req.method,
+          url: req.url,
+          remoteAddress: req.remoteAddress,
+        }),
         res: (res) => ({ statusCode: res.statusCode }),
       },
     }),
@@ -80,7 +88,7 @@ export function createApp(deps: AppDeps) {
   const api = express.Router()
   api.use(createRateLimiter(limits.api))
   api.use('/contact', contactRouter(deps.contact, limits.contact))
-  api.use('/me', meRouter(deps.auth, deps.profiles))
+  api.use('/me', meRouter(deps.auth, deps.profiles, deps.accounts))
   app.use('/api/v1', api)
 
   app.use(notFoundHandler)

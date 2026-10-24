@@ -4,7 +4,10 @@ import { PlanList } from '@/components/pricing/plan-list'
 
 export function PricingPreview() {
   return (
-    <section aria-labelledby="pricing-title" className="border-t border-border bg-surface py-20 sm:py-28">
+    <section
+      aria-labelledby="pricing-title"
+      className="border-t border-border bg-surface py-20 sm:py-28"
+    >
       <div className="container-page">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <SectionHeading

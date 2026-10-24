@@ -1,5 +1,13 @@
 import type { LucideIcon } from 'lucide-react'
-import { Compass, HeartPulse, LayoutDashboard, PiggyBank, Settings, Sparkles, UsersRound } from 'lucide-react'
+import {
+  Compass,
+  HeartPulse,
+  LayoutDashboard,
+  PiggyBank,
+  Settings,
+  Sparkles,
+  UsersRound,
+} from 'lucide-react'
 
 export type AppNavItem = {
   label: string
@@ -47,11 +55,5 @@ export const appNav: AppNavItem[] = [
     phase: 5,
     description: 'Budgets, savings goals and educational calculators.',
   },
-  {
-    label: 'Settings',
-    to: '/app/settings',
-    icon: Settings,
-    phase: 2,
-    description: 'Profile, preferences and account settings.',
-  },
+  { label: 'Settings', to: '/app/settings', icon: Settings },
 ]

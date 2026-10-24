@@ -5,9 +5,9 @@
 
 ## Current status
 
-- **Active phase:** Phase 2: Backend, Database, Auth & Onboarding (in progress on branch `phase-2-backend`)
+- **Active phase:** Phase 2 complete (built and verified on branch `phase-2-backend`). Wrap-up quiz in progress.
 - **Last updated:** 2026-10-24
-- **Next step:** Client side of Phase 2: Supabase Auth in React (register, login, logout, email verification, password reset, session, protected routes), onboarding wizard, real dashboard data, settings, contact form wired to the API.
+- **Next step:** Phase 3 (AI Guide with RAG). Before starting: the user adds `GEMINI_API_KEY` to `.env`. Before real users: configure custom SMTP in Supabase.
 
 ---
 
@@ -34,11 +34,13 @@
 - [x] Migrations: profiles, user_preferences, user_roles, audit_events, notifications, contact_messages + RLS (`20261024000001_identity_and_onboarding.sql`, applied 2026-10-24 by the user via the SQL Editor; `npm run db:verify` 26/26 passed)
 - [x] Server-side JWT verification (`getClaims`) + DB-backed role checks (`requireRole`)
 - [x] API: `POST /contact`, `GET /me`, `PATCH /me/profile`, `PUT /me/onboarding`
-- [ ] Client auth: register, login, logout, email verification, reset, session, protected routes
-- [ ] Onboarding wizard
-- [ ] Dashboard (real data + empty states), profile & settings
+- [x] Client auth: register, login, logout, email verification, reset, session, protected routes (+ redirect-after-login, open-redirect protection)
+- [x] Onboarding wizard (4 steps, "why we ask" notes, editable later)
+- [x] Dashboard (real data + empty states), profile & settings (name, time zone, password, sign out everywhere, account deletion)
+- [ ] Dashboard notifications panel (deferred: needs a notifications endpoint; no notifications are produced yet)
 - [x] Tests: auth middleware, authorization boundaries (36 server unit tests, 6 real-DB integration tests, 26 RLS checks)
-- [ ] Phase wrap-up ritual
+- [x] Phase wrap-up: explanation, company practices, `docs/learning/phase-2.md`
+- [ ] Phase 2 quiz with user
 
 ### Phase 3 — AI Guide with RAG
 - [ ] Migrations: conversations, messages, knowledge_documents, knowledge_chunks (pgvector), ai_usage, ai_feedback
@@ -76,7 +78,15 @@
 
 ## Phase log
 
-### Phase 2 (in progress)
+### Phase 2 — complete (2026-10-24)
+- **2026-10-24 (client + finish):**
+  - Packages: removed `@supabase/ssr` (Next.js-only) and root-level `supabase-js` (user approved). The client uses the standalone `@supabase/auth-js` (browser needs auth only), configured like supabase-js (same URL, headers, storage key). The server uses `@supabase/supabase-js`.
+  - Client: `lib/env.ts` (validated VITE_ config, no Zod at startup), `lib/supabase.ts`, `lib/api.ts` (typed API client, `ApiError`, 15s timeout), `lib/safe-redirect.ts`, `auth/` (AuthProvider via `onAuthStateChange`, guards `RequireAuth`/`RequireOnboarding`/`RedirectIfSignedIn`, error messages), pages: login, register (+ check inbox, resend), forgot/reset password, `/auth/callback`, onboarding wizard, dashboard, settings, `/account-deleted`. Contact form now really sends.
+  - Server: `DELETE /api/v1/me` (requires `{confirm: "DELETE"}`, writes an audit event, deletes the auth user, data cascades).
+  - **Verified:** typecheck 0 errors, oxlint clean, unit tests 111/111 (client 57, server 38, shared 16), integration 7/7 against the real DB, `db:verify` 26/26, production builds OK. **End-to-end browser run (real Chrome → Vite → API → Supabase): 16/16 checks** (guards, wrong-password message, onboarding, dashboard data, reload keeps session, settings save, sign out/in, account deletion). Database left empty afterwards.
+  - Bugs found by tests and fixed: sign-out race after account deletion (router transition vs urgent auth update, proven with a router trace); TanStack Query v5 `mutationFn` second argument leaking into API calls; main bundle 741 kB → 546 kB (162 kB gzip) by measuring, removing Zod from startup and switching to `auth-js`; sticky sidebar on long pages.
+  - Finding: Supabase rejects `@example.com` signups as invalid, so registration through the form must be tested with a real address.
+- **2026-10-24 (server and database):**
 - **2026-10-24:** Reviewed the user's Gemini schema (see decisions log). Wrote migration `database/migrations/20261024000001_identity_and_onboarding.sql`: 6 tables, signup trigger, `updated_at` triggers, `has_role()` helper, RLS on every table, column-level grants.
 - **2026-10-24:** Supabase dev project created by the user (region chosen by the user). Keys are in `.env` (server) and `client/.env.local` (client), both git-ignored. The user ran the migration in the SQL Editor.
 - **2026-10-24 (server):** Built `server/` (Express 5, TypeScript strict).
@@ -136,6 +146,11 @@
 | 2026-10-24 | Express 5 | Async errors in handlers reach the error handler automatically | — |
 | 2026-10-24 | tsx for dev, esbuild bundle for prod | Local Node lacks native TS support; one-file bundle is simple to deploy | Build step required |
 | 2026-10-24 | In-memory rate-limit store | Single instance for now | Must move to a shared store (e.g. Redis) when scaling out |
+| 2026-10-24 | Browser uses standalone `@supabase/auth-js`, not supabase-js | Browser needs only auth; saves ~55 kB gzip on every page | Must mirror supabase-js auth configuration ourselves |
+| 2026-10-24 | Implicit auth flow (Supabase default), not PKCE | Email links work across devices without custom email templates | PKCE is stricter; revisit with custom templates |
+| 2026-10-24 | Route guards perform post-login redirects; pages don't navigate themselves | One place decides where signed-in users go; avoids races | — |
+| 2026-10-24 | Account deletion lands on `/account-deleted`, which signs out after rendering | Avoids the guard redirecting to login mid-transition; clearer UX | Extra page |
+| 2026-10-24 | Main bundle budget 600 kB (`chunkSizeWarningLimit`) | Current main chunk is framework + auth that every page needs | Raise only after investigating growth |
 | 2026-10-24 | Light theme only for now | Focus on one polished theme first; semantic tokens make dark mode a later remap | No dark mode yet |
 
 ---
@@ -144,7 +159,9 @@
 
 | Service | Status | Needed by |
 |---|---|---|
-| Gemini API key | Available (user has it) | Phase 3 |
+| Gemini API key | User has it; **not yet in `.env`** (`GEMINI_API_KEY` empty) | Phase 3 |
+| Custom SMTP for Supabase Auth emails (e.g. Resend, Postmark, SendGrid) | Not configured. Supabase's built-in sender is for testing only (heavily rate-limited) | Before real users |
+| Supabase Auth URL configuration (Site URL + redirect URLs) | Set by user for `http://localhost:5173` | Add production URLs at deploy |
 | Supabase dev project (URL, publishable key, secret key) | ✅ Configured in `.env` / `client/.env.local`. The Supabase connector in Claude is linked to a different account, so migrations are run by the user in the SQL Editor. | Phase 2 |
 | Razorpay (key id/secret, webhook secret, plan IDs) | Not configured | Phase 6 |
 | Cloudinary | Not configured | Phase 5 |
@@ -158,6 +175,10 @@
 - Phase 1 (1/4): understood server-side validation. Revisit: why design tokens exist (maintainability, not speed); code splitting (performance, not SEO); why unknown facts are `null` (honesty, not a provider rule). Re-check these in the Phase 2 quiz.
 
 ## Open questions / backlog
-- Root `package.json` has `@supabase/ssr` and `@supabase/supabase-js` (added by the user). `@supabase/ssr` is for SSR frameworks such as Next.js and isn't needed in a Vite SPA; `supabase-js` belongs in the `client` and `server` workspaces. Waiting on the user's decision.
+- Dashboard notifications panel + `GET /me/notifications` (nothing produces notifications until Phase 4/6).
+- Changing the sign-in email address (needs Supabase email-change confirmation flow).
+- JWTs stay valid until expiry (~1h) after sign-out/deletion; consider shorter expiry when going live.
+- Generate DB types with the Supabase CLI and apply migrations via CI.
+- PKCE + custom email templates; captcha on signup/login.
 - Next migration: `revoke execute on function public.has_role from public, anon` (harmless today, since it returns false for anonymous callers, but tighter).
 - Pricing for Pro/Premium plans: not decided. The pricing UI reads from config and says "coming soon" until it's set.

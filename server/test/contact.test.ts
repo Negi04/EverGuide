@@ -12,7 +12,9 @@ const valid = {
 describe('POST /api/v1/contact', () => {
   it('validates input with the shared schema and reports each invalid field', async () => {
     const { app, calls } = buildTestApp()
-    const res = await request(app).post('/api/v1/contact').send({ name: 'A', email: 'nope', topic: 'sales' })
+    const res = await request(app)
+      .post('/api/v1/contact')
+      .send({ name: 'A', email: 'nope', topic: 'sales' })
     expect(res.status).toBe(400)
     expect(res.body.error.code).toBe('validation_failed')
     const paths = res.body.error.details.map((d: { path: string }) => d.path)
@@ -32,7 +34,10 @@ describe('POST /api/v1/contact', () => {
 
   it('has its own, stricter rate limit', async () => {
     const { app } = buildTestApp({
-      rateLimits: { api: { windowMs: 60_000, limit: 100 }, contact: { windowMs: 60_000, limit: 2 } },
+      rateLimits: {
+        api: { windowMs: 60_000, limit: 100 },
+        contact: { windowMs: 60_000, limit: 2 },
+      },
     })
     await request(app).post('/api/v1/contact').send(valid)
     await request(app).post('/api/v1/contact').send(valid)

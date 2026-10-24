@@ -27,7 +27,9 @@ describe('requireRole', () => {
   })
 
   it('returns 403 for a signed-in user without the role', async () => {
-    const res = await request(appWithRoles(['user'])).get('/admin-only').set('Authorization', `Bearer ${VALID_TOKEN}`)
+    const res = await request(appWithRoles(['user']))
+      .get('/admin-only')
+      .set('Authorization', `Bearer ${VALID_TOKEN}`)
     expect(res.status).toBe(403)
     expect(res.body.error.code).toBe('forbidden')
   })

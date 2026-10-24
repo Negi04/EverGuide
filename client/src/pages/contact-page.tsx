@@ -1,15 +1,16 @@
 import { contactMessageSchema, contactTopics, type ContactMessage } from '@everguide/shared'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { useSearchParams } from 'react-router'
-import { Notice } from '@/components/common/notice'
+import { FormAlert } from '@/components/common/form-alert'
 import { PageHeader } from '@/components/common/page-header'
 import { Button } from '@/components/ui/button'
 import { FormField } from '@/components/ui/form-field'
 import { Input, NativeSelect, Textarea } from '@/components/ui/input'
 import { siteConfig } from '@/config/site'
 import { usePageTitle } from '@/hooks/use-page-title'
+import { api } from '@/lib/api'
 
 const topicLabels: Record<ContactMessage['topic'], string> = {
   general: 'General question',
@@ -27,22 +28,16 @@ export default function ContactPage() {
   usePageTitle('Contact')
   const [searchParams] = useSearchParams()
   const requestedTopic = searchParams.get('topic')
-  const [submitted, setSubmitted] = useState(false)
+  const send = useMutation({ mutationFn: (values: ContactMessage) => api.submitContact(values) })
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<ContactMessage>({
     resolver: zodResolver(contactMessageSchema),
     defaultValues: { topic: isTopic(requestedTopic) ? requestedTopic : 'general' },
   })
-
-  // The contact API is added with the backend in Phase 2. Until then we validate
-  // the message but say plainly that it was not sent.
-  const onSubmit = () => {
-    setSubmitted(true)
-  }
 
   return (
     <>
@@ -53,45 +48,51 @@ export default function ContactPage() {
       />
 
       <div className="container-page grid gap-12 py-16 sm:py-20 lg:grid-cols-[1.4fr_1fr]">
-        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5" aria-describedby="contact-status">
-          <Notice>
-            Message delivery is being connected. You can complete the form, but messages are not
-            sent yet.
-          </Notice>
-
-          <div className="grid gap-5 sm:grid-cols-2">
-            <FormField label="Your name" error={errors.name?.message}>
-              <Input autoComplete="name" {...register('name')} />
-            </FormField>
-            <FormField label="Email" error={errors.email?.message}>
-              <Input type="email" autoComplete="email" {...register('email')} />
-            </FormField>
+        {send.isSuccess ? (
+          <div>
+            <FormAlert tone="success">
+              Thank you — your message has been received. We’ll reply to the email address you gave
+              us.
+            </FormAlert>
           </div>
-          <FormField label="Topic" error={errors.topic?.message}>
-            <NativeSelect {...register('topic')}>
-              {contactTopics.map((topic) => (
-                <option key={topic} value={topic}>
-                  {topicLabels[topic]}
-                </option>
-              ))}
-            </NativeSelect>
-          </FormField>
-          <FormField
-            label="Message"
-            hint="Please don’t include passwords or sensitive health or financial details."
-            error={errors.message?.message}
+        ) : (
+          <form
+            onSubmit={handleSubmit((values) => send.mutate(values))}
+            noValidate
+            className="space-y-5"
           >
-            <Textarea rows={6} {...register('message')} />
-          </FormField>
+            {send.isError && <FormAlert tone="error">{send.error.message}</FormAlert>}
 
-          <Button type="submit" size="lg" disabled={isSubmitting}>
-            Send message
-          </Button>
-          <p id="contact-status" role="status" className="text-sm text-muted-foreground">
-            {submitted &&
-              'Your message looks good, but it was not sent — message delivery is not connected yet.'}
-          </p>
-        </form>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <FormField label="Your name" error={errors.name?.message}>
+                <Input autoComplete="name" {...register('name')} />
+              </FormField>
+              <FormField label="Email" error={errors.email?.message}>
+                <Input type="email" autoComplete="email" {...register('email')} />
+              </FormField>
+            </div>
+            <FormField label="Topic" error={errors.topic?.message}>
+              <NativeSelect {...register('topic')}>
+                {contactTopics.map((topic) => (
+                  <option key={topic} value={topic}>
+                    {topicLabels[topic]}
+                  </option>
+                ))}
+              </NativeSelect>
+            </FormField>
+            <FormField
+              label="Message"
+              hint="Please don’t include passwords or sensitive health or financial details."
+              error={errors.message?.message}
+            >
+              <Textarea rows={6} {...register('message')} />
+            </FormField>
+
+            <Button type="submit" size="lg" disabled={send.isPending}>
+              {send.isPending ? 'Sending…' : 'Send message'}
+            </Button>
+          </form>
+        )}
 
         <aside className="space-y-6 lg:border-l lg:border-border lg:pl-12">
           <div>

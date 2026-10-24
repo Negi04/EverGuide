@@ -65,8 +65,13 @@ Base path `/api/v1`. Every error has the shape `{ "error": { "code", "message", 
 | GET | `/api/v1/me` | Bearer | Profile, roles, onboarding answers |
 | PATCH | `/api/v1/me/profile` | Bearer | Update name / time zone |
 | PUT | `/api/v1/me/onboarding` | Bearer | Save onboarding answers |
+| DELETE | `/api/v1/me` | Bearer | Delete the account (body `{"confirm":"DELETE"}`) |
 
 Production build: `npm run build -w @everguide/server` bundles the server into `server/dist/server.js` (run with `node dist/server.js`).
+
+## Authentication
+
+Supabase Auth runs in the browser (`@supabase/auth-js`); the API verifies the access token on every request and reads data as that user, so Row Level Security still applies. In the Supabase dashboard set **Authentication → URL Configuration**: Site URL `http://localhost:5173` and redirect URL `http://localhost:5173/**` (add production URLs at deploy). Supabase's built-in email sender is for testing only; configure custom SMTP before inviting real users.
 
 ## Design system
 

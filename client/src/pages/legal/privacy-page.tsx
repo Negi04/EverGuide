@@ -10,10 +10,21 @@ export default function PrivacyPage() {
       <section>
         <h2>What we collect</h2>
         <ul>
-          <li>Account details: your name, email address and password (stored by our authentication provider in hashed form).</li>
-          <li>Onboarding answers: life stage, goals, interests, preferred guidance areas and skill level.</li>
-          <li>Content you create: goals, conversations with the AI Guide, journal entries, uploaded resumes and booking details.</li>
-          <li>Usage information needed to run the service, such as AI usage counts against your plan.</li>
+          <li>
+            Account details: your name, email address and password (stored by our authentication
+            provider in hashed form).
+          </li>
+          <li>
+            Onboarding answers: life stage, goals, interests, preferred guidance areas and skill
+            level.
+          </li>
+          <li>
+            Content you create: goals, conversations with the AI Guide, journal entries, uploaded
+            resumes and booking details.
+          </li>
+          <li>
+            Usage information needed to run the service, such as AI usage counts against your plan.
+          </li>
         </ul>
       </section>
       <section>
@@ -49,7 +60,11 @@ export default function PrivacyPage() {
           <li>Request deletion of your account and associated data.</li>
         </ul>
         <p>
-          For privacy requests, use the <Link to="/contact?topic=privacy" className="text-primary underline">contact form</Link>.
+          For privacy requests, use the{' '}
+          <Link to="/contact?topic=privacy" className="text-primary underline">
+            contact form
+          </Link>
+          .
         </p>
       </section>
     </LegalPage>

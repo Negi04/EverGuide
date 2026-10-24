@@ -31,7 +31,14 @@ export function GuidanceMap() {
 
         <circle cx={center.x} cy={center.y} r="170" fill="url(#eg-glow)" />
         <circle cx={center.x} cy={center.y} r="112" stroke="white" strokeOpacity="0.07" />
-        <circle cx={center.x} cy={center.y} r="196" stroke="white" strokeOpacity="0.05" strokeDasharray="2 6" />
+        <circle
+          cx={center.x}
+          cy={center.y}
+          r="196"
+          stroke="white"
+          strokeOpacity="0.05"
+          strokeDasharray="2 6"
+        />
 
         {nodes.map((node) => (
           <line

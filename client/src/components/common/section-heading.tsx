@@ -10,13 +10,23 @@ type SectionHeadingProps = {
   tone?: 'default' | 'ink'
 }
 
-export function SectionHeading({ eyebrow, title, lead, id, className, tone = 'default' }: SectionHeadingProps) {
+export function SectionHeading({
+  eyebrow,
+  title,
+  lead,
+  id,
+  className,
+  tone = 'default',
+}: SectionHeadingProps) {
   return (
     <div className={cn('max-w-2xl', className)}>
       <p className="eyebrow">{eyebrow}</p>
       <h2
         id={id}
-        className={cn('mt-3 text-3xl font-semibold sm:text-4xl', tone === 'ink' ? 'text-white' : 'text-ink')}
+        className={cn(
+          'mt-3 text-3xl font-semibold sm:text-4xl',
+          tone === 'ink' ? 'text-white' : 'text-ink',
+        )}
       >
         {title}
       </h2>

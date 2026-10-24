@@ -24,8 +24,9 @@ export const unauthorized = (message = 'Please sign in to continue.') =>
 export const forbidden = (message = 'You do not have permission to do that.') =>
   new AppError(403, 'forbidden', message)
 
-export const serviceUnavailable = (message = 'A service we depend on is unavailable. Please try again shortly.') =>
-  new AppError(503, 'service_unavailable', message)
+export const serviceUnavailable = (
+  message = 'A service we depend on is unavailable. Please try again shortly.',
+) => new AppError(503, 'service_unavailable', message)
 
 export function validationError(error: ZodError): AppError {
   return new AppError(
@@ -38,7 +39,11 @@ export function validationError(error: ZodError): AppError {
 
 /** Errors thrown by express.json() carry a `type` from body-parser. */
 function isBodyParserError(error: unknown): error is { type: string } {
-  return typeof error === 'object' && error !== null && typeof (error as { type?: unknown }).type === 'string'
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    typeof (error as { type?: unknown }).type === 'string'
+  )
 }
 
 /** Convert anything thrown into an AppError; unknown errors become a generic 500. */

@@ -10,7 +10,11 @@ export const SheetTitle = Dialog.Title
 export const SheetDescription = Dialog.Description
 
 /** Slide-in panel from the right, used for mobile navigation. */
-export function SheetContent({ className, children, ...props }: ComponentProps<typeof Dialog.Content>) {
+export function SheetContent({
+  className,
+  children,
+  ...props
+}: ComponentProps<typeof Dialog.Content>) {
   return (
     <Dialog.Portal>
       <Dialog.Overlay className="fixed inset-0 z-50 bg-navy-950/60 data-[state=open]:animate-[fade-up_200ms_ease-out]" />

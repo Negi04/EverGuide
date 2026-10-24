@@ -14,7 +14,9 @@ export function createRateLimiter({ windowMs, limit }: LimitOptions) {
     standardHeaders: 'draft-8',
     legacyHeaders: false,
     handler: (_req, _res, next) => {
-      next(new AppError(429, 'rate_limited', 'Too many requests. Please wait a little and try again.'))
+      next(
+        new AppError(429, 'rate_limited', 'Too many requests. Please wait a little and try again.'),
+      )
     },
   })
 }

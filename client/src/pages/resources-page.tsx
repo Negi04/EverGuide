@@ -4,11 +4,31 @@ import { PageHeader } from '@/components/common/page-header'
 import { usePageTitle } from '@/hooks/use-page-title'
 
 const collections = [
-  { icon: Briefcase, name: 'Careers & education', body: 'Choosing a path, switching fields, building skills and portfolios.' },
-  { icon: Presentation, name: 'Interview preparation', body: 'Technical and behavioural practice, and how to talk about your work.' },
-  { icon: HeartPulse, name: 'Mental & physical wellness', body: 'Managing stress, sleep, movement and knowing when to seek help.' },
-  { icon: PiggyBank, name: 'Financial literacy', body: 'Budgeting, saving, borrowing and the vocabulary behind them.' },
-  { icon: Sprout, name: 'Personal development', body: 'Habits, communication, focus and confidence.' },
+  {
+    icon: Briefcase,
+    name: 'Careers & education',
+    body: 'Choosing a path, switching fields, building skills and portfolios.',
+  },
+  {
+    icon: Presentation,
+    name: 'Interview preparation',
+    body: 'Technical and behavioural practice, and how to talk about your work.',
+  },
+  {
+    icon: HeartPulse,
+    name: 'Mental & physical wellness',
+    body: 'Managing stress, sleep, movement and knowing when to seek help.',
+  },
+  {
+    icon: PiggyBank,
+    name: 'Financial literacy',
+    body: 'Budgeting, saving, borrowing and the vocabulary behind them.',
+  },
+  {
+    icon: Sprout,
+    name: 'Personal development',
+    body: 'Habits, communication, focus and confidence.',
+  },
 ]
 
 export default function ResourcesPage() {

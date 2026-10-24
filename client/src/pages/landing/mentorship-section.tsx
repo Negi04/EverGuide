@@ -48,7 +48,9 @@ export function MentorshipSection() {
         <ul className="space-y-3">
           {states.map(({ icon: Icon, name, body, className }) => (
             <li key={name} className="flex gap-4 rounded-lg border border-border bg-surface p-5">
-              <span className={`inline-flex size-10 shrink-0 items-center justify-center rounded-md ${className}`}>
+              <span
+                className={`inline-flex size-10 shrink-0 items-center justify-center rounded-md ${className}`}
+              >
                 <Icon className="size-5" aria-hidden />
               </span>
               <div>

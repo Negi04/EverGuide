@@ -26,10 +26,16 @@ export function createProfileService(clientFor: (accessToken: string) => Db): Pr
   async function getMe(ctx: UserContext): Promise<Me> {
     const db = clientFor(ctx.accessToken)
     const [profile, preferences, roles] = await Promise.all([
-      db.from('profiles').select('full_name, avatar_url, timezone').eq('id', ctx.userId).maybeSingle(),
+      db
+        .from('profiles')
+        .select('full_name, avatar_url, timezone')
+        .eq('id', ctx.userId)
+        .maybeSingle(),
       db
         .from('user_preferences')
-        .select('life_stage, primary_goals, target_career, preferred_domains, skill_level, onboarding_completed_at')
+        .select(
+          'life_stage, primary_goals, target_career, preferred_domains, skill_level, onboarding_completed_at',
+        )
         .eq('user_id', ctx.userId)
         .maybeSingle(),
       db.from('user_roles').select('role').eq('user_id', ctx.userId),
@@ -91,7 +97,8 @@ export function createProfileService(clientFor: (accessToken: string) => Db): Pr
           preferred_domains: input.preferredDomains,
           skill_level: input.skillLevel,
           // Keep the date onboarding was first completed when answers are edited later.
-          onboarding_completed_at: current.data?.onboarding_completed_at ?? new Date().toISOString(),
+          onboarding_completed_at:
+            current.data?.onboarding_completed_at ?? new Date().toISOString(),
         })
         .eq('user_id', ctx.userId)
       if (error) throw serviceUnavailable()

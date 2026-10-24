@@ -1,36 +1,99 @@
 import { registerSchema, type RegisterInput } from '@everguide/shared'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { MailCheck } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link } from 'react-router'
-import { Notice } from '@/components/common/notice'
+import { authErrorMessage } from '@/auth/auth-errors'
+import { FormAlert } from '@/components/common/form-alert'
 import { Button } from '@/components/ui/button'
 import { FormField } from '@/components/ui/form-field'
 import { Input } from '@/components/ui/input'
 import { usePageTitle } from '@/hooks/use-page-title'
+import { supabase } from '@/lib/supabase'
+
+const callbackUrl = () => `${window.location.origin}/auth/callback`
 
 export default function RegisterPage() {
   usePageTitle('Create your account')
-  const [attempted, setAttempted] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [sentTo, setSentTo] = useState<string | null>(null)
+  const [resent, setResent] = useState(false)
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<RegisterInput>({ resolver: zodResolver(registerSchema) })
 
-  // Supabase Auth is connected in Phase 2.
-  const onSubmit = () => setAttempted(true)
+  const onSubmit = async (values: RegisterInput) => {
+    setFormError(null)
+    const { data, error } = await supabase.auth.signUp({
+      email: values.email,
+      password: values.password,
+      // full_name is read by the database signup trigger to create the profile.
+      options: { data: { full_name: values.fullName }, emailRedirectTo: callbackUrl() },
+    })
+    if (error) return setFormError(authErrorMessage(error))
+    // With email confirmation on there is no session yet. If an account already exists
+    // for this email, Supabase answers the same way, so nobody can probe for accounts.
+    if (!data.session) setSentTo(values.email)
+  }
+
+  const resend = async () => {
+    if (!sentTo) return
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: sentTo,
+      options: { emailRedirectTo: callbackUrl() },
+    })
+    if (error) setFormError(authErrorMessage(error))
+    else setResent(true)
+  }
+
+  if (sentTo) {
+    return (
+      <div>
+        <span className="inline-flex size-12 items-center justify-center rounded-md bg-blue-50 text-blue-700">
+          <MailCheck className="size-6" aria-hidden />
+        </span>
+        <h1 className="mt-6 text-3xl font-semibold text-ink">Check your inbox</h1>
+        <p className="mt-3 leading-relaxed text-muted-foreground">
+          We sent a confirmation link to <strong className="text-foreground">{sentTo}</strong>. Open
+          it on this or any other device to activate your account.
+        </p>
+        <div className="mt-8 space-y-3">
+          {formError && <FormAlert tone="error">{formError}</FormAlert>}
+          {resent ? (
+            <FormAlert tone="success">A new link is on its way.</FormAlert>
+          ) : (
+            <Button variant="outline" onClick={resend}>
+              Send the link again
+            </Button>
+          )}
+        </div>
+        <p className="mt-8 text-sm text-muted-foreground">
+          Wrong address?{' '}
+          <button
+            type="button"
+            className="font-medium text-primary hover:underline"
+            onClick={() => setSentTo(null)}
+          >
+            Start again
+          </button>
+        </p>
+      </div>
+    )
+  }
 
   return (
     <>
       <h1 className="text-3xl font-semibold text-ink">Start your journey</h1>
       <p className="mt-2 text-muted-foreground">
-        Create a free account. We will ask a few questions afterwards to personalise your guidance.
+        Create a free account. We’ll ask a few questions afterwards to personalise your guidance.
       </p>
 
-      <Notice className="mt-8">Accounts are not open yet. Registration is being connected.</Notice>
-
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-6 space-y-5">
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-8 space-y-5">
+        {formError && <FormAlert tone="error">{formError}</FormAlert>}
         <FormField label="Full name" error={errors.fullName?.message}>
           <Input autoComplete="name" {...register('fullName')} />
         </FormField>
@@ -76,12 +139,9 @@ export default function RegisterPage() {
           )}
         </div>
 
-        <Button type="submit" size="lg" className="w-full">
-          Create account
+        <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? 'Creating your account…' : 'Create account'}
         </Button>
-        <p role="status" className="text-sm text-muted-foreground">
-          {attempted && 'Registration is not available yet, so no account was created.'}
-        </p>
       </form>
 
       <p className="mt-6 text-sm text-muted-foreground">

@@ -14,7 +14,9 @@ export default function ModulePlaceholderPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <p className="eyebrow">{item?.label ?? 'Workspace'}</p>
-      <h1 className="mt-2 text-3xl font-semibold text-ink">{item?.label ?? 'This area'} is on the way</h1>
+      <h1 className="mt-2 text-3xl font-semibold text-ink">
+        {item?.label ?? 'This area'} is on the way
+      </h1>
       <EmptyState
         icon={Construction}
         title="Not built yet"

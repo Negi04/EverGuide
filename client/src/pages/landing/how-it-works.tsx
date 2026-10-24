@@ -19,7 +19,11 @@ export function HowItWorks() {
   return (
     <section aria-labelledby="how-title" className="py-20 sm:py-28">
       <div className="container-page">
-        <SectionHeading id="how-title" eyebrow="How it works" title="From uncertainty to a next step." />
+        <SectionHeading
+          id="how-title"
+          eyebrow="How it works"
+          title="From uncertainty to a next step."
+        />
 
         <ol className="mt-14 grid gap-10 md:grid-cols-3 md:gap-8">
           {steps.map((step, index) => (

@@ -1,6 +1,7 @@
 import { Menu } from 'lucide-react'
 import { useState } from 'react'
 import { Link, NavLink } from 'react-router'
+import { useAuth } from '@/auth/use-auth'
 import { Logo } from '@/components/brand/logo'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,6 +16,8 @@ import { cn } from '@/lib/utils'
 
 export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const { status } = useAuth()
+  const signedIn = status === 'signed-in'
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/80 bg-background/85 backdrop-blur-md">
@@ -44,12 +47,20 @@ export function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <Button variant="ghost" asChild>
-            <Link to="/login">Log in</Link>
-          </Button>
-          <Button asChild>
-            <Link to="/register">Start your journey</Link>
-          </Button>
+          {signedIn ? (
+            <Button asChild>
+              <Link to="/app">Open dashboard</Link>
+            </Button>
+          ) : (
+            <>
+              <Button variant="ghost" asChild>
+                <Link to="/login">Log in</Link>
+              </Button>
+              <Button asChild>
+                <Link to="/register">Start your journey</Link>
+              </Button>
+            </>
+          )}
         </div>
 
         <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
@@ -83,16 +94,26 @@ export function SiteHeader() {
               </ul>
             </nav>
             <div className="mt-auto grid gap-2">
-              <Button variant="outline" asChild>
-                <Link to="/login" onClick={() => setMenuOpen(false)}>
-                  Log in
-                </Link>
-              </Button>
-              <Button asChild>
-                <Link to="/register" onClick={() => setMenuOpen(false)}>
-                  Start your journey
-                </Link>
-              </Button>
+              {signedIn ? (
+                <Button asChild>
+                  <Link to="/app" onClick={() => setMenuOpen(false)}>
+                    Open dashboard
+                  </Link>
+                </Button>
+              ) : (
+                <>
+                  <Button variant="outline" asChild>
+                    <Link to="/login" onClick={() => setMenuOpen(false)}>
+                      Log in
+                    </Link>
+                  </Button>
+                  <Button asChild>
+                    <Link to="/register" onClick={() => setMenuOpen(false)}>
+                      Start your journey
+                    </Link>
+                  </Button>
+                </>
+              )}
             </div>
           </SheetContent>
         </Sheet>

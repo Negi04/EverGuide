@@ -33,7 +33,10 @@ export const domains: Domain[] = [
     capabilities: [
       { label: 'Conversations with history and search', status: 'in-development' },
       { label: 'Citations linked to retrieved sources', status: 'in-development' },
-      { label: 'Domain modes: career, interview, wellness, finance, growth', status: 'in-development' },
+      {
+        label: 'Domain modes: career, interview, wellness, finance, growth',
+        status: 'in-development',
+      },
       { label: 'Feedback on every answer', status: 'in-development' },
     ],
   },

@@ -104,3 +104,8 @@ export type Me = {
   }
   onboardingCompletedAt: string | null
 }
+
+/** Body of DELETE /api/v1/me — an explicit confirmation guards against accidental calls. */
+export const deleteAccountSchema = z.object({
+  confirm: z.literal('DELETE', { error: 'Type DELETE to confirm.' }),
+})

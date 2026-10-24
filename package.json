@@ -2,7 +2,7 @@
   "name": "everguide",
   "private": true,
   "version": "0.1.0",
-  "description": "EverGuide \u2014 Guidance for a Brighter Tomorrow.",
+  "description": "EverGuide — Guidance for a Brighter Tomorrow.",
   "workspaces": [
     "client",
     "server",
@@ -25,9 +25,5 @@
   },
   "devDependencies": {
     "prettier": "^3.9.10"
-  },
-  "dependencies": {
-    "@supabase/ssr": "^0.12.7",
-    "@supabase/supabase-js": "^2.118.0"
   }
 }

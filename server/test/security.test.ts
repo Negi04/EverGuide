@@ -48,14 +48,19 @@ describe('error responses', () => {
 
   it('rejects malformed JSON with 400', async () => {
     const { app } = buildTestApp()
-    const res = await request(app).post('/api/v1/contact').set('Content-Type', 'application/json').send('{"name":')
+    const res = await request(app)
+      .post('/api/v1/contact')
+      .set('Content-Type', 'application/json')
+      .send('{"name":')
     expect(res.status).toBe(400)
     expect(res.body.error.code).toBe('invalid_json')
   })
 
   it('rejects bodies over 100 kB with 413', async () => {
     const { app } = buildTestApp()
-    const res = await request(app).post('/api/v1/contact').send({ message: 'x'.repeat(110_000) })
+    const res = await request(app)
+      .post('/api/v1/contact')
+      .send({ message: 'x'.repeat(110_000) })
     expect(res.status).toBe(413)
     expect(res.body.error.code).toBe('payload_too_large')
   })

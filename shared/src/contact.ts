@@ -1,9 +1,19 @@
 import { z } from 'zod'
 
-export const contactTopics = ['general', 'mentorship', 'partnerships', 'support', 'privacy'] as const
+export const contactTopics = [
+  'general',
+  'mentorship',
+  'partnerships',
+  'support',
+  'privacy',
+] as const
 
 export const contactMessageSchema = z.object({
-  name: z.string({ error: 'Please enter your name.' }).trim().min(2, 'Please enter your name.').max(80),
+  name: z
+    .string({ error: 'Please enter your name.' })
+    .trim()
+    .min(2, 'Please enter your name.')
+    .max(80),
   email: z.email('Please enter a valid email address.').max(254),
   topic: z.enum(contactTopics, { error: 'Please choose a topic.' }),
   message: z

@@ -19,12 +19,17 @@ describe('onboardingSchema', () => {
   })
 
   it('rejects duplicate goals', () => {
-    const result = onboardingSchema.safeParse({ ...valid, primaryGoals: ['find_first_job', 'find_first_job'] })
+    const result = onboardingSchema.safeParse({
+      ...valid,
+      primaryGoals: ['find_first_job', 'find_first_job'],
+    })
     expect(result.success).toBe(false)
   })
 
   it('rejects domains the database does not allow', () => {
-    expect(onboardingSchema.safeParse({ ...valid, preferredDomains: ['astrology'] }).success).toBe(false)
+    expect(onboardingSchema.safeParse({ ...valid, preferredDomains: ['astrology'] }).success).toBe(
+      false,
+    )
   })
 
   it('drops unknown fields such as a role (no mass assignment)', () => {

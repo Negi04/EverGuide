@@ -10,12 +10,24 @@ export function createLogger(config: Pick<Config, 'logLevel' | 'nodeEnv'>): Logg
     level: config.logLevel,
     base: { service: 'everguide-api' },
     redact: {
-      paths: ['req.headers.authorization', 'req.headers.cookie', 'req.headers.apikey', 'res.headers["set-cookie"]'],
+      paths: [
+        'req.headers.authorization',
+        'req.headers.cookie',
+        'req.headers.apikey',
+        'res.headers["set-cookie"]',
+      ],
       censor: '[redacted]',
     },
     transport:
       config.nodeEnv === 'development'
-        ? { target: 'pino-pretty', options: { singleLine: true, translateTime: 'SYS:HH:MM:ss', ignore: 'pid,hostname,service' } }
+        ? {
+            target: 'pino-pretty',
+            options: {
+              singleLine: true,
+              translateTime: 'SYS:HH:MM:ss',
+              ignore: 'pid,hostname,service',
+            },
+          }
         : undefined,
   })
 }

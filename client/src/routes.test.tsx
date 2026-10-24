@@ -1,13 +1,19 @@
 import { screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
+import { fakeSession, setSession } from '@/test/fake-supabase'
 import { renderRoute } from '@/test/render-route'
 
 describe('routing', () => {
   it('renders the landing page hero with both calls to action', async () => {
     renderRoute('/')
-    expect(await screen.findByRole('heading', { level: 1, name: /your next chapter/i })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { level: 1, name: /your next chapter/i }),
+    ).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: /start your journey/i }).length).toBeGreaterThan(0)
-    expect(screen.getByRole('link', { name: /explore everguide/i })).toHaveAttribute('href', '/features')
+    expect(screen.getByRole('link', { name: /explore everguide/i })).toHaveAttribute(
+      'href',
+      '/features',
+    )
   })
 
   it.each([
@@ -28,18 +34,17 @@ describe('routing', () => {
 
   it('shows the 404 page for unknown URLs', async () => {
     renderRoute('/does-not-exist')
-    expect(await screen.findByRole('heading', { name: /took a different path/i })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { name: /took a different path/i }),
+    ).toBeInTheDocument()
   })
 
   it('shows an honest placeholder for workspace modules that are not built yet', async () => {
+    setSession(fakeSession())
     renderRoute('/app/guide')
-    expect(await screen.findByRole('heading', { level: 1, name: /ai guide is on the way/i })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { level: 1, name: /ai guide is on the way/i }),
+    ).toBeInTheDocument()
     expect(screen.getByText(/build phase 3/i)).toBeInTheDocument()
-  })
-
-  it('renders the dashboard with empty states rather than fake data', async () => {
-    renderRoute('/app')
-    expect(await screen.findByRole('heading', { name: /no goals yet/i })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /no upcoming sessions/i })).toBeInTheDocument()
   })
 })

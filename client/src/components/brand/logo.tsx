@@ -21,7 +21,13 @@ export function LogoMark({ className }: { className?: string }) {
   )
 }
 
-export function Logo({ className, tone = 'default' }: { className?: string; tone?: 'default' | 'ink' }) {
+export function Logo({
+  className,
+  tone = 'default',
+}: {
+  className?: string
+  tone?: 'default' | 'ink'
+}) {
   return (
     <span className={cn('inline-flex items-center gap-2.5', className)}>
       <LogoMark />

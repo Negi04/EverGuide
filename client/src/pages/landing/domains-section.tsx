@@ -48,7 +48,9 @@ export function DomainsSection() {
               className="rounded-lg border border-border bg-surface p-6 shadow-md sm:p-10"
             >
               <h3 className="text-2xl font-semibold text-ink sm:text-3xl">{domain.summary}</h3>
-              <p className="mt-4 max-w-2xl leading-relaxed text-muted-foreground">{domain.description}</p>
+              <p className="mt-4 max-w-2xl leading-relaxed text-muted-foreground">
+                {domain.description}
+              </p>
               <ul className="mt-8 divide-y divide-border border-y border-border">
                 {domain.capabilities.map((capability) => (
                   <li

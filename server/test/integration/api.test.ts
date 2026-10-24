@@ -45,8 +45,13 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-  if (createdContactIds.length) await admin.from('contact_messages').delete().in('id', createdContactIds)
-  if (userId) await admin.auth.admin.deleteUser(userId)
+  if (createdContactIds.length)
+    await admin.from('contact_messages').delete().in('id', createdContactIds)
+  if (userId) {
+    // Normally already deleted by the last test; this is the safety net.
+    await admin.auth.admin.deleteUser(userId)
+    await admin.from('audit_events').delete().eq('target_id', userId)
+  }
 })
 
 describe('API against the real database', () => {
@@ -70,7 +75,9 @@ describe('API against the real database', () => {
   it('rejects a token whose signature was tampered with', async () => {
     const [header, payload, signature = ''] = token.split('.')
     const flipped = (signature[0] === 'A' ? 'B' : 'A') + signature.slice(1)
-    const res = await request(app).get('/api/v1/me').set('Authorization', `Bearer ${header}.${payload}.${flipped}`)
+    const res = await request(app)
+      .get('/api/v1/me')
+      .set('Authorization', `Bearer ${header}.${payload}.${flipped}`)
     expect(res.status).toBe(401)
   })
 
@@ -82,7 +89,10 @@ describe('API against the real database', () => {
       preferredDomains: ['career', 'interview'],
       skillLevel: 'intermediate',
     }
-    const first = await request(app).put('/api/v1/me/onboarding').set('Authorization', `Bearer ${token}`).send(answers)
+    const first = await request(app)
+      .put('/api/v1/me/onboarding')
+      .set('Authorization', `Bearer ${token}`)
+      .send(answers)
     expect(first.status).toBe(200)
     expect(first.body.preferences.targetCareer).toBe('Frontend developer')
     expect(first.body.onboardingCompletedAt).not.toBeNull()
@@ -114,7 +124,29 @@ describe('API against the real database', () => {
     expect(res.status).toBe(201)
     createdContactIds.push(res.body.id)
 
-    const stored = await admin.from('contact_messages').select('status').eq('id', res.body.id).single()
+    const stored = await admin
+      .from('contact_messages')
+      .select('status')
+      .eq('id', res.body.id)
+      .single()
     expect(stored.data?.status).toBe('new')
+  })
+
+  it('deletes the account and all of its data, leaving an audit record', async () => {
+    const res = await request(app)
+      .delete('/api/v1/me')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ confirm: 'DELETE' })
+    expect(res.status).toBe(204)
+
+    const user = await admin.auth.admin.getUserById(userId)
+    expect(user.data.user).toBeNull()
+    const profile = await admin.from('profiles').select('id').eq('id', userId)
+    expect(profile.data).toEqual([])
+    const audit = await admin
+      .from('audit_events')
+      .select('action, actor_id')
+      .eq('target_id', userId)
+    expect(audit.data).toEqual([{ action: 'account.deleted', actor_id: null }])
   })
 })

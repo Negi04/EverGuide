@@ -41,8 +41,12 @@ export default function TermsPage() {
       <section>
         <h2>Acceptable use</h2>
         <ul>
-          <li>Do not misuse the service, attempt to access other users’ data or disrupt the platform.</li>
-          <li>Do not misrepresent your identity or experience, including in mentor applications.</li>
+          <li>
+            Do not misuse the service, attempt to access other users’ data or disrupt the platform.
+          </li>
+          <li>
+            Do not misrepresent your identity or experience, including in mentor applications.
+          </li>
           <li>Do not upload content you do not have the right to share.</li>
         </ul>
       </section>

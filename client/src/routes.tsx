@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react'
 import type { RouteObject } from 'react-router'
+import { RedirectIfSignedIn, RequireAuth, RequireOnboarding } from '@/auth/guards'
 import { AppLayout } from '@/components/layout/app-layout'
 import { AuthLayout } from '@/components/layout/auth-layout'
 import { PublicLayout } from '@/components/layout/public-layout'
@@ -12,6 +13,8 @@ import RouteErrorPage from '@/pages/route-error-page'
 const page = (load: () => Promise<{ default: ComponentType }>) => async () => ({
   Component: (await load()).default,
 })
+
+const builtAppPages = new Set(['/app', '/app/settings'])
 
 export const routes: RouteObject[] = [
   {
@@ -30,27 +33,51 @@ export const routes: RouteObject[] = [
           { path: 'contact', lazy: page(() => import('@/pages/contact-page')) },
           { path: 'privacy', lazy: page(() => import('@/pages/legal/privacy-page')) },
           { path: 'terms', lazy: page(() => import('@/pages/legal/terms-page')) },
+          { path: 'account-deleted', lazy: page(() => import('@/pages/account-deleted-page')) },
           { path: '*', element: <NotFoundPage /> },
         ],
       },
       {
         element: <AuthLayout />,
         children: [
-          { path: 'login', lazy: page(() => import('@/pages/auth/login-page')) },
-          { path: 'register', lazy: page(() => import('@/pages/auth/register-page')) },
+          {
+            element: <RedirectIfSignedIn />,
+            children: [
+              { path: 'login', lazy: page(() => import('@/pages/auth/login-page')) },
+              { path: 'register', lazy: page(() => import('@/pages/auth/register-page')) },
+              {
+                path: 'forgot-password',
+                lazy: page(() => import('@/pages/auth/forgot-password-page')),
+              },
+            ],
+          },
+          { path: 'reset-password', lazy: page(() => import('@/pages/auth/reset-password-page')) },
+          { path: 'auth/callback', lazy: page(() => import('@/pages/auth/auth-callback-page')) },
         ],
       },
       {
-        path: 'app',
-        element: <AppLayout />,
+        element: <RequireAuth />,
         children: [
-          { index: true, lazy: page(() => import('@/pages/app/dashboard-page')) },
-          ...appNav
-            .filter((item) => item.to !== '/app')
-            .map((item) => ({
-              path: item.to.replace('/app/', ''),
-              lazy: page(() => import('@/pages/app/module-placeholder-page')),
-            })),
+          { path: 'onboarding', lazy: page(() => import('@/pages/onboarding/onboarding-page')) },
+          {
+            element: <RequireOnboarding />,
+            children: [
+              {
+                path: 'app',
+                element: <AppLayout />,
+                children: [
+                  { index: true, lazy: page(() => import('@/pages/app/dashboard-page')) },
+                  { path: 'settings', lazy: page(() => import('@/pages/app/settings-page')) },
+                  ...appNav
+                    .filter((item) => !builtAppPages.has(item.to))
+                    .map((item) => ({
+                      path: item.to.replace('/app/', ''),
+                      lazy: page(() => import('@/pages/app/module-placeholder-page')),
+                    })),
+                ],
+              },
+            ],
+          },
         ],
       },
     ],

@@ -1,7 +1,11 @@
 import { FileText, Plus, Search, Sparkles, ThumbsDown, ThumbsUp } from 'lucide-react'
 import { SectionHeading } from '@/components/common/section-heading'
 
-const exampleThreads = ['Moving into data analysis', 'Preparing for a first interview', 'Building a monthly budget']
+const exampleThreads = [
+  'Moving into data analysis',
+  'Preparing for a first interview',
+  'Building a monthly budget',
+]
 
 /**
  * A static, clearly labelled illustration of the AI Guide workspace.
@@ -9,7 +13,10 @@ const exampleThreads = ['Moving into data analysis', 'Preparing for a first inte
  */
 export function ProductPreview() {
   return (
-    <section aria-labelledby="preview-title" className="border-y border-border bg-surface py-20 sm:py-28">
+    <section
+      aria-labelledby="preview-title"
+      className="border-y border-border bg-surface py-20 sm:py-28"
+    >
       <div className="container-page">
         <SectionHeading
           id="preview-title"
@@ -24,7 +31,9 @@ export function ProductPreview() {
               <span className="size-2.5 rounded-full bg-border-strong" />
               <span className="size-2.5 rounded-full bg-border-strong" />
               <span className="size-2.5 rounded-full bg-border-strong" />
-              <span className="ml-3 text-xs font-medium text-muted-foreground">EverGuide · AI Guide</span>
+              <span className="ml-3 text-xs font-medium text-muted-foreground">
+                EverGuide · AI Guide
+              </span>
             </div>
 
             <div className="grid md:grid-cols-[15rem_1fr]">

@@ -14,12 +14,17 @@ describe('loadConfig', () => {
   it('parses and normalises valid configuration', () => {
     const config = loadConfig(validEnv)
     expect(config.port).toBe(8080)
-    expect(config.corsOrigins).toEqual(['https://everguide.example', 'https://www.everguide.example'])
+    expect(config.corsOrigins).toEqual([
+      'https://everguide.example',
+      'https://www.everguide.example',
+    ])
     expect(config.trustProxy).toBe(0)
   })
 
   it('lists every missing variable', () => {
-    expect(() => loadConfig({})).toThrow(/CORS_ORIGINS[\s\S]*SUPABASE_URL[\s\S]*SUPABASE_SERVICE_ROLE_KEY/)
+    expect(() => loadConfig({})).toThrow(
+      /CORS_ORIGINS[\s\S]*SUPABASE_URL[\s\S]*SUPABASE_SERVICE_ROLE_KEY/,
+    )
   })
 
   it('never includes secret values in the error message', () => {
