@@ -5,7 +5,7 @@
 
 ## Current status
 
-- **Active phase:** Phase 3 complete (built and verified on branch `phase-3-ai-guide`). Wrap-up quiz in progress.
+- **Active phase:** Phase 3 complete (built, verified, quizzed) on branch `phase-3-ai-guide`. Waiting for the user to push and merge the PR, then Phase 4.
 - **Last updated:** 2026-10-24
 - **Next step:** User reviews and merges `phase-3-ai-guide` via a pull request, then Phase 4 (Career Studio + Mentor marketplace).
 
@@ -52,7 +52,7 @@
 - [x] Server-enforced monthly usage limits (atomic, refunded on failure)
 - [x] Tests: citation correctness, conversation isolation, usage limits (91 server unit, 15 integration incl. 8 real-AI, 50 RLS checks)
 - [x] Phase wrap-up: explanation, company practices, `docs/learning/phase-3.md`
-- [ ] Phase 3 quiz with user
+- [x] Phase 3 quiz with user (2026-10-24: 4/4, incl. code splitting finally understood)
 
 ### Phase 4 — Career Studio & Mentor Marketplace
 - [ ] Roadmap goals + milestones
@@ -198,6 +198,7 @@
 ## Learning focus (from quizzes)
 - Phase 1 (1/4): understood server-side validation. Revisit: why design tokens exist (maintainability, not speed); code splitting (performance, not SEO); why unknown facts are `null` (honesty, not a provider rule). Re-checked in Phase 2.
 - Phase 2 (3/4): correct on defence in depth (user-scoped client + RLS), account enumeration and 401 vs 503. Missed again: why the main bundle matters (every visitor downloads it; route chunks load on demand; critical path). Ask about it again in Phase 3.
+- Phase 3 (4/4): citation validation, measured threshold, race conditions / atomic reservation, and the code-splitting critical path (third attempt) all correct. Next quiz: mix in Phase 2 security concepts as spaced repetition.
 
 ## Open questions / backlog
 - Dashboard notifications panel + `GET /me/notifications` (nothing produces notifications until Phase 4/6).
