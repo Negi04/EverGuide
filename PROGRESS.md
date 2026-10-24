@@ -5,7 +5,7 @@
 
 ## Current status
 
-- **Active phase:** Phase 1 complete (built and verified). Wrap-up quiz in progress.
+- **Active phase:** Phase 1 complete (built, verified, quizzed). Waiting for the go-ahead on Phase 2.
 - **Last updated:** 2026-10-24
 - **Next step:** Phase 2. User creates a Supabase project (URL, anon key, service role key), then build the Express server, migrations, and auth.
 
@@ -27,7 +27,7 @@
 - [x] Router with lazy routes, 404, error boundary
 - [x] Unit tests + lint + typecheck + build passing
 - [x] Phase wrap-up: explanation, company practices, `docs/learning/phase-1.md`
-- [ ] Phase 1 quiz with user
+- [x] Phase 1 quiz with user (2026-10-24: 1/4; revisit design tokens, code splitting, honest-UI reasoning)
 
 ### Phase 2 — Backend, Database, Auth & Onboarding
 - [ ] Express server: env validation, request IDs, pino, helmet, CORS, rate limiting, error handler, `/health`
@@ -131,6 +131,9 @@
 | Contact email, legal entity name/address for Privacy/Terms | Not provided | Before launch |
 
 ---
+
+## Learning focus (from quizzes)
+- Phase 1 (1/4): understood server-side validation. Revisit: why design tokens exist (maintainability, not speed); code splitting (performance, not SEO); why unknown facts are `null` (honesty, not a provider rule). Re-check these in the Phase 2 quiz.
 
 ## Open questions / backlog
 - Pricing for Pro/Premium plans: not decided. The pricing UI reads from config and says "coming soon" until it's set.
