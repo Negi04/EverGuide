@@ -15,7 +15,9 @@
     "lint": "oxlint --deny-warnings",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:integration": "vitest run --config vitest.integration.config.ts"
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "kb:ingest": "tsx --env-file-if-exists=../.env scripts/ingest-knowledge.ts",
+    "kb:eval": "tsx --env-file-if-exists=../.env scripts/eval-retrieval.ts"
   },
   "dependencies": {
     "@everguide/shared": "^0.1.0",

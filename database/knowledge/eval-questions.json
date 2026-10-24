@@ -1,0 +1,33 @@
+{
+  "description": "Retrieval evaluation set. 'expected' questions should retrieve the named document; 'offTopic' questions should NOT match anything above the similarity threshold.",
+  "expected": [
+    { "question": "How do I decide what to study after school?", "slug": "choosing-a-career-path" },
+    { "question": "I'm not sure which career fits me. How can I explore options?", "slug": "choosing-a-career-path" },
+    { "question": "How can I move from customer support into data analysis?", "slug": "switching-careers" },
+    { "question": "What are transferable skills and how do I use them?", "slug": "switching-careers" },
+    { "question": "How should I describe my achievements on my CV?", "slug": "resume-basics" },
+    { "question": "Do applicant tracking systems read fancy resume layouts?", "slug": "resume-basics" },
+    { "question": "How do I answer 'tell me about a time you had a conflict'?", "slug": "behavioural-interviews" },
+    { "question": "What is the STAR method?", "slug": "behavioural-interviews" },
+    { "question": "How should I prepare for a coding interview?", "slug": "technical-interview-preparation" },
+    { "question": "What should I do when I get stuck during a live technical problem?", "slug": "technical-interview-preparation" },
+    { "question": "I feel overwhelmed by exam pressure. What can help?", "slug": "managing-stress" },
+    { "question": "When should I talk to a counsellor about stress?", "slug": "managing-stress" },
+    { "question": "How many hours of sleep do adults need?", "slug": "sleep-and-movement" },
+    { "question": "How much exercise should I get each week?", "slug": "sleep-and-movement" },
+    { "question": "How do I make a monthly budget on my first salary?", "slug": "budgeting-basics" },
+    { "question": "What is the 50/30/20 rule?", "slug": "budgeting-basics" },
+    { "question": "How big should my emergency fund be?", "slug": "saving-and-emergency-funds" },
+    { "question": "Can you explain compound interest simply?", "slug": "saving-and-emergency-funds" },
+    { "question": "How do I stick to a new habit?", "slug": "building-habits" },
+    { "question": "What should I do when I miss a day of my routine?", "slug": "building-habits" }
+  ],
+  "offTopic": [
+    "What is the capital of France?",
+    "How do I replace the brake pads on my car?",
+    "Write a poem about the ocean.",
+    "Who won the cricket world cup in 2011?",
+    "What is the best recipe for biryani?",
+    "How do black holes form?"
+  ]
+}
