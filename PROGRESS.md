@@ -31,7 +31,7 @@
 
 ### Phase 2 — Backend, Database, Auth & Onboarding
 - [ ] Express server: env validation, request IDs, pino, helmet, CORS, rate limiting, error handler, `/health`
-- [ ] Migrations: profiles, user_preferences, user_roles, audit_events, notifications, contact_messages + RLS
+- [ ] Migrations: profiles, user_preferences, user_roles, audit_events, notifications, contact_messages + RLS (written locally 2026-10-24: `20261024000001_identity_and_onboarding.sql`; awaiting user review, not yet applied)
 - [ ] Server-side JWT verification + DB-backed role checks
 - [ ] Client auth: register, login, logout, email verification, reset, session, protected routes
 - [ ] Onboarding wizard
@@ -114,6 +114,9 @@
 | 2026-10-24 | Self-hosted fonts via Fontsource | Privacy, no third-party request, stable layout | Slightly larger build output |
 | 2026-10-24 | shadcn-style components hand-written on `radix-ui`, with `components.json` | shadcn is copy-in by design; keeps CLI usable later | — |
 | 2026-10-24 | Feature status, plan prices, contact/legal details stored as typed config; unknowns are `null` | Never show invented facts; one place to update | Pages must handle null states |
+| 2026-10-24 | Reviewed the user's Gemini schema; adopted its structure with fixes: RLS on every table, roles in a separate `user_roles` table, FK to `auth.users`, NOT NULLs, updated_at triggers, FK indexes, separate private resumes from the global knowledge base, exclusion constraint for bookings, idempotent payment events | The original allowed privilege escalation, cross-user data exposure and double bookings | More tables and policies to maintain |
+| 2026-10-24 | Tables are created phase by phase as timestamped SQL migrations in `database/migrations/` | Reviewable, replayable on staging/prod, no unused tables | Can't just click tables together in the dashboard |
+| 2026-10-24 | Evolving value lists use text + CHECK; only stable sets (app_role) use Postgres enums | Enum values can't be removed or renamed easily | Slightly less strict typing in the DB |
 | 2026-10-24 | Light theme only for now | Focus on one polished theme first; semantic tokens make dark mode a later remap | No dark mode yet |
 
 ---
