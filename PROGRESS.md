@@ -7,7 +7,7 @@
 
 - **Active phase:** Phase 2: Backend, Database, Auth & Onboarding (in progress on branch `phase-2-backend`)
 - **Last updated:** 2026-10-24
-- **Next step:** Build the Express server (env validation, logging, security headers, error handling, `/health`), then client auth with Supabase.
+- **Next step:** Client side of Phase 2: Supabase Auth in React (register, login, logout, email verification, password reset, session, protected routes), onboarding wizard, real dashboard data, settings, contact form wired to the API.
 
 ---
 
@@ -30,13 +30,14 @@
 - [x] Phase 1 quiz with user (2026-10-24: 1/4; revisit design tokens, code splitting, honest-UI reasoning)
 
 ### Phase 2 — Backend, Database, Auth & Onboarding
-- [ ] Express server: env validation, request IDs, pino, helmet, CORS, rate limiting, error handler, `/health`
+- [x] Express server: env validation, request IDs, pino, helmet, CORS, rate limiting, error handler, `/health` + `/health/ready`, graceful shutdown, request timeouts
 - [x] Migrations: profiles, user_preferences, user_roles, audit_events, notifications, contact_messages + RLS (`20261024000001_identity_and_onboarding.sql`, applied 2026-10-24 by the user via the SQL Editor; `npm run db:verify` 26/26 passed)
-- [ ] Server-side JWT verification + DB-backed role checks
+- [x] Server-side JWT verification (`getClaims`) + DB-backed role checks (`requireRole`)
+- [x] API: `POST /contact`, `GET /me`, `PATCH /me/profile`, `PUT /me/onboarding`
 - [ ] Client auth: register, login, logout, email verification, reset, session, protected routes
 - [ ] Onboarding wizard
 - [ ] Dashboard (real data + empty states), profile & settings
-- [ ] Tests: auth middleware, authorization boundaries
+- [x] Tests: auth middleware, authorization boundaries (36 server unit tests, 6 real-DB integration tests, 26 RLS checks)
 - [ ] Phase wrap-up ritual
 
 ### Phase 3 — AI Guide with RAG
@@ -78,6 +79,14 @@
 ### Phase 2 (in progress)
 - **2026-10-24:** Reviewed the user's Gemini schema (see decisions log). Wrote migration `database/migrations/20261024000001_identity_and_onboarding.sql`: 6 tables, signup trigger, `updated_at` triggers, `has_role()` helper, RLS on every table, column-level grants.
 - **2026-10-24:** Supabase dev project created by the user (region chosen by the user). Keys are in `.env` (server) and `client/.env.local` (client), both git-ignored. The user ran the migration in the SQL Editor.
+- **2026-10-24 (server):** Built `server/` (Express 5, TypeScript strict).
+  - Layout: `src/config/env.ts` (Zod-validated env, fails fast without printing values), `src/lib/` (errors, validation, logger, Supabase clients), `src/middleware/` (auth, errors, rate-limit), `src/routes/` (health, contact, me), `src/services/` (auth, contact, profile), `src/deps.ts` (real dependencies), `src/app.ts` (`createApp(deps)`, dependency injection so tests use fakes).
+  - Two Supabase clients: **admin** (secret key; verifying tokens, reading roles, server-only tables) and **user-scoped** (publishable key + user's JWT; RLS still applies on the server, as defence in depth).
+  - Shared contracts added: `shared/src/profile.ts` (onboarding/profile schemas, value lists matching the DB CHECKs, `Me` type), `shared/src/api.ts` (error body type).
+  - Dev: `tsx watch`. Prod: `server/build.mjs` (esbuild) bundles to `dist/server.js` and inlines `@everguide/shared`. This Node build lacks native TypeScript support, so we don't rely on it.
+  - Hand-written `server/src/db/database.types.ts` until Supabase type generation is set up.
+  - **Verified:** typecheck 0 errors, oxlint clean, 36/36 unit tests, 6/6 integration tests against the real project (signup trigger, tampered-token rejection, onboarding save, profile update, contact insert), production bundle started and exercised with curl (health, ready, 401, 400, CORS allow/deny). No leftover test users afterwards.
+  - Fixes found during verification: auth scheme must be case-insensitive (`bearer` is valid HTTP); logs trimmed to useful fields; friendlier validation messages.
 - **2026-10-24:** Added `database/tests/verify-rls.mjs` (`npm run db:verify`): creates 2 temporary users, attempts cross-user reads/writes, privilege escalation, protected-column edits and invalid values, then deletes the users. **Result: 26/26 passed**, run twice.
 
 ### Phase 1 — complete (2026-10-24)
@@ -122,6 +131,11 @@
 | 2026-10-24 | Reviewed the user's Gemini schema; adopted its structure with fixes: RLS on every table, roles in a separate `user_roles` table, FK to `auth.users`, NOT NULLs, updated_at triggers, FK indexes, separate private resumes from the global knowledge base, exclusion constraint for bookings, idempotent payment events | The original allowed privilege escalation, cross-user data exposure and double bookings | More tables and policies to maintain |
 | 2026-10-24 | Tables are created phase by phase as timestamped SQL migrations in `database/migrations/` | Reviewable, replayable on staging/prod, no unused tables | Can't just click tables together in the dashboard |
 | 2026-10-24 | Evolving value lists use text + CHECK; only stable sets (app_role) use Postgres enums | Enum values can't be removed or renamed easily | Slightly less strict typing in the DB |
+| 2026-10-24 | Browser talks to Supabase only for auth; all app data goes through the Express API with the user's JWT | One place for validation, rate limits, logging and business rules; RLS stays as a second layer | Extra hop compared with querying Supabase directly |
+| 2026-10-24 | Server reads user data with a user-scoped Supabase client, not the service role | A bug in our code still can't cross users (RLS applies) | One client created per request |
+| 2026-10-24 | Express 5 | Async errors in handlers reach the error handler automatically | — |
+| 2026-10-24 | tsx for dev, esbuild bundle for prod | Local Node lacks native TS support; one-file bundle is simple to deploy | Build step required |
+| 2026-10-24 | In-memory rate-limit store | Single instance for now | Must move to a shared store (e.g. Redis) when scaling out |
 | 2026-10-24 | Light theme only for now | Focus on one polished theme first; semantic tokens make dark mode a later remap | No dark mode yet |
 
 ---

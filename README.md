@@ -9,12 +9,12 @@
 ```
 client/     React 19 + Vite + TypeScript (strict) + Tailwind CSS v4 + Radix/shadcn-style UI
 shared/     Zod schemas shared by client and server (the API contract)
-server/     Express API (Phase 2)
-database/   SQL migrations and RLS policies (Phase 2+)
+server/     Express 5 REST API (TypeScript, pino, helmet, rate limiting, Supabase)
+database/   SQL migrations, RLS policies and database security tests
 docs/       Architecture, setup, deployment and learning notes
 ```
 
-npm workspaces tie `client` and `shared` together, so the client imports `@everguide/shared` directly.
+npm workspaces tie the packages together, so both client and server import `@everguide/shared` directly.
 
 ## Requirements
 
@@ -25,8 +25,18 @@ npm workspaces tie `client` and `shared` together, so the client imports `@everg
 
 ```bash
 npm install
-cp .env.example client/.env.local   # client values only (VITE_*)
-npm run dev                         # http://localhost:5173
+cp .env.example .env                # server values (secret — never commit)
+cp .env.example client/.env.local   # keep only the VITE_* lines here
+npm run dev                         # client: http://localhost:5173
+npm run dev:api                     # API:    http://localhost:4000/health
+```
+
+### Database
+
+Migrations live in `database/migrations/` and are applied in filename order (Supabase SQL Editor, or `supabase db push` once the CLI is linked). After applying, run:
+
+```bash
+npm run db:verify   # creates 2 temporary users, attempts cross-user access, then deletes them
 ```
 
 ## Scripts (from the repo root)
@@ -34,11 +44,29 @@ npm run dev                         # http://localhost:5173
 | Command | What it does |
 |---|---|
 | `npm run dev` | Start the client dev server |
+| `npm run dev:api` | Start the API with auto-reload (reads `.env`) |
 | `npm run build` | Type-check and build the client for production |
 | `npm run typecheck` | TypeScript checks in every workspace |
 | `npm run lint` | oxlint (fails on warnings) |
-| `npm test` | Vitest unit/component tests in every workspace |
+| `npm test` | Vitest unit/component tests in every workspace (no network) |
+| `npm run test:integration` | API tests against the real Supabase project in `.env` |
+| `npm run db:verify` | Row Level Security regression test against the database |
 | `npm run format` | Prettier |
+
+## API
+
+Base path `/api/v1`. Every error has the shape `{ "error": { "code", "message", "requestId", "details?" } }`.
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| GET | `/health` | — | Liveness |
+| GET | `/health/ready` | — | Readiness (database reachable) |
+| POST | `/api/v1/contact` | — | Contact form (5 per hour per IP) |
+| GET | `/api/v1/me` | Bearer | Profile, roles, onboarding answers |
+| PATCH | `/api/v1/me/profile` | Bearer | Update name / time zone |
+| PUT | `/api/v1/me/onboarding` | Bearer | Save onboarding answers |
+
+Production build: `npm run build -w @everguide/server` bundles the server into `server/dist/server.js` (run with `node dist/server.js`).
 
 ## Design system
 

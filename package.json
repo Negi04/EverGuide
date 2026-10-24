@@ -5,6 +5,7 @@
   "description": "EverGuide \u2014 Guidance for a Brighter Tomorrow.",
   "workspaces": [
     "client",
+    "server",
     "shared"
   ],
   "engines": {
@@ -12,13 +13,15 @@
   },
   "scripts": {
     "dev": "npm run dev -w client",
+    "dev:api": "npm run dev -w @everguide/server",
     "build": "npm run build -w client",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
+    "test:integration": "npm run test:integration -w @everguide/server",
+    "db:verify": "node database/tests/verify-rls.mjs .env",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "db:verify": "node database/tests/verify-rls.mjs .env"
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
     "prettier": "^3.9.10"

@@ -1,0 +1,7 @@
+{
+  "$schema": "../node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "oxc", "import", "node"],
+  "rules": {
+    "no-console": ["warn", { "allow": ["error"] }]
+  }
+}
