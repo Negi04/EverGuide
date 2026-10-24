@@ -1,0 +1,223 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/bricolage-grotesque/wght.css';
+@import '@fontsource-variable/figtree/wght.css';
+
+/*
+ * EverGuide design tokens.
+ * Raw brand values live in :root; semantic tokens (background, primary, …) point at them.
+ * Components only use semantic tokens so the palette can change in one place.
+ */
+:root {
+  /* Brand palette */
+  --eg-navy-950: #070e22;
+  --eg-navy-900: #0b1530; /* Midnight Navy */
+  --eg-navy-800: #13214a;
+  --eg-navy-700: #1c2e63;
+  --eg-blue-700: #174ea6; /* Deep Blue */
+  --eg-blue-600: #2563eb; /* Cobalt Blue */
+  --eg-blue-100: #dbe7fd;
+  --eg-blue-50: #eef4fe;
+  --eg-sky-400: #38bdf8; /* Sky Blue */
+  --eg-sky-200: #bae6fd;
+  --eg-gold-400: #f4b860; /* Warm Gold */
+  --eg-gold-700: #8a5a12; /* Gold for text on light surfaces (AA contrast) */
+  --eg-gold-100: #fdf0db;
+  --eg-cloud: #f7f9fc; /* Cloud White */
+
+  /* Neutrals (slate) */
+  --eg-slate-950: #0f172a;
+  --eg-slate-800: #1e293b;
+  --eg-slate-700: #334155;
+  --eg-slate-600: #475569;
+  --eg-slate-500: #64748b;
+  --eg-slate-300: #cbd5e1;
+  --eg-slate-200: #e2e8f0;
+  --eg-slate-100: #f1f5f9;
+
+  /* Semantic tokens */
+  --background: var(--eg-cloud);
+  --foreground: var(--eg-slate-950);
+  --surface: #ffffff;
+  --surface-muted: var(--eg-slate-100);
+  --muted-foreground: var(--eg-slate-600);
+  --border: var(--eg-slate-200);
+  --border-strong: var(--eg-slate-300);
+  --primary: var(--eg-blue-600);
+  --primary-hover: var(--eg-blue-700);
+  --primary-foreground: #ffffff;
+  --accent: var(--eg-gold-400);
+  --accent-foreground: var(--eg-navy-900);
+  --accent-text: var(--eg-gold-700);
+  --ink: var(--eg-navy-900);
+  --ink-foreground: #e6ecf8;
+  --ink-muted: #9aa8c7;
+  --ink-border: rgb(255 255 255 / 0.1);
+  --danger: #b42318;
+  --success: #067647;
+  --ring: var(--eg-blue-600);
+
+  /* Shape, depth and motion */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-sm: 0 1px 2px rgb(11 21 48 / 0.06);
+  --shadow-md: 0 1px 2px rgb(11 21 48 / 0.06), 0 8px 24px -8px rgb(11 21 48 / 0.12);
+  --shadow-lg: 0 2px 4px rgb(11 21 48 / 0.06), 0 24px 48px -16px rgb(11 21 48 / 0.22);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 150ms;
+  --duration-base: 240ms;
+}
+
+@theme inline {
+  --font-sans: 'Figtree Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Bricolage Grotesque Variable', 'Figtree Variable', ui-sans-serif, sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-text: var(--accent-text);
+  --color-ink: var(--ink);
+  --color-ink-foreground: var(--ink-foreground);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-border: var(--ink-border);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-ring: var(--ring);
+
+  --color-navy-950: var(--eg-navy-950);
+  --color-navy-900: var(--eg-navy-900);
+  --color-navy-800: var(--eg-navy-800);
+  --color-navy-700: var(--eg-navy-700);
+  --color-blue-700: var(--eg-blue-700);
+  --color-blue-600: var(--eg-blue-600);
+  --color-blue-100: var(--eg-blue-100);
+  --color-blue-50: var(--eg-blue-50);
+  --color-sky-400: var(--eg-sky-400);
+  --color-sky-200: var(--eg-sky-200);
+  --color-gold-400: var(--eg-gold-400);
+  --color-gold-100: var(--eg-gold-100);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --ease-out: var(--ease-out);
+
+  --animate-fade-up: fade-up 600ms var(--ease-out) both;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes eg-dash {
+  to {
+    stroke-dashoffset: -280;
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: 'ss01';
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--eg-sky-200);
+    color: var(--eg-navy-900);
+  }
+}
+
+@layer components {
+  /* Standard page width and side gutters, used by every public section. */
+  .container-page {
+    width: 100%;
+    max-width: 76rem;
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .container-page {
+      padding-inline: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container-page {
+      padding-inline: 2rem;
+    }
+  }
+
+  /* Small uppercase label above section headings. */
+  .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--primary);
+  }
+
+  .on-ink .eyebrow {
+    color: var(--eg-gold-400);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

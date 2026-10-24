@@ -1,0 +1,16 @@
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+*.log
+.DS_Store
+
+# Environment files — never commit real secrets
+.env
+.env.*
+!.env.example
+
+# Supabase local
+supabase/.temp/
+.vercel
