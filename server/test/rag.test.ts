@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { normalize } from '../src/lib/gemini.ts'
+import { createGeminiEmbedder, normalize } from '../src/lib/gemini.ts'
 import { chunkMarkdown, embeddingText } from '../src/rag/chunker.ts'
 import { parseKnowledgeFile } from '../src/rag/front-matter.ts'
 
@@ -86,5 +86,37 @@ describe('normalize', () => {
 
   it('leaves a zero vector unchanged', () => {
     expect(normalize([0, 0])).toEqual([0, 0])
+  })
+})
+
+describe('createGeminiEmbedder', () => {
+  const fakeAi = (embeddingsPerCall: number, dims = 768) =>
+    ({
+      models: {
+        embedContent: async () => ({
+          embeddings: Array.from({ length: embeddingsPerCall }, () => ({
+            values: Array(dims).fill(1),
+          })),
+        }),
+      },
+    }) as unknown as Parameters<typeof createGeminiEmbedder>[0]
+
+  it('returns one normalised vector per input text', async () => {
+    const vectors = await createGeminiEmbedder(fakeAi(2), 'model').embed(['a', 'b'], 'document')
+    expect(vectors).toHaveLength(2)
+    expect(Math.hypot(...(vectors[0] ?? []))).toBeCloseTo(1)
+  })
+
+  it('fails loudly if the model merges inputs into fewer embeddings', async () => {
+    // gemini-embedding-2 combines a list of texts into one embedding; this must never be stored.
+    await expect(
+      createGeminiEmbedder(fakeAi(1), 'model').embed(['a', 'b', 'c'], 'document'),
+    ).rejects.toThrow(/count does not match/)
+  })
+
+  it('fails loudly on the wrong vector size', async () => {
+    await expect(
+      createGeminiEmbedder(fakeAi(1, 3072), 'model').embed(['a'], 'query'),
+    ).rejects.toThrow(/768/)
   })
 })

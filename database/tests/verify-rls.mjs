@@ -1,4 +1,4 @@
-// Database security regression test (Phase 2 tables).
+// Database security regression test (Phase 2 and Phase 3 tables).
 //
 // Run with:  npm run db:verify
 //
@@ -175,6 +175,116 @@ try {
     const anon = await rest(`${table}?select=*`)
     check(`Anonymous read of ${table} is refused`, denied(anon.status), `HTTP ${anon.status}`)
   }
+
+  // ===================== Phase 3: AI Guide tables =====================
+  console.log('\n— Conversations (Phase 3)')
+  const conv = await rest('conversations', {
+    token: a.token,
+    method: 'POST',
+    body: { user_id: a.id, title: 'My plan', domain: 'career' },
+    prefer: 'return=representation',
+  })
+  check('User A can start their own conversation', conv.status === 201, `HTTP ${conv.status}`)
+  const convId = conv.data?.[0]?.id
+  const forgedConv = await rest('conversations', { token: a.token, method: 'POST', body: { user_id: b.id, title: 'Not mine' } })
+  check('User A cannot create a conversation owned by User B', denied(forgedConv.status), `HTTP ${forgedConv.status}`)
+  const bSeesConv = await rest(`conversations?id=eq.${convId}&select=id`, { token: b.token })
+  check("User B cannot see User A's conversation", bSeesConv.status === 200 && bSeesConv.data.length === 0)
+  await rest(`conversations?id=eq.${convId}`, { token: b.token, method: 'PATCH', body: { title: 'Hijacked' } })
+  await rest(`conversations?id=eq.${convId}`, { token: b.token, method: 'DELETE' })
+  const convAfter = await rest(`conversations?id=eq.${convId}&select=title`, { key: sec })
+  check("User B cannot rename or delete User A's conversation", convAfter.data?.[0]?.title === 'My plan')
+  const renameConv = await rest(`conversations?id=eq.${convId}`, { token: a.token, method: 'PATCH', body: { title: 'Renamed plan' }, prefer: 'return=representation' })
+  check('User A can rename their conversation', renameConv.status === 200 && renameConv.data?.[0]?.title === 'Renamed plan')
+
+  console.log('\n— Messages can only be written by the server')
+  const forgedMsg = await rest('messages', {
+    token: a.token,
+    method: 'POST',
+    body: { conversation_id: convId, user_id: a.id, role: 'assistant', content: 'Fake AI answer' },
+  })
+  check('User A cannot insert a fake AI message', denied(forgedMsg.status), `HTTP ${forgedMsg.status}`)
+  const userMsg = await rest('messages', {
+    key: sec,
+    method: 'POST',
+    body: { conversation_id: convId, user_id: a.id, role: 'user', content: 'How do I start?' },
+    prefer: 'return=representation',
+  })
+  const aiMsg = await rest('messages', {
+    key: sec,
+    method: 'POST',
+    body: { conversation_id: convId, user_id: a.id, role: 'assistant', content: 'Start small.', grounded: true },
+    prefer: 'return=representation',
+  })
+  const aiMsgId = aiMsg.data?.[0]?.id
+  check('The server can store messages', userMsg.status === 201 && aiMsg.status === 201)
+  const mismatched = await rest('messages', {
+    key: sec,
+    method: 'POST',
+    body: { conversation_id: convId, user_id: b.id, role: 'user', content: 'Wrong owner' },
+  })
+  check("Even the server cannot attach User B's message to User A's conversation", mismatched.status === 409, `HTTP ${mismatched.status}`)
+  const aReads = await rest(`messages?conversation_id=eq.${convId}&select=id`, { token: a.token })
+  check('User A can read their messages', aReads.status === 200 && aReads.data.length === 2)
+  const bReads = await rest(`messages?conversation_id=eq.${convId}&select=id`, { token: b.token })
+  check("User B cannot read User A's messages", bReads.status === 200 && bReads.data.length === 0)
+  const editMsg = await rest(`messages?id=eq.${aiMsgId}`, { token: a.token, method: 'PATCH', body: { content: 'Edited answer' } })
+  check('User A cannot edit an AI answer', denied(editMsg.status), `HTTP ${editMsg.status}`)
+
+  console.log('\n— Citations, usage and the knowledge base')
+  const forgedCitation = await rest('message_citations', {
+    token: a.token,
+    method: 'POST',
+    body: { message_id: aiMsgId, user_id: a.id, citation_number: 1, title: 'Fake', source_name: 'Fake', excerpt: 'x', similarity: 1 },
+  })
+  check('User A cannot add a fake citation', denied(forgedCitation.status), `HTTP ${forgedCitation.status}`)
+  const reserve = await rest('rpc/reserve_ai_message', { key: sec, method: 'POST', body: { p_user_id: a.id, p_monthly_limit: 30 } })
+  const reservationId = reserve.data?.[0]?.reservation_id
+  check('The server can reserve AI usage', Boolean(reservationId))
+  const resetUsage = await rest(`ai_usage?id=eq.${reservationId}`, { token: a.token, method: 'PATCH', body: { status: 'failed' } })
+  check('User A cannot change their usage records', denied(resetUsage.status), `HTTP ${resetUsage.status}`)
+  const deleteUsage = await rest(`ai_usage?id=eq.${reservationId}`, { token: a.token, method: 'DELETE' })
+  check('User A cannot delete their usage records', denied(deleteUsage.status), `HTTP ${deleteUsage.status}`)
+  const ownUsage = await rest('ai_usage?select=id', { token: a.token })
+  check('User A can see their own usage', ownUsage.status === 200 && ownUsage.data.length === 1)
+  const selfReserve = await rest('rpc/reserve_ai_message', { token: a.token, method: 'POST', body: { p_user_id: a.id, p_monthly_limit: 1000 } })
+  check('Users cannot call the quota function themselves', selfReserve.status >= 400, `HTTP ${selfReserve.status}`)
+  const kb = await rest('knowledge_documents?select=id', { token: a.token })
+  check('Users cannot read the knowledge base tables directly', denied(kb.status), `HTTP ${kb.status}`)
+
+  console.log('\n— Usage limit under concurrent requests')
+  const burst = await Promise.all(
+    Array.from({ length: 10 }, () =>
+      rest('rpc/reserve_ai_message', { key: sec, method: 'POST', body: { p_user_id: b.id, p_monthly_limit: 3 } }),
+    ),
+  )
+  const granted = burst.filter((r) => r.data?.[0]?.reservation_id).length
+  check('10 simultaneous requests against a limit of 3 get exactly 3 reservations', granted === 3, `${granted} granted`)
+
+  console.log('\n— Feedback')
+  const rateOwn = await rest('ai_feedback', {
+    token: a.token,
+    method: 'POST',
+    body: { message_id: aiMsgId, user_id: a.id, rating: 'helpful' },
+  })
+  check('User A can rate an AI answer in their conversation', rateOwn.status === 201, `HTTP ${rateOwn.status}`)
+  const rateUserMsg = await rest('ai_feedback', {
+    token: a.token,
+    method: 'POST',
+    body: { message_id: userMsg.data?.[0]?.id, user_id: a.id, rating: 'helpful' },
+  })
+  check('User A cannot rate their own question (only AI answers)', denied(rateUserMsg.status), `HTTP ${rateUserMsg.status}`)
+  const rateAsB = await rest('ai_feedback', {
+    token: b.token,
+    method: 'POST',
+    body: { message_id: aiMsgId, user_id: b.id, rating: 'not_helpful' },
+  })
+  check("User B cannot rate User A's answers", denied(rateAsB.status), `HTTP ${rateAsB.status}`)
+
+  console.log('\n— Deleting a conversation')
+  const del = await rest(`conversations?id=eq.${convId}`, { token: a.token, method: 'DELETE' })
+  const leftover = await rest(`messages?conversation_id=eq.${convId}&select=id`, { key: sec })
+  check('Deleting a conversation removes its messages', del.status === 204 && leftover.data?.length === 0, `HTTP ${del.status}`)
 } catch (error) {
   failures++
   console.log(`\nERROR  ${error.message}`)

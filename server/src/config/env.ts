@@ -26,12 +26,18 @@ const envSchema = z.object({
   // AI Guide. Without a key the rest of the API still works and AI endpoints return 503.
   GEMINI_API_KEY: z.preprocess(blankToUndefined, z.string().min(20).optional()),
   GEMINI_CHAT_MODEL: z.preprocess(blankToUndefined, z.string().default('gemini-2.5-flash')),
-  GEMINI_EMBEDDING_MODEL: z.preprocess(blankToUndefined, z.string().default('gemini-embedding-2')),
+  GEMINI_EMBEDDING_MODEL: z.preprocess(
+    blankToUndefined,
+    z.string().default('gemini-embedding-001'),
+  ),
   AI_FREE_MONTHLY_MESSAGES: z.preprocess(
     blankToUndefined,
     z.coerce.number().int().min(0).default(30),
   ),
-  RAG_MIN_SIMILARITY: z.preprocess(blankToUndefined, z.coerce.number().min(0).max(1).default(0.5)),
+  // Chosen from `npm run kb:eval` (2026-10-24): correct documents scored ≥ 0.670,
+  // off-topic questions ≤ 0.535 with gemini-embedding-001 at 768 dims. Re-run after
+  // changing the model or knowledge base.
+  RAG_MIN_SIMILARITY: z.preprocess(blankToUndefined, z.coerce.number().min(0).max(1).default(0.6)),
   RAG_MATCH_COUNT: z.preprocess(
     blankToUndefined,
     z.coerce.number().int().min(1).max(10).default(5),
