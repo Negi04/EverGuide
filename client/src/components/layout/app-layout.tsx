@@ -1,4 +1,4 @@
-import { LogOut, Menu } from 'lucide-react'
+import { LogOut, Menu, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useMatches } from 'react-router'
 import { Logo } from '@/components/brand/logo'
@@ -14,12 +14,18 @@ import { useAuth } from '@/auth/use-auth'
 import { appNav } from '@/config/app-nav'
 import { useMe } from '@/hooks/use-me'
 import { cn } from '@/lib/utils'
+import { NotificationBell } from './notification-bell'
 import { SkipLink } from './skip-link'
 
 function AppNavList({ onNavigate }: { onNavigate?: () => void }) {
+  const { data: me } = useMe()
+  // Shown only to admins for convenience; the server enforces the role on every request.
+  const items = me?.roles.includes('admin')
+    ? [...appNav, { label: 'Admin: mentors', to: '/app/admin/mentors', icon: ShieldCheck }]
+    : appNav
   return (
     <ul className="space-y-0.5">
-      {appNav.map(({ label, to, icon: Icon }) => (
+      {items.map(({ label, to, icon: Icon }) => (
         <li key={to}>
           <NavLink
             to={to}
@@ -74,10 +80,11 @@ export function AppLayout() {
     <div className="min-h-dvh lg:grid lg:grid-cols-[16rem_1fr]">
       <SkipLink />
       <aside className="hidden border-r border-border bg-surface lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col">
-        <div className="flex h-16 items-center px-5">
+        <div className="flex h-16 items-center justify-between px-5">
           <Link to="/" aria-label="EverGuide home" className="rounded-md">
             <Logo />
           </Link>
+          <NotificationBell />
         </div>
         <nav aria-label="App" className="flex-1 px-3 py-4">
           <AppNavList />
@@ -90,22 +97,25 @@ export function AppLayout() {
           <Link to="/" aria-label="EverGuide home" className="rounded-md">
             <Logo />
           </Link>
-          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Open navigation">
-                <Menu className="size-5" aria-hidden />
-              </Button>
-            </SheetTrigger>
-            <SheetContent>
-              <SheetTitle className="sr-only">Navigation</SheetTitle>
-              <SheetDescription className="sr-only">App sections</SheetDescription>
-              <Logo />
-              <nav aria-label="App mobile" className="mt-8 flex-1">
-                <AppNavList onNavigate={() => setMenuOpen(false)} />
-              </nav>
-              <UserPanel />
-            </SheetContent>
-          </Sheet>
+          <div className="flex items-center gap-1">
+            <NotificationBell />
+            <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Open navigation">
+                  <Menu className="size-5" aria-hidden />
+                </Button>
+              </SheetTrigger>
+              <SheetContent>
+                <SheetTitle className="sr-only">Navigation</SheetTitle>
+                <SheetDescription className="sr-only">App sections</SheetDescription>
+                <Logo />
+                <nav aria-label="App mobile" className="mt-8 flex-1">
+                  <AppNavList onNavigate={() => setMenuOpen(false)} />
+                </nav>
+                <UserPanel />
+              </SheetContent>
+            </Sheet>
+          </div>
         </header>
 
         <main

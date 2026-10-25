@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react'
 import type { RouteObject } from 'react-router'
 import { RedirectIfSignedIn, RequireAuth, RequireOnboarding } from '@/auth/guards'
-import { AppLayout } from '@/components/layout/app-layout'
+import { RequireRole } from '@/auth/require-role'
 import { AuthLayout } from '@/components/layout/auth-layout'
 import { PublicLayout } from '@/components/layout/public-layout'
 import { appNav } from '@/config/app-nav'
@@ -14,7 +14,13 @@ const page = (load: () => Promise<{ default: ComponentType }>) => async () => ({
   Component: (await load()).default,
 })
 
-const builtAppPages = new Set(['/app', '/app/settings', '/app/guide', '/app/career'])
+const builtAppPages = new Set([
+  '/app',
+  '/app/settings',
+  '/app/guide',
+  '/app/career',
+  '/app/mentors',
+])
 
 export const routes: RouteObject[] = [
   {
@@ -28,6 +34,7 @@ export const routes: RouteObject[] = [
           { path: 'features', lazy: page(() => import('@/pages/features-page')) },
           { path: 'pricing', lazy: page(() => import('@/pages/pricing-page')) },
           { path: 'mentors', lazy: page(() => import('@/pages/mentors-page')) },
+          { path: 'mentors/:mentorId', lazy: page(() => import('@/pages/mentor-detail-page')) },
           { path: 'resources', lazy: page(() => import('@/pages/resources-page')) },
           { path: 'about', lazy: page(() => import('@/pages/about-page')) },
           { path: 'contact', lazy: page(() => import('@/pages/contact-page')) },
@@ -64,10 +71,42 @@ export const routes: RouteObject[] = [
             children: [
               {
                 path: 'app',
-                element: <AppLayout />,
+                // The signed-in shell (sidebar, notifications) isn't needed on public pages.
+                lazy: async () => ({
+                  Component: (await import('@/components/layout/app-layout')).AppLayout,
+                }),
                 children: [
                   { index: true, lazy: page(() => import('@/pages/app/dashboard-page')) },
                   { path: 'settings', lazy: page(() => import('@/pages/app/settings-page')) },
+                  {
+                    path: 'mentors',
+                    lazy: page(() => import('@/pages/mentors/mentors-layout')),
+                    children: [
+                      { index: true, lazy: page(() => import('@/pages/mentors/find-mentor-page')) },
+                      {
+                        path: 'sessions',
+                        lazy: page(() => import('@/pages/mentors/sessions-page')),
+                      },
+                      {
+                        path: 'profile',
+                        lazy: page(() => import('@/pages/mentors/mentor-profile-page')),
+                      },
+                      {
+                        path: ':mentorId',
+                        lazy: page(() => import('@/pages/mentors/app-mentor-detail-page')),
+                      },
+                    ],
+                  },
+                  {
+                    path: 'admin',
+                    element: <RequireRole role="admin" />,
+                    children: [
+                      {
+                        path: 'mentors',
+                        lazy: page(() => import('@/pages/admin/mentor-applications-page')),
+                      },
+                    ],
+                  },
                   {
                     path: 'career',
                     lazy: page(() => import('@/pages/career/career-layout')),

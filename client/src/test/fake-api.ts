@@ -124,7 +124,62 @@ export const fakeApi = {
   uploadResume: vi.fn(),
   deleteResume: vi.fn(),
   analyseResume: vi.fn(),
+  listMentors: vi.fn(),
+  getMentor: vi.fn(),
+  mentorSlots: vi.fn(),
+  getMyMentorProfile: vi.fn(),
+  applyAsMentor: vi.fn(),
+  updateMyMentorProfile: vi.fn(),
+  saveAvailability: vi.fn(),
+  listBookings: vi.fn(),
+  requestBooking: vi.fn(),
+  respondToBooking: vi.fn(),
+  cancelBooking: vi.fn(),
+  rescheduleBooking: vi.fn(),
+  reviewBooking: vi.fn(),
+  listMentorApplications: vi.fn(),
+  decideMentorApplication: vi.fn(),
+  listNotifications: vi.fn(),
+  markNotificationsRead: vi.fn(),
 }
+
+export const mentorId = '9c8b7a6f-5e4d-4c3b-8a2f-1e0d9c8b7a6f'
+const inHours = (h: number) => new Date(Date.now() + h * 3_600_000).toISOString()
+
+export function fakeMentorCard() {
+  return {
+    id: mentorId,
+    name: 'Meera Iyer',
+    headline: 'Helping career switchers into data analysis',
+    jobTitle: 'Senior Data Analyst',
+    company: 'Acme Retail',
+    yearsExperience: 7,
+    expertise: ['data_analytics' as const, 'career_switching' as const],
+    languages: ['English', 'Hindi'],
+    sessionMinutes: 30 as const,
+    isAccepting: true,
+    rating: { average: 4.8, count: 5 },
+    verifiedAt: '2026-10-01T00:00:00Z',
+  }
+}
+
+export function fakeBooking(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'booking-1',
+    role: 'mentee' as const,
+    counterpart: { id: mentorId, name: 'Meera Iyer' },
+    startsAt: inHours(48),
+    endsAt: inHours(48.5),
+    status: 'confirmed' as const,
+    topic: 'Moving from support into data analysis',
+    meetingUrl: 'https://meet.example/abc',
+    statusReason: null,
+    reviewed: false,
+    ...overrides,
+  }
+}
+
+export { inHours }
 
 export const resumeId = '5d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a'
 
@@ -295,6 +350,41 @@ export function resetFakeApi() {
   fakeApi.getResume.mockResolvedValue({ ...fakeResume(), analyses: [] })
   fakeApi.uploadResume.mockImplementation(async (file: File) => fakeResume({ fileName: file.name }))
   fakeApi.deleteResume.mockResolvedValue(undefined)
+  fakeApi.listMentors.mockResolvedValue([fakeMentorCard()])
+  fakeApi.getMentor.mockResolvedValue({
+    ...fakeMentorCard(),
+    bio: 'Seven years in retail analytics.',
+    timezone: 'Asia/Kolkata',
+    reviews: [],
+  })
+  fakeApi.mentorSlots.mockResolvedValue([
+    { startsAt: inHours(26), endsAt: inHours(26.5) },
+    { startsAt: inHours(26.5), endsAt: inHours(27) },
+  ])
+  fakeApi.getMyMentorProfile.mockResolvedValue(null)
+  fakeApi.applyAsMentor.mockImplementation(async (input) => ({
+    ...input,
+    jobTitle: input.jobTitle ?? null,
+    company: input.company ?? null,
+    isAccepting: true,
+    verificationStatus: 'pending',
+    latestApplication: {
+      status: 'pending',
+      submittedAt: new Date().toISOString(),
+      reviewNotes: null,
+    },
+    availability: [],
+  }))
+  fakeApi.listBookings.mockResolvedValue([])
+  fakeApi.requestBooking.mockResolvedValue({ id: 'booking-new' })
+  fakeApi.respondToBooking.mockResolvedValue(undefined)
+  fakeApi.cancelBooking.mockResolvedValue(undefined)
+  fakeApi.rescheduleBooking.mockResolvedValue(undefined)
+  fakeApi.reviewBooking.mockResolvedValue(undefined)
+  fakeApi.listMentorApplications.mockResolvedValue([])
+  fakeApi.decideMentorApplication.mockResolvedValue(undefined)
+  fakeApi.listNotifications.mockResolvedValue([])
+  fakeApi.markNotificationsRead.mockResolvedValue(undefined)
   fakeApi.analyseResume.mockImplementation(async (_id, input) => ({
     id: 'analysis-1',
     targetRole: input.targetRole || null,

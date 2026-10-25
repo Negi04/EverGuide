@@ -14,3 +14,31 @@ export function formatRelative(iso: string, now = new Date()): string {
     year: 'numeric',
   })
 }
+
+/** The time zone to show times in: the user's profile setting, else the browser's. */
+export function displayTimeZone(profileTimeZone?: string | null): string {
+  return profileTimeZone || Intl.DateTimeFormat().resolvedOptions().timeZone
+}
+
+export function formatDay(iso: string, timeZone: string): string {
+  return new Date(iso).toLocaleDateString('en-IN', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    timeZone,
+  })
+}
+
+export function formatTime(iso: string, timeZone: string): string {
+  return new Date(iso).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone })
+}
+
+/** "Mon 27 Oct, 10:00 am – 10:30 am" in the given time zone. */
+export function formatSession(startsAt: string, endsAt: string, timeZone: string): string {
+  return `${formatDay(startsAt, timeZone)}, ${formatTime(startsAt, timeZone)} – ${formatTime(endsAt, timeZone)}`
+}
+
+/** Calendar-day key (YYYY-MM-DD) for grouping times by day in a time zone. */
+export function dayKey(iso: string, timeZone: string): string {
+  return new Date(iso).toLocaleDateString('en-CA', { timeZone })
+}

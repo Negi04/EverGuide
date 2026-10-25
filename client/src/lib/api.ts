@@ -1,5 +1,9 @@
 import type {
   AiUsage,
+  AppNotification,
+  AvailabilityWindow,
+  Booking,
+  BookingResponse,
   ApiErrorBody,
   ApiErrorCode,
   ChatStreamEvent,
@@ -17,6 +21,14 @@ import type {
   InterviewQuestionList,
   InterviewRole,
   Me,
+  MentorApplication,
+  MentorApplicationForReview,
+  MentorCard,
+  MentorDetail,
+  MentorExpertise,
+  MentorProfileUpdate,
+  MentorReviewInput,
+  MyMentorProfile,
   MilestoneCreate,
   MilestoneUpdate,
   OnboardingInput,
@@ -28,6 +40,8 @@ import type {
   ResumeAnalysisRequest,
   ResumeDetail,
   ResumeSummary,
+  Slot,
+  VerificationDecision,
 } from '@everguide/shared'
 import { env } from './env'
 import { readSse } from './sse'
@@ -246,4 +260,46 @@ export const api = {
   deleteResume: (id: string) => request<void>(`/api/v1/resumes/${id}`, { method: 'DELETE' }),
   analyseResume: (id: string, input: ResumeAnalysisRequest) =>
     request<ResumeAnalysis>(`/api/v1/resumes/${id}/analyses`, { method: 'POST', body: input }),
+  listMentors: (filters: { expertise?: MentorExpertise; q?: string; language?: string }) => {
+    const params = new URLSearchParams()
+    if (filters.expertise) params.set('expertise', filters.expertise)
+    if (filters.q) params.set('q', filters.q)
+    if (filters.language) params.set('language', filters.language)
+    const query = params.toString()
+    return request<MentorCard[]>(`/api/v1/mentors${query ? `?${query}` : ''}`, { auth: false })
+  },
+  getMentor: (id: string) => request<MentorDetail>(`/api/v1/mentors/${id}`, { auth: false }),
+  mentorSlots: (id: string, days = 14) =>
+    request<Slot[]>(`/api/v1/mentors/${id}/slots?days=${days}`, { auth: false }),
+  getMyMentorProfile: () => request<MyMentorProfile | null>('/api/v1/me/mentor-profile'),
+  applyAsMentor: (input: MentorApplication) =>
+    request<MyMentorProfile>('/api/v1/me/mentor-profile', { method: 'POST', body: input }),
+  updateMyMentorProfile: (patch: MentorProfileUpdate) =>
+    request<MyMentorProfile>('/api/v1/me/mentor-profile', { method: 'PATCH', body: patch }),
+  saveAvailability: (windows: AvailabilityWindow[]) =>
+    request<MyMentorProfile>('/api/v1/me/mentor-profile/availability', {
+      method: 'PUT',
+      body: { windows },
+    }),
+  listBookings: () => request<Booking[]>('/api/v1/bookings'),
+  requestBooking: (input: { mentorId: string; startsAt: string; topic: string }) =>
+    request<{ id: string }>('/api/v1/bookings', { method: 'POST', body: input }),
+  respondToBooking: (id: string, input: BookingResponse) =>
+    request<void>(`/api/v1/bookings/${id}/respond`, { method: 'POST', body: input }),
+  cancelBooking: (id: string, reason?: string) =>
+    request<void>(`/api/v1/bookings/${id}/cancel`, { method: 'POST', body: { reason } }),
+  rescheduleBooking: (id: string, startsAt: string) =>
+    request<void>(`/api/v1/bookings/${id}/reschedule`, { method: 'POST', body: { startsAt } }),
+  reviewBooking: (id: string, input: MentorReviewInput) =>
+    request<void>(`/api/v1/bookings/${id}/review`, { method: 'POST', body: input }),
+  listMentorApplications: () =>
+    request<MentorApplicationForReview[]>('/api/v1/admin/mentor-applications'),
+  decideMentorApplication: (id: string, input: VerificationDecision) =>
+    request<void>(`/api/v1/admin/mentor-applications/${id}/decision`, {
+      method: 'POST',
+      body: input,
+    }),
+  listNotifications: () => request<AppNotification[]>('/api/v1/notifications'),
+  markNotificationsRead: (ids?: string[]) =>
+    request<void>('/api/v1/notifications/read', { method: 'POST', body: { ids } }),
 }

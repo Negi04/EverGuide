@@ -5,6 +5,7 @@ export type ApiErrorCode =
   | 'unauthorized'
   | 'forbidden'
   | 'not_found'
+  | 'conflict'
   | 'payload_too_large'
   | 'rate_limited'
   | 'quota_exceeded'

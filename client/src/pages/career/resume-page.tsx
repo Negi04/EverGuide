@@ -29,7 +29,7 @@ export default function ResumePage() {
   const [fileError, setFileError] = useState<string | null>(null)
 
   const upload = useMutation({
-    mutationFn: api.uploadResume,
+    mutationFn: (file: File) => api.uploadResume(file),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: resumeKeys.all(user?.id) }),
   })
 

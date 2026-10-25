@@ -458,6 +458,119 @@ export type Database = {
         Update: never
         Relationships: []
       }
+      mentor_profiles: {
+        Row: {
+          user_id: string
+          headline: string
+          bio: string
+          job_title: string | null
+          company: string | null
+          years_experience: number
+          expertise: string[]
+          languages: string[]
+          session_minutes: number
+          is_accepting: boolean
+          verification_status: 'pending' | 'verified' | 'rejected'
+          verified_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          headline: string
+          bio: string
+          job_title?: string | null
+          company?: string | null
+          years_experience: number
+          expertise: string[]
+          languages?: string[]
+          session_minutes?: number
+          is_accepting?: boolean
+          verification_status?: 'pending' | 'verified' | 'rejected'
+          verified_at?: string | null
+        }
+        Update: {
+          headline?: string
+          bio?: string
+          job_title?: string | null
+          company?: string | null
+          years_experience?: number
+          expertise?: string[]
+          languages?: string[]
+          session_minutes?: number
+          is_accepting?: boolean
+          verification_status?: 'pending' | 'verified' | 'rejected'
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
+      mentor_verifications: {
+        Row: {
+          id: string
+          mentor_id: string
+          evidence_url: string
+          evidence_notes: string | null
+          status: 'pending' | 'verified' | 'rejected'
+          reviewer_id: string | null
+          review_notes: string | null
+          submitted_at: string
+          reviewed_at: string | null
+        }
+        Insert: { mentor_id: string; evidence_url: string; evidence_notes?: string | null }
+        Update: {
+          status?: 'pending' | 'verified' | 'rejected'
+          reviewer_id?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+        }
+        Relationships: []
+      }
+      mentor_availability: {
+        Row: {
+          id: string
+          mentor_id: string
+          weekday: number
+          start_time: string
+          end_time: string
+          created_at: string
+        }
+        Insert: { mentor_id: string; weekday: number; start_time: string; end_time: string }
+        Update: never
+        Relationships: []
+      }
+      bookings: {
+        Row: {
+          id: string
+          mentor_id: string
+          mentee_id: string
+          starts_at: string
+          ends_at: string
+          status: 'requested' | 'confirmed' | 'declined' | 'cancelled'
+          topic: string
+          meeting_url: string | null
+          cancelled_by: string | null
+          status_reason: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      mentor_reviews: {
+        Row: {
+          id: string
+          booking_id: string
+          mentor_id: string
+          mentee_id: string
+          rating: number
+          comment: string | null
+          created_at: string
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
     }
     Views: { [_ in never]: never }
     Functions: {
@@ -474,6 +587,35 @@ export type Database = {
           content: string
           similarity: number
         }[]
+      }
+      mentor_open_slots: {
+        Args: { p_mentor_id: string; p_days?: number; p_exclude_booking?: string | null }
+        Returns: { starts_at: string; ends_at: string }[]
+      }
+      request_booking: {
+        Args: { p_mentor_id: string; p_starts_at: string; p_topic: string }
+        Returns: string
+      }
+      respond_to_booking: {
+        Args: {
+          p_booking_id: string
+          p_accept: boolean
+          p_meeting_url?: string | null
+          p_reason?: string | null
+        }
+        Returns: undefined
+      }
+      cancel_booking: {
+        Args: { p_booking_id: string; p_reason?: string | null }
+        Returns: undefined
+      }
+      reschedule_booking: {
+        Args: { p_booking_id: string; p_new_starts_at: string }
+        Returns: undefined
+      }
+      submit_mentor_review: {
+        Args: { p_booking_id: string; p_rating: number; p_comment?: string | null }
+        Returns: string
       }
       reserve_ai_message: {
         Args: { p_user_id: string; p_monthly_limit: number }

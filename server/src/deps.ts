@@ -16,6 +16,8 @@ import { createAuthService } from './services/auth-service.ts'
 import { createCareerService } from './services/career-service.ts'
 import { createContactService } from './services/contact-service.ts'
 import { createInterviewService } from './services/interview-service.ts'
+import { createMentorService } from './services/mentor-service.ts'
+import { createNotificationService } from './services/notification-service.ts'
 import { createProfileService } from './services/profile-service.ts'
 import { createResumeService } from './services/resume-service.ts'
 import { createUsageMeter } from './services/usage-meter.ts'
@@ -46,6 +48,8 @@ export function createDeps(config: Config, logger: Logger): AppDeps {
     career: createCareerService(clientFor, ai?.retriever ?? null),
     interview: createInterviewService(admin, clientFor, aiTools),
     resumes: createResumeService(admin, clientFor, aiTools),
+    mentors: createMentorService(admin, clientFor),
+    notifications: createNotificationService(clientFor),
     checkDatabase: async () => {
       const { error } = await admin
         .from('profiles')
