@@ -2,9 +2,10 @@
   "name": "everguide",
   "private": true,
   "version": "0.1.0",
-  "description": "EverGuide — Guidance for a Brighter Tomorrow.",
+  "description": "EverGuide \u2014 Guidance for a Brighter Tomorrow.",
   "workspaces": [
     "client",
+    "database",
     "server",
     "shared"
   ],

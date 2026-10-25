@@ -1,0 +1,18 @@
+{
+  "name": "@everguide/database",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "SQL migrations plus an offline test harness that runs them in PGlite (Postgres in WebAssembly).",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.11",
+    "@electric-sql/pglite-pgvector": "^0.0.12",
+    "vitest": "^5.0.5",
+    "typescript": "~6.0.3",
+    "@types/node": "^22.20.5"
+  }
+}
