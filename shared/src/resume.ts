@@ -19,32 +19,51 @@ export const resumeAnalysisRequestSchema = z.object({
 
 export const resumeAlignments = ['strong', 'partial', 'limited', 'not_assessed'] as const
 
+/** Size limits for the AI's report: used by the schema below, the model's schema and trimming. */
+export const RESUME_REPORT_LIMITS = {
+  summary: 800,
+  strengths: 5,
+  gaps: 6,
+  suggestions: 8,
+  missingKeywords: 15,
+  point: 300,
+  evidence: 300,
+  requirement: 300,
+  suggestion: 400,
+  section: 60,
+  keyword: 60,
+} as const
+const L = RESUME_REPORT_LIMITS
+
 /** Shape the AI must return; validated on the server before saving. */
 export const resumeReportSchema = z.object({
-  summary: z.string().trim().min(1).max(800),
+  summary: z.string().trim().min(1).max(L.summary),
   alignment: z.enum(resumeAlignments),
   strengths: z
     .array(
-      z.object({ point: z.string().trim().min(1).max(300), evidence: z.string().trim().max(300) }),
+      z.object({
+        point: z.string().trim().min(1).max(L.point),
+        evidence: z.string().trim().max(L.evidence),
+      }),
     )
-    .max(5),
+    .max(L.strengths),
   gaps: z
     .array(
       z.object({
-        requirement: z.string().trim().min(1).max(300),
-        suggestion: z.string().trim().max(400),
+        requirement: z.string().trim().min(1).max(L.requirement),
+        suggestion: z.string().trim().max(L.suggestion),
       }),
     )
-    .max(6),
+    .max(L.gaps),
   suggestions: z
     .array(
       z.object({
-        section: z.string().trim().min(1).max(60),
-        suggestion: z.string().trim().min(1).max(400),
+        section: z.string().trim().min(1).max(L.section),
+        suggestion: z.string().trim().min(1).max(L.suggestion),
       }),
     )
-    .max(8),
-  missingKeywords: z.array(z.string().trim().min(1).max(60)).max(15),
+    .max(L.suggestions),
+  missingKeywords: z.array(z.string().trim().min(1).max(L.keyword)).max(L.missingKeywords),
 })
 
 export type ResumeAnalysisRequest = z.input<typeof resumeAnalysisRequestSchema>

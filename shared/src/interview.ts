@@ -26,12 +26,25 @@ export const practiceAttemptSchema = z.object({
 
 export const savedQuestionSchema = z.object({ saved: z.boolean() })
 
+/** Size limits for AI feedback: used by the schema below, the model's schema and trimming. */
+export const INTERVIEW_FEEDBACK_LIMITS = {
+  summary: 600,
+  strengths: 4,
+  improvements: 4,
+  point: 300,
+  suggestedStructure: 800,
+} as const
+
 /** Shape the AI must return; also validated on the server before saving. */
 export const interviewFeedbackSchema = z.object({
-  summary: z.string().trim().min(1).max(600),
-  strengths: z.array(z.string().trim().min(1).max(300)).max(4),
-  improvements: z.array(z.string().trim().min(1).max(300)).max(4),
-  suggestedStructure: z.string().trim().max(800),
+  summary: z.string().trim().min(1).max(INTERVIEW_FEEDBACK_LIMITS.summary),
+  strengths: z
+    .array(z.string().trim().min(1).max(INTERVIEW_FEEDBACK_LIMITS.point))
+    .max(INTERVIEW_FEEDBACK_LIMITS.strengths),
+  improvements: z
+    .array(z.string().trim().min(1).max(INTERVIEW_FEEDBACK_LIMITS.point))
+    .max(INTERVIEW_FEEDBACK_LIMITS.improvements),
+  suggestedStructure: z.string().trim().max(INTERVIEW_FEEDBACK_LIMITS.suggestedStructure),
 })
 
 export type PracticeAttemptInput = z.input<typeof practiceAttemptSchema>
