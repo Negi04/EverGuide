@@ -14,7 +14,7 @@ const page = (load: () => Promise<{ default: ComponentType }>) => async () => ({
   Component: (await load()).default,
 })
 
-const builtAppPages = new Set(['/app', '/app/settings', '/app/guide'])
+const builtAppPages = new Set(['/app', '/app/settings', '/app/guide', '/app/career'])
 
 export const routes: RouteObject[] = [
   {
@@ -68,6 +68,21 @@ export const routes: RouteObject[] = [
                 children: [
                   { index: true, lazy: page(() => import('@/pages/app/dashboard-page')) },
                   { path: 'settings', lazy: page(() => import('@/pages/app/settings-page')) },
+                  {
+                    path: 'career',
+                    lazy: page(() => import('@/pages/career/career-layout')),
+                    children: [
+                      { index: true, lazy: page(() => import('@/pages/career/roadmap-page')) },
+                      {
+                        path: 'resume',
+                        lazy: page(() => import('@/pages/career/coming-soon-tab')),
+                      },
+                      {
+                        path: 'interview',
+                        lazy: page(() => import('@/pages/career/coming-soon-tab')),
+                      },
+                    ],
+                  },
                   {
                     path: 'guide',
                     handle: { fullBleed: true },

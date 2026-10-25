@@ -28,6 +28,13 @@ export const serviceUnavailable = (
   message = 'A service we depend on is unavailable. Please try again shortly.',
 ) => new AppError(503, 'service_unavailable', message)
 
+/** Hide database details from the client, but keep them on `cause` for the server logs. */
+export function databaseError(cause: unknown): AppError {
+  const error = serviceUnavailable()
+  error.cause = cause
+  return error
+}
+
 export function validationError(error: ZodError): AppError {
   return new AppError(
     400,

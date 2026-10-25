@@ -9,12 +9,14 @@ import type { Config } from './config/env.ts'
 import { errorHandler, notFoundHandler } from './middleware/errors.ts'
 import { createRateLimiter } from './middleware/rate-limit.ts'
 import { registerAiRoutes } from './routes/ai.ts'
+import { registerCareerRoutes } from './routes/career.ts'
 import { contactRouter } from './routes/contact.ts'
 import { healthRouter } from './routes/health.ts'
 import { meRouter } from './routes/me.ts'
 import type { AccountService } from './services/account-service.ts'
 import type { AiGuideService } from './services/ai-guide-service.ts'
 import type { AuthService } from './services/auth-service.ts'
+import type { CareerService } from './services/career-service.ts'
 import type { ContactService } from './services/contact-service.ts'
 import type { ProfileService } from './services/profile-service.ts'
 
@@ -30,6 +32,7 @@ export type AppDeps = {
   contact: ContactService
   /** Null when no Gemini key is configured: AI endpoints then answer 503. */
   aiGuide: AiGuideService | null
+  career: CareerService
   checkDatabase: () => Promise<boolean>
   /** Override individual limits (tests use small ones); the rest keep their defaults. */
   rateLimits?: Partial<Record<'api' | 'contact' | 'aiAnswers', LimitOptions>>
@@ -97,6 +100,7 @@ export function createApp(deps: AppDeps) {
   api.use('/contact', contactRouter(deps.contact, limits.contact))
   api.use('/me', meRouter(deps.auth, deps.profiles, deps.accounts))
   registerAiRoutes(api, deps.auth, deps.aiGuide, limits.aiAnswers)
+  registerCareerRoutes(api, deps.auth, deps.career)
   app.use('/api/v1', api)
 
   app.use(notFoundHandler)

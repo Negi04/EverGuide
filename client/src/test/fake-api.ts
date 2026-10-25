@@ -3,6 +3,7 @@ import type {
   ChatStreamEvent,
   ConversationDetail,
   ConversationSummary,
+  Goal,
   Me,
 } from '@everguide/shared'
 import { vi } from 'vitest'
@@ -104,6 +105,48 @@ export const fakeApi = {
   sendFeedback: vi.fn(),
   getUsage: vi.fn(),
   streamMessage: vi.fn(),
+  listGoals: vi.fn(),
+  createGoal: vi.fn(),
+  updateGoal: vi.fn(),
+  deleteGoal: vi.fn(),
+  goalRecommendations: vi.fn(),
+  addMilestone: vi.fn(),
+  updateMilestone: vi.fn(),
+  deleteMilestone: vi.fn(),
+}
+
+export function fakeGoal(overrides: Partial<Goal> = {}): Goal {
+  return {
+    id: 'goal-1',
+    title: 'Become a data analyst',
+    description: null,
+    category: 'career',
+    targetDate: null,
+    status: 'active',
+    completedAt: null,
+    createdAt: '2026-10-25T00:00:00Z',
+    milestones: [
+      {
+        id: 'm1',
+        goalId: 'goal-1',
+        title: 'Learn SQL',
+        notes: null,
+        targetDate: null,
+        position: 0,
+        completedAt: '2026-10-25T00:00:00Z',
+      },
+      {
+        id: 'm2',
+        goalId: 'goal-1',
+        title: 'Build a portfolio project',
+        notes: null,
+        targetDate: null,
+        position: 1,
+        completedAt: null,
+      },
+    ],
+    ...overrides,
+  }
 }
 
 export function resetFakeApi() {
@@ -126,4 +169,55 @@ export function resetFakeApi() {
   fakeApi.sendFeedback.mockResolvedValue(undefined)
   fakeApi.getUsage.mockResolvedValue({ used: 0, limit: 30, periodEnd: '2026-11-01T00:00:00.000Z' })
   fakeApi.streamMessage.mockImplementation(defaultStream)
+  fakeApi.listGoals.mockResolvedValue([])
+  fakeApi.createGoal.mockImplementation(async (input) => ({
+    ...fakeGoal(),
+    id: 'goal-new',
+    title: input.title,
+    milestones: [],
+  }))
+  fakeApi.updateGoal.mockImplementation(async (_id, patch) => ({
+    ...fakeGoal(),
+    ...patch,
+    completedAt: patch.status === 'completed' ? '2026-10-25T10:00:00Z' : null,
+  }))
+  fakeApi.deleteGoal.mockResolvedValue(undefined)
+  fakeApi.goalRecommendations.mockResolvedValue([
+    {
+      title: 'Switching to a new career',
+      sourceName: 'EverGuide starter guide (AI-drafted, pending expert review)',
+      excerpt: 'Identify your transferable skills.',
+    },
+  ])
+  fakeApi.addMilestone.mockImplementation(async (_goalId, input) => {
+    const goal = fakeGoal()
+    return {
+      ...goal,
+      milestones: [
+        ...goal.milestones,
+        {
+          id: 'm3',
+          goalId: goal.id,
+          title: input.title,
+          notes: null,
+          targetDate: null,
+          position: 2,
+          completedAt: null,
+        },
+      ],
+    }
+  })
+  fakeApi.updateMilestone.mockImplementation(async (id, patch) => {
+    const goal = fakeGoal()
+    return {
+      ...goal,
+      milestones: goal.milestones.map((m) =>
+        m.id === id ? { ...m, completedAt: patch.completed ? '2026-10-25T10:00:00Z' : null } : m,
+      ),
+    }
+  })
+  fakeApi.deleteMilestone.mockImplementation(async (id) => {
+    const goal = fakeGoal()
+    return { ...goal, milestones: goal.milestones.filter((m) => m.id !== id) }
+  })
 }

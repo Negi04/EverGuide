@@ -1,7 +1,7 @@
 /**
  * Database types for the Supabase client.
  *
- * HAND-WRITTEN to match database/migrations/2026102400000{1,2}_*.sql.
+ * HAND-WRITTEN to match database/migrations/*.sql (phases 2–4).
  * Replace with generated types (`supabase gen types typescript`) once the Supabase CLI
  * is linked to the project, and regenerate after every migration.
  */
@@ -293,6 +293,169 @@ export type Database = {
           comment?: string | null
         }
         Update: { rating?: 'helpful' | 'not_helpful'; comment?: string | null }
+        Relationships: []
+      }
+      goals: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          description: string | null
+          category: string
+          target_date: string | null
+          status: 'active' | 'completed' | 'archived'
+          completed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          title: string
+          description?: string | null
+          category?: string
+          target_date?: string | null
+        }
+        Update: {
+          title?: string
+          description?: string | null
+          category?: string
+          target_date?: string | null
+          status?: 'active' | 'completed' | 'archived'
+          completed_at?: string | null
+        }
+        Relationships: []
+      }
+      milestones: {
+        Row: {
+          id: string
+          goal_id: string
+          user_id: string
+          title: string
+          notes: string | null
+          target_date: string | null
+          position: number
+          completed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          goal_id: string
+          user_id: string
+          title: string
+          notes?: string | null
+          target_date?: string | null
+          position?: number
+        }
+        Update: {
+          title?: string
+          notes?: string | null
+          target_date?: string | null
+          position?: number
+          completed_at?: string | null
+        }
+        Relationships: []
+      }
+      resumes: {
+        Row: {
+          id: string
+          user_id: string
+          file_name: string
+          storage_path: string
+          size_bytes: number
+          page_count: number
+          extracted_text: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          file_name: string
+          storage_path: string
+          size_bytes: number
+          page_count: number
+          extracted_text: string
+        }
+        Update: never
+        Relationships: []
+      }
+      resume_analyses: {
+        Row: {
+          id: string
+          resume_id: string
+          user_id: string
+          target_role: string | null
+          job_description: string | null
+          report: Record<string, unknown>
+          model: string
+          created_at: string
+        }
+        Insert: {
+          resume_id: string
+          user_id: string
+          target_role?: string | null
+          job_description?: string | null
+          report: Record<string, unknown>
+          model: string
+        }
+        Update: never
+        Relationships: []
+      }
+      interview_questions: {
+        Row: {
+          id: string
+          slug: string
+          category: string
+          role: string
+          difficulty: string
+          prompt: string
+          guidance: string
+          status: 'draft' | 'approved' | 'archived'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          slug: string
+          category: string
+          role: string
+          difficulty: string
+          prompt: string
+          guidance: string
+          status?: 'draft' | 'approved' | 'archived'
+        }
+        Update: {
+          category?: string
+          role?: string
+          difficulty?: string
+          prompt?: string
+          guidance?: string
+          status?: 'draft' | 'approved' | 'archived'
+        }
+        Relationships: []
+      }
+      saved_questions: {
+        Row: { user_id: string; question_id: string; created_at: string }
+        Insert: { user_id: string; question_id: string }
+        Update: never
+        Relationships: []
+      }
+      practice_attempts: {
+        Row: {
+          id: string
+          user_id: string
+          question_id: string
+          answer: string
+          feedback: Record<string, unknown> | null
+          model: string | null
+          created_at: string
+        }
+        Insert: {
+          user_id: string
+          question_id: string
+          answer: string
+          feedback?: Record<string, unknown> | null
+          model?: string | null
+        }
+        Update: never
         Relationships: []
       }
     }

@@ -8,10 +8,16 @@ import type {
   ConversationSummary,
   ConversationUpdate,
   Feedback,
+  Goal,
+  GoalCreate,
+  GoalUpdate,
   GuidanceDomain,
   Me,
+  MilestoneCreate,
+  MilestoneUpdate,
   OnboardingInput,
   ProfileUpdate,
+  Recommendation,
 } from '@everguide/shared'
 import { env } from './env'
 import { readSse } from './sse'
@@ -166,4 +172,17 @@ export const api = {
     request<void>(`/api/v1/messages/${messageId}/feedback`, { method: 'PUT', body: feedback }),
   getUsage: () => request<AiUsage>('/api/v1/ai/usage'),
   streamMessage,
+  listGoals: () => request<Goal[]>('/api/v1/goals'),
+  createGoal: (input: GoalCreate) =>
+    request<Goal>('/api/v1/goals', { method: 'POST', body: input }),
+  updateGoal: (id: string, patch: GoalUpdate) =>
+    request<Goal>(`/api/v1/goals/${id}`, { method: 'PATCH', body: patch }),
+  deleteGoal: (id: string) => request<void>(`/api/v1/goals/${id}`, { method: 'DELETE' }),
+  goalRecommendations: (id: string) =>
+    request<Recommendation[]>(`/api/v1/goals/${id}/recommendations`),
+  addMilestone: (goalId: string, input: MilestoneCreate) =>
+    request<Goal>(`/api/v1/goals/${goalId}/milestones`, { method: 'POST', body: input }),
+  updateMilestone: (id: string, patch: MilestoneUpdate) =>
+    request<Goal>(`/api/v1/milestones/${id}`, { method: 'PATCH', body: patch }),
+  deleteMilestone: (id: string) => request<Goal>(`/api/v1/milestones/${id}`, { method: 'DELETE' }),
 }

@@ -6,7 +6,7 @@ import type {
   FeedbackRating,
   GuidanceDomain,
 } from '@everguide/shared'
-import { serviceUnavailable } from '../lib/errors.ts'
+import { databaseError } from '../lib/errors.ts'
 import type { Db } from '../lib/supabase.ts'
 import type { UserContext } from './profile-service.ts'
 
@@ -85,11 +85,8 @@ const toSummary = (row: ConversationRow): ConversationSummary => ({
 /** Escape LIKE wildcards so a search for "50%" means the literal text. */
 const escapeLike = (value: string) => value.replace(/[\\%_]/g, (c) => `\\${c}`)
 
-/** Hide database details from the client, but keep them on `cause` for the server logs. */
 function fail(error: unknown): never {
-  const appError = serviceUnavailable()
-  appError.cause = error
-  throw appError
+  throw databaseError(error)
 }
 
 export function createAiStore(admin: Db, clientFor: (accessToken: string) => Db): AiStore {
