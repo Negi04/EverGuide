@@ -123,6 +123,8 @@ describe('becoming a mentor', () => {
     setSession(fakeSession())
     const user = userEvent.setup()
     renderRoute('/app/mentors/profile')
+    const nav = await screen.findByRole('navigation', { name: 'Mentorship' })
+    expect(await within(nav).findByRole('link', { name: 'Become a mentor' })).toBeInTheDocument()
     await user.type(
       await screen.findByLabelText('Headline'),
       'Helping career switchers into data analysis',
@@ -135,6 +137,8 @@ describe('becoming a mentor', () => {
     await user.type(screen.getByLabelText('Evidence link'), 'https://www.linkedin.com/in/example')
     await user.click(screen.getByRole('button', { name: /submit application/i }))
     expect(await screen.findByRole('heading', { name: /being reviewed/i })).toBeInTheDocument()
+    // Once there is a profile, the tab is no longer an invitation to apply.
+    expect(within(nav).getByRole('link', { name: 'Mentor profile' })).toBeInTheDocument()
     expect(fakeApi.applyAsMentor).toHaveBeenCalledWith(
       expect.objectContaining({
         expertise: ['data_analytics'],

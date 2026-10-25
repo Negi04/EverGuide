@@ -74,6 +74,14 @@ export function MentorDirectory({ basePath }: { basePath: string }) {
                 ? 'Try a different search or area.'
                 : 'Mentors appear here only after their background has been reviewed.'}
             </p>
+            {!search && !expertise && (
+              <p className="mt-2">
+                Have experience to share?{' '}
+                <Link to="/app/mentors/profile" className="font-medium text-blue-700 underline">
+                  Apply to become a mentor
+                </Link>
+              </p>
+            )}
           </EmptyState>
         ) : (
           <ul className="grid gap-4 md:grid-cols-2">
