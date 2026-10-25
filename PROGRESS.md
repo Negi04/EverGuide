@@ -218,6 +218,7 @@
 - Phase 1 (1/4): understood server-side validation. Revisit: why design tokens exist (maintainability, not speed); code splitting (performance, not SEO); why unknown facts are `null` (honesty, not a provider rule). Re-checked in Phase 2.
 - Phase 2 (3/4): correct on defence in depth (user-scoped client + RLS), account enumeration and 401 vs 503. Missed again: why the main bundle matters (every visitor downloads it; route chunks load on demand; critical path). Ask about it again in Phase 3.
 - Phase 3 (4/4): citation validation, measured threshold, race conditions / atomic reservation, and the code-splitting critical path (third attempt) all correct. Next quiz: mix in Phase 2 security concepts as spaced repetition.
+- Phase 4 (1/4): correct on the booking race (check-then-insert gap). Missed: DST is why recurring times are stored as local time + IANA zone; client role checks are UX only, the server check is the security (Phase 2 concept); lazy-loading helps because public visitors stop downloading the code, not compression (bundle/critical path again). Re-ask all three in the Phase 5 quiz.
 
 ## Open questions / backlog
 - Notifications are polled; consider realtime/push (Phase 6). Email copies of booking notifications come with n8n (Phase 6).
