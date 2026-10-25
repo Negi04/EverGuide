@@ -136,3 +136,25 @@ describe('roadmap date handling', () => {
     )
   })
 })
+
+describe('milestone ticking', () => {
+  it('ticks immediately, before the server answers, and rolls back on failure', async () => {
+    setSession(fakeSession())
+    fakeApi.listGoals.mockResolvedValue([fakeGoal()])
+    let fail: (error: Error) => void = () => {}
+    fakeApi.updateMilestone.mockImplementation(
+      () => new Promise((_resolve, reject) => (fail = reject)),
+    )
+    const user = userEvent.setup()
+    renderRoute('/app/career')
+    const box = await screen.findByRole('checkbox', { name: /build a portfolio project/i })
+    await user.click(box)
+    expect(box).toBeChecked() // optimistic: no waiting for the server
+    fail(new Error('Network down'))
+    await waitFor(() =>
+      expect(
+        screen.getByRole('checkbox', { name: /build a portfolio project/i }),
+      ).not.toBeChecked(),
+    )
+  })
+})

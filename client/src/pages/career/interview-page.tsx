@@ -65,9 +65,12 @@ export default function InterviewPage() {
       )}
 
       <div className="mt-6 flex flex-wrap items-end gap-3">
-        <label className="text-sm">
-          <span className="mb-1 block font-medium">Role</span>
+        <div className="text-sm">
+          <label htmlFor="filter-role" className="mb-1 block font-medium">
+            Role
+          </label>
           <NativeSelect
+            id="filter-role"
             value={role}
             onChange={(e) => setRole(e.target.value as InterviewRole | '')}
             className="w-48"
@@ -79,10 +82,13 @@ export default function InterviewPage() {
               </option>
             ))}
           </NativeSelect>
-        </label>
-        <label className="text-sm">
-          <span className="mb-1 block font-medium">Type</span>
+        </div>
+        <div className="text-sm">
+          <label htmlFor="filter-type" className="mb-1 block font-medium">
+            Type
+          </label>
           <NativeSelect
+            id="filter-type"
             value={category}
             onChange={(e) => setCategory(e.target.value as InterviewCategory | '')}
             className="w-44"
@@ -94,7 +100,7 @@ export default function InterviewPage() {
               </option>
             ))}
           </NativeSelect>
-        </label>
+        </div>
         <label className="flex h-10 items-center gap-2 text-sm">
           <input
             type="checkbox"

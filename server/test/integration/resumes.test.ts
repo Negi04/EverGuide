@@ -59,6 +59,8 @@ afterAll(async () => {
     if (files.length)
       await admin.storage.from('resumes').remove(files.map((f) => `${id}/${f.name}`))
     await admin.auth.admin.deleteUser(id)
+    // The account-deletion test leaves an audit record; remove it with the test user.
+    await admin.from('audit_events').delete().eq('target_id', id)
   }
 })
 
@@ -84,6 +86,8 @@ describe('resume analyser', () => {
     expect(['strong', 'partial', 'limited']).toContain(res.body.report.alignment)
     expect(res.body.report.summary.length).toBeGreaterThan(10)
     expect(Array.isArray(res.body.report.suggestions)).toBe(true)
+    // The report addresses the user as "you" and never guesses their gender.
+    expect(JSON.stringify(res.body.report)).not.toMatch(/\b(she|her|hers|he|him|his)\b/i)
   })
 
   it("keeps Alice's resume private from Bob", async () => {

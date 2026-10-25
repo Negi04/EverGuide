@@ -260,23 +260,53 @@ export function GoalCard({ goal }: { goal: Goal }) {
 
 function MilestoneRow({ milestone }: { milestone: Milestone }) {
   const replaceGoal = useReplaceGoal()
+  const queryClient = useQueryClient()
+  const { user } = useAuth()
+
+  // Optimistic update: tick the box immediately, then confirm with the server's
+  // version of the goal, or roll back if the request fails.
+  const setCompleted = (completedAt: string | null) =>
+    queryClient.setQueryData<Goal[]>(careerKeys.goals(user?.id), (old) =>
+      old?.map((goal) =>
+        goal.id === milestone.goalId
+          ? {
+              ...goal,
+              milestones: goal.milestones.map((m) =>
+                m.id === milestone.id ? { ...m, completedAt } : m,
+              ),
+            }
+          : goal,
+      ),
+    )
+  // React state updates within the click event; query-cache updates reach components a
+  // tick later (setTimeout), which would let the controlled checkbox snap back briefly.
+  // This local value shows the user's choice instantly until the server confirms.
+  const [pendingChecked, setPendingChecked] = useState<boolean | null>(null)
   const toggle = useMutation({
-    mutationFn: () => api.updateMilestone(milestone.id, { completed: !milestone.completedAt }),
+    mutationFn: ({ completed }: { completed: boolean; previous: string | null }) =>
+      api.updateMilestone(milestone.id, { completed }),
+    onError: (_error, { previous }) => setCompleted(previous),
     onSuccess: replaceGoal,
+    onSettled: () => setPendingChecked(null),
   })
+  const onToggle = (completed: boolean) => {
+    const previous = milestone.completedAt
+    setPendingChecked(completed)
+    setCompleted(completed ? new Date().toISOString() : null) // updates progress for the whole goal
+    toggle.mutate({ completed, previous })
+  }
   const remove = useMutation({
     mutationFn: () => api.deleteMilestone(milestone.id),
     onSuccess: replaceGoal,
   })
-  const done = Boolean(milestone.completedAt)
+  const done = pendingChecked ?? Boolean(milestone.completedAt)
 
   return (
     <li className="group flex items-center gap-3 rounded-md px-2 py-1.5 hover:bg-surface-muted">
       <input
         type="checkbox"
         checked={done}
-        disabled={toggle.isPending}
-        onChange={() => toggle.mutate()}
+        onChange={(event) => onToggle(event.target.checked)}
         aria-label={`${milestone.title}: ${done ? 'done' : 'not done'}`}
         className="size-4 shrink-0 accent-[var(--primary)]"
       />

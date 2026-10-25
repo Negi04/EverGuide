@@ -93,7 +93,8 @@ export function createApp(deps: AppDeps) {
       // Requests without an Origin header (curl, server-to-server) are not browser
       // cross-origin requests; CORS does not apply to them and auth still does.
       origin: (origin, callback) => callback(null, !origin || allowedOrigins.has(origin)),
-      allowedHeaders: ['Authorization', 'Content-Type', 'X-Request-Id'],
+      // X-File-Name carries the original name of uploaded resumes.
+      allowedHeaders: ['Authorization', 'Content-Type', 'X-Request-Id', 'X-File-Name'],
       exposedHeaders: ['X-Request-Id', 'RateLimit', 'RateLimit-Policy', 'Retry-After'],
       maxAge: 600,
     }),

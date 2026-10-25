@@ -5,9 +5,9 @@
 
 ## Current status
 
-- **Active phase:** Phase 3 complete (built, verified, quizzed) on branch `phase-3-ai-guide`. Waiting for the user to push and merge the PR, then Phase 4.
+- **Active phase:** Phase 4 (branch `phase-4-career-mentors`). Database and Career Studio are done and verified; the mentor marketplace is next.
 - **Last updated:** 2026-10-24
-- **Next step:** User reviews and merges `phase-3-ai-guide` via a pull request, then Phase 4 (Career Studio + Mentor marketplace).
+- **Next step:** Mentor marketplace API and UI (applications, admin verification, availability, booking, sessions, reviews, notifications). The user needs an admin role for verification (one SQL line).
 
 ---
 
@@ -55,10 +55,11 @@
 - [x] Phase 3 quiz with user (2026-10-24: 4/4, incl. code splitting finally understood)
 
 ### Phase 4 — Career Studio & Mentor Marketplace
-- [ ] Roadmap goals + milestones
-- [ ] Resume analyzer (private storage, PDF validation, extraction, analysis, deletion)
-- [ ] Interview prep
-- [ ] Mentor profiles, verification states, availability, bookings (no overlaps), reviews
+- [x] Roadmap goals + milestones (+ recommended reading via the AI Guide's search)
+- [x] Resume analyser (private storage, PDF validation, extraction, structured AI report, deletion; account deletion also removes files)
+- [x] Interview practice (32-question bank, saved questions, progress, optional AI feedback)
+- [x] Mentor database: profiles, verification states, availability, bookings (exclusion constraints), reviews, booking functions (migration `20261025000003_career_and_mentors.sql`, applied by the user)
+- [ ] Mentor marketplace API + UI
 - [ ] Tests: booking conflicts, review eligibility, document isolation
 - [ ] Phase wrap-up ritual
 
@@ -79,6 +80,12 @@
 ---
 
 ## Phase log
+
+### Phase 4 (in progress)
+- **2026-10-25 (database):** Built an offline test harness: PGlite (Postgres 18 in WebAssembly) + Supabase stubs (`database/test/harness.ts`) runs every migration and tests SQL in seconds without Docker. Migration 3: goals/milestones, resumes (private bucket), interview practice, mentor profiles/verifications/availability, bookings with two exclusion constraints (no mentor or mentee overlaps), reviews, and SECURITY DEFINER booking functions (`mentor_open_slots`, `request_booking`, `respond_to_booking`, `cancel_booking`, `reschedule_booking`, `submit_mentor_review`). Wrapped in `begin/commit`. **29 PGlite tests**, incl. a daylight-saving test (US clocks change 1 Nov 2026) and mutation testing (deleting the overlap constraint or weakening the 12-hour rule makes tests fail). The user applied the migration; `db:verify` extended to **69 checks** on Supabase (btree_gist overlap confirmed via error 23P01, private bucket, direct uploads refused).
+- **2026-10-25 (Career Studio):** Roadmap API/UI (`services/career-service.ts`, `pages/career/`); interview practice with a 32-question bank (`database/interview/questions.json`, `npm run interview:seed -w @everguide/server`) and structured AI feedback; resume analyser (`lib/pdf.ts`, `services/resume-service.ts`, raw-body upload after auth). Shared `usage-meter.ts` (one allowance for every AI feature) and `ChatModel.generateJson` with zod validation of model output.
+  - **Verified:** typecheck 0, lint clean, 267 unit/DB tests, integration (career 6, interview 6, resumes 6 with real Gemini + Storage), real-browser E2E **12/12** (goal + milestones, optimistic ticking, recommendations, real AI feedback, PDF upload + real report, dashboard progress + usage 2/30, deletion removes the stored file).
+  - Bugs caught and fixed: blank starter milestone and empty date blocked goal creation (component tests); CORS didn't allow `X-File-Name`, so uploads failed only in browsers; the milestone checkbox flickered because query-cache updates arrive a tick after the click (now local optimistic state); filter labels gave selects the accessible name "Role All roles"; AI reports guessed the user's gender from their name (prompts now say "you", with a test that rejects gendered pronouns); privacy gap: account deletion didn't remove stored files; a flaky test from the 1 s default async timeout (now 4 s).
 
 ### Phase 3 — complete (2026-10-24)
 - **2026-10-24 (workspace UI):** `client/src/lib/sse.ts` (stream parser, handles split events and multi-byte characters), `lib/api.ts` (`streamMessage` + conversation endpoints), `hooks/use-ai.ts`, `pages/guide/` (layout with history sidebar, new-conversation page with starter questions, conversation page, streaming hook, safe Markdown renderer, source panel, composer). The AI Guide route is full-height (`handle.fullBleed`). The dashboard shows recent conversations and an AI usage meter.
@@ -173,6 +180,10 @@
 | 2026-10-24 | Answers keep streaming when the user navigates away; only Stop cancels | Better UX; avoids the StrictMode double-mount cancelling the first question | Background work continues until finished |
 | 2026-10-24 | Grounding label counts guides, not passages | "5 sources" from one guide overstated the evidence | — |
 | 2026-10-24 | Bundle budget on total first-load JS (185 kB gzip), enforced after build | Per-chunk limits miss growth once code is split | Build fails if exceeded |
+| 2026-10-25 | PGlite harness for migration tests | Docker unavailable; tests every migration offline in seconds | Not full Supabase; cloud still checked by `db:verify` |
+| 2026-10-25 | Booking rules as SECURITY DEFINER functions + exclusion constraints | Atomic, can't be bypassed via the Supabase API, race-proof | Logic lives in SQL; tested in PGlite and on Supabase |
+| 2026-10-25 | Resume upload as raw PDF body (not multipart) after auth | Simple, no extra dependency, nothing buffered for anonymous callers | Name sent in a header (`X-File-Name`), so CORS must allow it |
+| 2026-10-25 | AI outputs (feedback, reports) are structured JSON validated with zod | Never trust model output's shape | A malformed answer is refunded and shown as a retryable error |
 | 2026-10-24 | Light theme only for now | Focus on one polished theme first; semantic tokens make dark mode a later remap | No dark mode yet |
 
 ---

@@ -50,6 +50,7 @@ const questionNotFound = () => new AppError(404, 'not_found', 'Question not foun
 const FEEDBACK_SYSTEM = `You are an experienced, encouraging interview coach. Give feedback on a candidate's practice answer.
 - Be specific: refer to what the candidate actually wrote.
 - Give no numeric score or grade.
+- Address the candidate directly as "you"; never guess their gender or other personal characteristics.
 - Do not invent facts about the candidate, their experience or any employer.
 - For behavioural questions, comment on structure (situation, task, action, result).
 - Keep each point to one or two sentences. Reply in the language of the answer.

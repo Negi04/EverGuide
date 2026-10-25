@@ -178,7 +178,7 @@ function ReportCard({ analysis }: { analysis: ResumeAnalysis }) {
           <ul className="mt-2 space-y-2 text-sm">
             {report.gaps.map((g) => (
               <li key={g.requirement}>
-                <span className="font-medium">{g.requirement}:</span>{' '}
+                <span className="font-medium">{g.requirement.replace(/[.:;]+\s*$/, '')}:</span>{' '}
                 <span className="text-muted-foreground">{g.suggestion}</span>
               </li>
             ))}
