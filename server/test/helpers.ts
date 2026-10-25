@@ -1,6 +1,7 @@
 import type { ContactMessage, Me, Onboarding, ProfileUpdate } from '@everguide/shared'
 import type { CareerService } from '../src/services/career-service.ts'
 import type { InterviewService } from '../src/services/interview-service.ts'
+import type { ResumeService } from '../src/services/resume-service.ts'
 import { pino } from 'pino'
 import { createApp, type AppDeps } from '../src/app.ts'
 import type { AuthUser } from '../src/services/auth-service.ts'
@@ -72,6 +73,7 @@ export function buildTestApp(overrides: Partial<AppDeps> = {}) {
     aiGuide: null,
     career: unusedService<CareerService>('career'),
     interview: unusedService<InterviewService>('interview'),
+    resumes: unusedService<ResumeService>('resumes'),
     contact: {
       submit: async (message) => {
         calls.contact.push(message)

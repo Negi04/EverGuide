@@ -75,7 +75,11 @@ export const routes: RouteObject[] = [
                       { index: true, lazy: page(() => import('@/pages/career/roadmap-page')) },
                       {
                         path: 'resume',
-                        lazy: page(() => import('@/pages/career/coming-soon-tab')),
+                        lazy: page(() => import('@/pages/career/resume-page')),
+                      },
+                      {
+                        path: 'resume/:resumeId',
+                        lazy: page(() => import('@/pages/career/resume-detail-page')),
                       },
                       {
                         path: 'interview',

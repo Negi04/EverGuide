@@ -24,6 +24,10 @@ import type {
   PracticeAttemptInput,
   ProfileUpdate,
   Recommendation,
+  ResumeAnalysis,
+  ResumeAnalysisRequest,
+  ResumeDetail,
+  ResumeSummary,
 } from '@everguide/shared'
 import { env } from './env'
 import { readSse } from './sse'
@@ -153,6 +157,28 @@ export async function streamMessage(
   }
 }
 
+/** Upload a PDF as the raw request body (not JSON), with the original name in a header. */
+async function uploadResume(file: File): Promise<ResumeSummary> {
+  let response: Response
+  try {
+    response = await fetch(`${env.apiUrl}/api/v1/resumes`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/pdf',
+        'X-File-Name': encodeURIComponent(file.name),
+        Authorization: await bearerToken(),
+      },
+      body: file,
+      signal: AbortSignal.timeout(60_000),
+    })
+  } catch (error) {
+    throw networkError(error)
+  }
+  if (!response.ok) throw await toApiError(response)
+  return (await response.json()) as ResumeSummary
+}
+
 export const api = {
   getMe: () => request<Me>('/api/v1/me'),
   updateProfile: (input: ProfileUpdate) =>
@@ -214,4 +240,10 @@ export const api = {
     }),
   deletePracticeAttempt: (id: string) =>
     request<void>(`/api/v1/interview/attempts/${id}`, { method: 'DELETE' }),
+  listResumes: () => request<ResumeSummary[]>('/api/v1/resumes'),
+  getResume: (id: string) => request<ResumeDetail>(`/api/v1/resumes/${id}`),
+  uploadResume,
+  deleteResume: (id: string) => request<void>(`/api/v1/resumes/${id}`, { method: 'DELETE' }),
+  analyseResume: (id: string, input: ResumeAnalysisRequest) =>
+    request<ResumeAnalysis>(`/api/v1/resumes/${id}/analyses`, { method: 'POST', body: input }),
 }

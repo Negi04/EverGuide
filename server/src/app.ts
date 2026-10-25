@@ -11,6 +11,7 @@ import { createRateLimiter } from './middleware/rate-limit.ts'
 import { registerAiRoutes } from './routes/ai.ts'
 import { registerCareerRoutes } from './routes/career.ts'
 import { registerInterviewRoutes } from './routes/interview.ts'
+import { registerResumeRoutes } from './routes/resumes.ts'
 import { contactRouter } from './routes/contact.ts'
 import { healthRouter } from './routes/health.ts'
 import { meRouter } from './routes/me.ts'
@@ -19,6 +20,7 @@ import type { AiGuideService } from './services/ai-guide-service.ts'
 import type { AuthService } from './services/auth-service.ts'
 import type { CareerService } from './services/career-service.ts'
 import type { InterviewService } from './services/interview-service.ts'
+import type { ResumeService } from './services/resume-service.ts'
 import type { ContactService } from './services/contact-service.ts'
 import type { ProfileService } from './services/profile-service.ts'
 
@@ -36,9 +38,10 @@ export type AppDeps = {
   aiGuide: AiGuideService | null
   career: CareerService
   interview: InterviewService
+  resumes: ResumeService
   checkDatabase: () => Promise<boolean>
   /** Override individual limits (tests use small ones); the rest keep their defaults. */
-  rateLimits?: Partial<Record<'api' | 'contact' | 'aiAnswers', LimitOptions>>
+  rateLimits?: Partial<Record<'api' | 'contact' | 'aiAnswers' | 'resumeUploads', LimitOptions>>
 }
 
 const defaultRateLimits = {
@@ -46,6 +49,7 @@ const defaultRateLimits = {
   contact: { windowMs: HOUR, limit: 5 },
   // Per-IP burst protection; the monthly allowance per user is enforced separately.
   aiAnswers: { windowMs: MINUTE, limit: 10 },
+  resumeUploads: { windowMs: HOUR, limit: 10 },
 }
 
 // Accept a caller's request ID (e.g. from a load balancer) only if it looks safe to log.
@@ -105,6 +109,10 @@ export function createApp(deps: AppDeps) {
   registerAiRoutes(api, deps.auth, deps.aiGuide, limits.aiAnswers)
   registerCareerRoutes(api, deps.auth, deps.career)
   registerInterviewRoutes(api, deps.auth, deps.interview, limits.aiAnswers)
+  registerResumeRoutes(api, deps.auth, deps.resumes, {
+    upload: limits.resumeUploads,
+    analysis: limits.aiAnswers,
+  })
   app.use('/api/v1', api)
 
   app.use(notFoundHandler)

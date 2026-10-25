@@ -17,6 +17,7 @@ import { createCareerService } from './services/career-service.ts'
 import { createContactService } from './services/contact-service.ts'
 import { createInterviewService } from './services/interview-service.ts'
 import { createProfileService } from './services/profile-service.ts'
+import { createResumeService } from './services/resume-service.ts'
 import { createUsageMeter } from './services/usage-meter.ts'
 
 /** Real dependencies backed by Supabase. Tests pass fakes to createApp instead. */
@@ -24,6 +25,10 @@ export function createDeps(config: Config, logger: Logger): AppDeps {
   const admin = createAdminClient(config)
   const clientFor = (accessToken: string) => createUserClient(config, accessToken)
   const ai = createAiComponents(config, admin, logger)
+  // Structured-output AI features share the chat model and the monthly allowance.
+  const aiTools = ai
+    ? { chat: ai.chat, meter: createUsageMeter(admin), monthlyLimit: config.ai.monthlyMessageLimit }
+    : null
 
   return {
     config,
@@ -39,17 +44,8 @@ export function createDeps(config: Config, logger: Logger): AppDeps {
         })
       : null,
     career: createCareerService(clientFor, ai?.retriever ?? null),
-    interview: createInterviewService(
-      admin,
-      clientFor,
-      ai
-        ? {
-            chat: ai.chat,
-            meter: createUsageMeter(admin),
-            monthlyLimit: config.ai.monthlyMessageLimit,
-          }
-        : null,
-    ),
+    interview: createInterviewService(admin, clientFor, aiTools),
+    resumes: createResumeService(admin, clientFor, aiTools),
     checkDatabase: async () => {
       const { error } = await admin
         .from('profiles')

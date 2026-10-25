@@ -1,5 +1,6 @@
 import { serviceUnavailable } from '../lib/errors.ts'
 import type { Db } from '../lib/supabase.ts'
+import { RESUME_BUCKET } from './resume-service.ts'
 
 export interface AccountService {
   /** Permanently deletes the user. Their rows are removed by ON DELETE CASCADE. */
@@ -19,6 +20,17 @@ export function createAccountService(admin: Db): AccountService {
         request_id: requestId,
       })
       if (audit.error) throw serviceUnavailable()
+
+      // Database rows are removed by ON DELETE CASCADE, but stored files are not. Remove
+      // them first: once the account is gone, nothing would point to them any more.
+      const files = await admin.storage.from(RESUME_BUCKET).list(userId, { limit: 1000 })
+      if (files.error) throw serviceUnavailable()
+      if (files.data.length > 0) {
+        const removed = await admin.storage
+          .from(RESUME_BUCKET)
+          .remove(files.data.map((file) => `${userId}/${file.name}`))
+        if (removed.error) throw serviceUnavailable()
+      }
 
       const { error } = await admin.auth.admin.deleteUser(userId)
       if (error)

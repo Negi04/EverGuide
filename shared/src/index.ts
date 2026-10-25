@@ -1,3 +1,4 @@
+export * from './resume.ts'
 export * from './interview.ts'
 export * from './career.ts'
 export * from './ai.ts'

@@ -119,6 +119,36 @@ export const fakeApi = {
   setQuestionSaved: vi.fn(),
   createPracticeAttempt: vi.fn(),
   deletePracticeAttempt: vi.fn(),
+  listResumes: vi.fn(),
+  getResume: vi.fn(),
+  uploadResume: vi.fn(),
+  deleteResume: vi.fn(),
+  analyseResume: vi.fn(),
+}
+
+export const resumeId = '5d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a'
+
+export function fakeResume(overrides: Record<string, unknown> = {}) {
+  return {
+    id: resumeId,
+    fileName: 'Asha Rao CV.pdf',
+    sizeBytes: 120_000,
+    pageCount: 1,
+    createdAt: new Date().toISOString(),
+    analysisCount: 0,
+    ...overrides,
+  }
+}
+
+export const fakeReport = {
+  summary: 'A solid support background with relevant reporting experience.',
+  alignment: 'partial' as const,
+  strengths: [
+    { point: 'Reporting experience', evidence: 'Built weekly Excel reports on ticket volumes.' },
+  ],
+  gaps: [{ requirement: 'Dashboard tools', suggestion: 'Add a small dashboard project.' }],
+  suggestions: [{ section: 'Summary', suggestion: 'Lead with your data work.' }],
+  missingKeywords: ['Tableau'],
 }
 
 export const questionId = '7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d'
@@ -261,6 +291,17 @@ export function resetFakeApi() {
       : null,
   }))
   fakeApi.deletePracticeAttempt.mockResolvedValue(undefined)
+  fakeApi.listResumes.mockResolvedValue([])
+  fakeApi.getResume.mockResolvedValue({ ...fakeResume(), analyses: [] })
+  fakeApi.uploadResume.mockImplementation(async (file: File) => fakeResume({ fileName: file.name }))
+  fakeApi.deleteResume.mockResolvedValue(undefined)
+  fakeApi.analyseResume.mockImplementation(async (_id, input) => ({
+    id: 'analysis-1',
+    targetRole: input.targetRole || null,
+    jobDescription: input.jobDescription || null,
+    report: fakeReport,
+    createdAt: new Date().toISOString(),
+  }))
   fakeApi.deleteMilestone.mockImplementation(async (id) => {
     const goal = fakeGoal()
     return { ...goal, milestones: goal.milestones.filter((m) => m.id !== id) }
