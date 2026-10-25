@@ -15,7 +15,9 @@ import { createAiStore } from './services/ai-store.ts'
 import { createAuthService } from './services/auth-service.ts'
 import { createCareerService } from './services/career-service.ts'
 import { createContactService } from './services/contact-service.ts'
+import { createInterviewService } from './services/interview-service.ts'
 import { createProfileService } from './services/profile-service.ts'
+import { createUsageMeter } from './services/usage-meter.ts'
 
 /** Real dependencies backed by Supabase. Tests pass fakes to createApp instead. */
 export function createDeps(config: Config, logger: Logger): AppDeps {
@@ -37,6 +39,17 @@ export function createDeps(config: Config, logger: Logger): AppDeps {
         })
       : null,
     career: createCareerService(clientFor, ai?.retriever ?? null),
+    interview: createInterviewService(
+      admin,
+      clientFor,
+      ai
+        ? {
+            chat: ai.chat,
+            meter: createUsageMeter(admin),
+            monthlyLimit: config.ai.monthlyMessageLimit,
+          }
+        : null,
+    ),
     checkDatabase: async () => {
       const { error } = await admin
         .from('profiles')

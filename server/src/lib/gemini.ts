@@ -1,4 +1,4 @@
-import { FinishReason, GoogleGenAI, Type } from '@google/genai'
+import { FinishReason, GoogleGenAI, Type, type Schema } from '@google/genai'
 
 /** Must match the vector(768) column in database/migrations/20261024000002_ai_guide.sql. */
 export const EMBEDDING_DIMENSIONS = 768
@@ -75,6 +75,13 @@ export interface ChatModel {
     answer: string
     signal: AbortSignal
   }): Promise<string[]>
+  /** One non-streamed call that must return JSON matching `schema` (still validate it). */
+  generateJson(input: {
+    system: string
+    prompt: string
+    schema: Schema
+    signal: AbortSignal
+  }): Promise<{ data: unknown; inputTokens: number; outputTokens: number }>
 }
 
 export function createGeminiChatModel(ai: GoogleGenAI, model: string): ChatModel {
@@ -142,6 +149,31 @@ export function createGeminiChatModel(ai: GoogleGenAI, model: string): ChatModel
         .map((item) => item.trim())
         .filter((item) => item.length > 0 && item.length <= 120)
         .slice(0, 3)
+    },
+
+    async generateJson({ system, prompt, schema, signal }) {
+      const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+          systemInstruction: system,
+          responseMimeType: 'application/json',
+          responseSchema: schema,
+          temperature: 0.3,
+          maxOutputTokens: 2048,
+          abortSignal: signal,
+          ...thinking,
+        },
+      })
+      const reason = response.candidates?.[0]?.finishReason
+      if (reason === FinishReason.SAFETY || reason === FinishReason.PROHIBITED_CONTENT) {
+        throw new ModelBlockedError()
+      }
+      return {
+        data: JSON.parse(response.text ?? 'null') as unknown,
+        inputTokens: response.usageMetadata?.promptTokenCount ?? 0,
+        outputTokens: response.usageMetadata?.candidatesTokenCount ?? 0,
+      }
     },
   }
 }

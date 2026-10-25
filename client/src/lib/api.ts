@@ -12,10 +12,16 @@ import type {
   GoalCreate,
   GoalUpdate,
   GuidanceDomain,
+  InterviewCategory,
+  InterviewQuestionDetail,
+  InterviewQuestionList,
+  InterviewRole,
   Me,
   MilestoneCreate,
   MilestoneUpdate,
   OnboardingInput,
+  PracticeAttempt,
+  PracticeAttemptInput,
   ProfileUpdate,
   Recommendation,
 } from '@everguide/shared'
@@ -185,4 +191,27 @@ export const api = {
   updateMilestone: (id: string, patch: MilestoneUpdate) =>
     request<Goal>(`/api/v1/milestones/${id}`, { method: 'PATCH', body: patch }),
   deleteMilestone: (id: string) => request<Goal>(`/api/v1/milestones/${id}`, { method: 'DELETE' }),
+  listInterviewQuestions: (filters: {
+    role?: InterviewRole
+    category?: InterviewCategory
+    saved?: boolean
+  }) => {
+    const params = new URLSearchParams()
+    if (filters.role) params.set('role', filters.role)
+    if (filters.category) params.set('category', filters.category)
+    if (filters.saved) params.set('saved', 'true')
+    const query = params.toString()
+    return request<InterviewQuestionList>(`/api/v1/interview/questions${query ? `?${query}` : ''}`)
+  },
+  getInterviewQuestion: (id: string) =>
+    request<InterviewQuestionDetail>(`/api/v1/interview/questions/${id}`),
+  setQuestionSaved: (id: string, saved: boolean) =>
+    request<void>(`/api/v1/interview/questions/${id}/saved`, { method: 'PUT', body: { saved } }),
+  createPracticeAttempt: (id: string, input: PracticeAttemptInput) =>
+    request<PracticeAttempt>(`/api/v1/interview/questions/${id}/attempts`, {
+      method: 'POST',
+      body: input,
+    }),
+  deletePracticeAttempt: (id: string) =>
+    request<void>(`/api/v1/interview/attempts/${id}`, { method: 'DELETE' }),
 }

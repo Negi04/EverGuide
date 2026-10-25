@@ -4,6 +4,7 @@ import type {
   ConversationDetail,
   ConversationSummary,
   Goal,
+  InterviewQuestion,
   Me,
 } from '@everguide/shared'
 import { vi } from 'vitest'
@@ -113,6 +114,29 @@ export const fakeApi = {
   addMilestone: vi.fn(),
   updateMilestone: vi.fn(),
   deleteMilestone: vi.fn(),
+  listInterviewQuestions: vi.fn(),
+  getInterviewQuestion: vi.fn(),
+  setQuestionSaved: vi.fn(),
+  createPracticeAttempt: vi.fn(),
+  deletePracticeAttempt: vi.fn(),
+}
+
+export const questionId = '7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d'
+
+export function fakeQuestion(overrides: Partial<InterviewQuestion> = {}): InterviewQuestion {
+  return {
+    id: questionId,
+    slug: 'prioritising-competing-tasks',
+    category: 'situational',
+    role: 'general',
+    difficulty: 'intermediate',
+    prompt: 'Two managers ask you for urgent work on the same afternoon. How would you handle it?',
+    guidance: 'Clarify the real deadlines and impact, and agree priorities together.',
+    saved: false,
+    attemptCount: 0,
+    lastPractisedAt: null,
+    ...overrides,
+  }
 }
 
 export function fakeGoal(overrides: Partial<Goal> = {}): Goal {
@@ -216,6 +240,27 @@ export function resetFakeApi() {
       ),
     }
   })
+  fakeApi.listInterviewQuestions.mockResolvedValue({
+    questions: [fakeQuestion()],
+    progress: { practised: 0, total: 32 },
+  })
+  fakeApi.getInterviewQuestion.mockResolvedValue({ ...fakeQuestion(), attempts: [] })
+  fakeApi.setQuestionSaved.mockResolvedValue(undefined)
+  fakeApi.createPracticeAttempt.mockImplementation(async (_id, input) => ({
+    id: 'attempt-1',
+    questionId,
+    answer: input.answer,
+    createdAt: new Date().toISOString(),
+    feedback: input.withFeedback
+      ? {
+          summary: 'A clear, calm answer that shows good judgement.',
+          strengths: ['You checked deadlines with both managers.'],
+          improvements: ['Say what the outcome was.'],
+          suggestedStructure: 'Situation, the clash, how you agreed priorities, the result.',
+        }
+      : null,
+  }))
+  fakeApi.deletePracticeAttempt.mockResolvedValue(undefined)
   fakeApi.deleteMilestone.mockImplementation(async (id) => {
     const goal = fakeGoal()
     return { ...goal, milestones: goal.milestones.filter((m) => m.id !== id) }

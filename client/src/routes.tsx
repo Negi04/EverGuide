@@ -79,7 +79,11 @@ export const routes: RouteObject[] = [
                       },
                       {
                         path: 'interview',
-                        lazy: page(() => import('@/pages/career/coming-soon-tab')),
+                        lazy: page(() => import('@/pages/career/interview-page')),
+                      },
+                      {
+                        path: 'interview/:questionId',
+                        lazy: page(() => import('@/pages/career/practice-page')),
                       },
                     ],
                   },

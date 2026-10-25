@@ -9,6 +9,7 @@ import type {
 import { databaseError } from '../lib/errors.ts'
 import type { Db } from '../lib/supabase.ts'
 import type { UserContext } from './profile-service.ts'
+import { createUsageMeter } from './usage-meter.ts'
 
 export type NewMessage = {
   conversationId: string
@@ -90,6 +91,7 @@ function fail(error: unknown): never {
 }
 
 export function createAiStore(admin: Db, clientFor: (accessToken: string) => Db): AiStore {
+  const meter = createUsageMeter(admin)
   return {
     async listConversations(ctx, search) {
       let query = clientFor(ctx.accessToken)
@@ -263,34 +265,9 @@ export function createAiStore(admin: Db, clientFor: (accessToken: string) => Db)
       return lastMessageAt
     },
 
-    async reserveUsage(userId, monthlyLimit) {
-      const { data, error } = await admin.rpc('reserve_ai_message', {
-        p_user_id: userId,
-        p_monthly_limit: monthlyLimit,
-      })
-      if (error) fail(error)
-      const row = data[0]
-      return { reservationId: row?.reservation_id ?? null, used: row?.used ?? 0 }
-    },
-
-    async completeUsage(id, details) {
-      const { error } = await admin
-        .from('ai_usage')
-        .update({
-          status: 'completed',
-          message_id: details.messageId,
-          model: details.model,
-          input_tokens: details.inputTokens,
-          output_tokens: details.outputTokens,
-        })
-        .eq('id', id)
-      if (error) fail(error)
-    },
-
-    async failUsage(id) {
-      const { error } = await admin.from('ai_usage').update({ status: 'failed' }).eq('id', id)
-      if (error) fail(error)
-    },
+    reserveUsage: (userId, monthlyLimit) => meter.reserve(userId, monthlyLimit),
+    completeUsage: (id, details) => meter.complete(id, details),
+    failUsage: (id) => meter.fail(id),
 
     async countUsage(ctx, since) {
       const { count, error } = await clientFor(ctx.accessToken)
