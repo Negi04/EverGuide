@@ -5,9 +5,9 @@
 
 ## Current status
 
-- **Active phase:** Phase 4 (branch `phase-4-career-mentors`). Database and Career Studio are done and verified; the mentor marketplace is next.
-- **Last updated:** 2026-10-24
-- **Next step:** Mentor marketplace API and UI (applications, admin verification, availability, booking, sessions, reviews, notifications). The user needs an admin role for verification (one SQL line).
+- **Active phase:** Phase 4 (branch `phase-4-career-mentors`). All features built and verified; the phase wrap-up is next.
+- **Last updated:** 2026-10-25
+- **Next step:** Phase 4 wrap-up (learning doc, quiz), then the user opens the PR. The user's admin-role insert matched 0 rows (as of 2026-10-25, no admin exists); a corrected query was given.
 
 ---
 
@@ -59,8 +59,8 @@
 - [x] Resume analyser (private storage, PDF validation, extraction, structured AI report, deletion; account deletion also removes files)
 - [x] Interview practice (32-question bank, saved questions, progress, optional AI feedback)
 - [x] Mentor database: profiles, verification states, availability, bookings (exclusion constraints), reviews, booking functions (migration `20261025000003_career_and_mentors.sql`, applied by the user)
-- [ ] Mentor marketplace API + UI
-- [ ] Tests: booking conflicts, review eligibility, document isolation
+- [x] Mentor marketplace API + UI (directory, profiles, booking, sessions, reviews, applications, availability, admin review queue, notifications)
+- [x] Tests: booking conflicts, review eligibility, document isolation
 - [ ] Phase wrap-up ritual
 
 ### Phase 5 — Wellness, Finance, Resources & Admin Portal
@@ -86,6 +86,10 @@
 - **2026-10-25 (Career Studio):** Roadmap API/UI (`services/career-service.ts`, `pages/career/`); interview practice with a 32-question bank (`database/interview/questions.json`, `npm run interview:seed -w @everguide/server`) and structured AI feedback; resume analyser (`lib/pdf.ts`, `services/resume-service.ts`, raw-body upload after auth). Shared `usage-meter.ts` (one allowance for every AI feature) and `ChatModel.generateJson` with zod validation of model output.
   - **Verified:** typecheck 0, lint clean, 267 unit/DB tests, integration (career 6, interview 6, resumes 6 with real Gemini + Storage), real-browser E2E **12/12** (goal + milestones, optimistic ticking, recommendations, real AI feedback, PDF upload + real report, dashboard progress + usage 2/30, deletion removes the stored file).
   - Bugs caught and fixed: blank starter milestone and empty date blocked goal creation (component tests); CORS didn't allow `X-File-Name`, so uploads failed only in browsers; the milestone checkbox flickered because query-cache updates arrive a tick after the click (now local optimistic state); filter labels gave selects the accessible name "Role All roles"; AI reports guessed the user's gender from their name (prompts now say "you", with a test that rejects gendered pronouns); privacy gap: account deletion didn't remove stored files; a flaky test from the 1 s default async timeout (now 4 s).
+
+- **2026-10-25 (mentor marketplace):** API in `routes/mentors.ts`, `services/mentor-service.ts`, `services/notification-service.ts`: public directory/profile/slots (verified mentors only), mentor application + profile + weekly availability (replace with rollback on failure), booking request/respond/cancel/reschedule/review through the SQL functions (rule errors mapped: P0001→409, P0002→404, 28000→401), admin review queue behind `requireRole('admin')` (decides only still-pending applications, grants the mentor role, notifies, audits), notifications list/mark-read. UI: `/mentors` + `/mentors/:id` (public), `/app/mentors` tabs (Find, My sessions, Mentor profile), `/app/admin/mentors`, notification bell (Radix Popover, 60 s polling).
+  - **Verified:** typecheck 0, lint clean, client 110, server 132, database 29, shared 16; integration mentors 9 (real Supabase); real-browser E2E **13/13** with three separate people (apply → admin verifies → availability → mentee books → mentor confirms with link → mentee notified and sees Join; public profile on a phone). Career E2E re-run 12/12.
+  - Bugs caught and fixed: passing `api.applyAsMentor` / `api.uploadResume` straight to `mutationFn` leaked TanStack's context object as a second argument (now wrapped, plus a convention test that fails if the pattern returns, checked by reintroducing it); `Date.now()` during render (new `useNow` hook); on phones the booking panel widened the page to 1458 px because a grid item's default `min-width: auto` let the two-week day row stretch it (`minmax(0,1fr)` + `min-w-0`); the "Request sent" banner reappeared on reload because browsers keep history state (now shown once and cleared, with a test confirmed to fail without the fix); first-load JS hit 190 kB (budget 185) because the notification bell's Popover sat in the eagerly loaded app shell; the app shell is now lazy-loaded (177.7 kB).
 
 ### Phase 3 — complete (2026-10-24)
 - **2026-10-24 (workspace UI):** `client/src/lib/sse.ts` (stream parser, handles split events and multi-byte characters), `lib/api.ts` (`streamMessage` + conversation endpoints), `hooks/use-ai.ts`, `pages/guide/` (layout with history sidebar, new-conversation page with starter questions, conversation page, streaming hook, safe Markdown renderer, source panel, composer). The AI Guide route is full-height (`handle.fullBleed`). The dashboard shows recent conversations and an AI usage meter.
@@ -184,6 +188,10 @@
 | 2026-10-25 | Booking rules as SECURITY DEFINER functions + exclusion constraints | Atomic, can't be bypassed via the Supabase API, race-proof | Logic lives in SQL; tested in PGlite and on Supabase |
 | 2026-10-25 | Resume upload as raw PDF body (not multipart) after auth | Simple, no extra dependency, nothing buffered for anonymous callers | Name sent in a header (`X-File-Name`), so CORS must allow it |
 | 2026-10-25 | AI outputs (feedback, reports) are structured JSON validated with zod | Never trust model output's shape | A malformed answer is refunded and shown as a retryable error |
+| 2026-10-25 | Admin-only routes enforced on the server (`requireRole` reads `user_roles`); `RequireRole` in the client only hides UI | The client can be edited by anyone; roles in the JWT could be stale | Two places to keep in sync |
+| 2026-10-25 | Notifications by polling every 60 s (not realtime) | Simple and cheap at this scale; no websocket infrastructure | Up to a minute's delay; revisit with Supabase Realtime or n8n push in Phase 6 |
+| 2026-10-25 | Signed-in app shell lazy-loaded | Public visitors shouldn't download the sidebar and notification code | One extra request when entering `/app` |
+| 2026-10-25 | Convention test for `mutationFn: api.x` | A lint rule can't express it; a cheap grep test stops a known bug coming back | Text-based, so it can be fooled by unusual formatting |
 | 2026-10-24 | Light theme only for now | Focus on one polished theme first; semantic tokens make dark mode a later remap | No dark mode yet |
 
 ---
@@ -192,7 +200,7 @@
 
 | Service | Status | Needed by |
 |---|---|---|
-| Gemini API key | User has it; **not yet in `.env`** (`GEMINI_API_KEY` empty) | Phase 3 |
+| Gemini API key | ✅ Configured in `.env` | Phase 3 |
 | Helpline numbers in the crisis response and stress guide (112, Tele-MANAS 14416) | **Verify with an authoritative source** | Before launch |
 | Expert review of the AI-drafted knowledge base | Not started | Before launch |
 | Custom SMTP for Supabase Auth emails (e.g. Resend, Postmark, SendGrid) | Not configured. Supabase's built-in sender is for testing only (heavily rate-limited) | Before real users |
@@ -212,7 +220,9 @@
 - Phase 3 (4/4): citation validation, measured threshold, race conditions / atomic reservation, and the code-splitting critical path (third attempt) all correct. Next quiz: mix in Phase 2 security concepts as spaced repetition.
 
 ## Open questions / backlog
-- Dashboard notifications panel + `GET /me/notifications` (nothing produces notifications until Phase 4/6).
+- Notifications are polled; consider realtime/push (Phase 6). Email copies of booking notifications come with n8n (Phase 6).
+- `npm run format:check` flags existing docs/JSON/tsconfig files; decide whether to format them or add a `.prettierignore`.
+- Mentor E2E scripts live in the session scratchpad; move them into the repo as Playwright tests in Phase 6.
 - Changing the sign-in email address (needs Supabase email-change confirmation flow).
 - JWTs stay valid until expiry (~1h) after sign-out/deletion; consider shorter expiry when going live.
 - Generate DB types with the Supabase CLI and apply migrations via CI.
