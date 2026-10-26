@@ -7,7 +7,7 @@
 
 - **Active phase:** Phase 5 (branch `phase-5-wellness-finance-admin`, branched from the Phase 4 tip; the Phase 4 PR is awaiting the user's merge).
 - **Last updated:** 2026-10-26
-- **Next step:** Phase 5c: Finance (budget planner, savings goals, glossary, SIP/EMI/compound-interest calculators).
+- **Next step:** Phase 5d: Resource library (curated articles and videos, search, bookmarks; admin-managed).
 
 ---
 
@@ -65,7 +65,7 @@
 
 ### Phase 5 — Wellness, Finance, Resources & Admin Portal
 - [x] Wellness tools (breathing, journal, habits, support)
-- [ ] Finance tools (budget, savings goals, glossary, calculators)
+- [x] Finance tools (budget, savings goals, glossary, calculators)
 - [ ] Resource library (links + video embeds; Cloudinary deferred)
 - [ ] Admin portal (users, mentor verification, content, KB docs, feedback, analytics, audit log)
 - [ ] Phase wrap-up ritual
@@ -87,6 +87,11 @@
 - **2026-10-26 (5b Wellness):** The user applied migration 4; `db:verify` passes on Supabase with 16 new Phase 5 checks. API: `services/wellness-service.ts`, `routes/wellness.ts` (journal CRUD + search + paging; habits, idempotent PUT/DELETE check-ins, archive). Date logic in `shared/src/dates.ts` and `habitStats` (pure, tested: "today" per time zone, unfinished days don't break streaks, weekly targets count weeks). UI: `/app/wellness` tabs Breathe (two patterns, reduced-motion aware, step changes announced to screen readers), Journal (privacy notice, mood, search, gentle support pointer after a "very low" entry), Habits (7-day grid, optimistic ticks with rollback, archive/restore), Support (helplines + AI-drafted labelled guides).
   - **Verified:** typecheck 0, lint clean, client 125, server 150, database 49, shared 27; wellness integration 7/7 on real Supabase; real-browser E2E 14/14 (desktop + 390 px phone).
   - Bugs caught: Supabase's API silently caps responses at 1000 rows, so streaks for many habits would quietly be wrong (now paged; an integration test with 1200 check-ins showed 167 instead of 200 without the fix); journal search flashed a spinner on every pause in typing (now keeps previous results, dimmed); uneven wrapping of day labels on phones; a false claim in my own copy ("reviewed sources") corrected; an old test that used Wellness as its "coming soon" example.
+- **2026-10-26 (5c Finance):** `shared/src/finance.ts`: money as integer paise parsed from text (`parseRupees`, exact where `1.15 × 100` isn't), `budgetSummary` (needs/wants/savings vs the 50/30/20 rule of thumb), SIP/EMI/compound-interest functions tested against values computed independently in Python. API (`services/finance-service.ts`, `routes/finance.ts`): monthly budgets (income, items, copy last month's plan with spending reset), savings goals on the ledger (deposits/withdrawals through `record_savings_entry`; deleting a deposit that would take a goal below zero is refused). Shared `lib/paging.ts` reads past the 1000-row cap (Wellness now uses it too). UI `/app/finance`: Budget, Savings goals, Calculators, Glossary (AI-drafted, labelled), "education, not advice" notices, `MoneyInput`. Removed the unused module placeholder page (every module is built).
+  - **Verified:** typecheck 0, lint clean, client 136, server 155, database 54, shared 38; finance integration 8/8 on real Supabase; real-browser E2E 14/14 (desktop + 390 px).
+  - Bugs caught: **upsert needs UPDATE permission on every column it writes**, so setting income as the signed-in user failed with 42501 (Postgres's hint, "GRANT UPDATE ON budgets", would have let users move budgets between months or users; fixed in code instead); a screen-reader-only table heading escaped its scroll box (absolute positioning) and widened phone pages to 481 px, found by measuring positioned elements; the "Spent" column was off-screen on phones (rows are now responsive); calculator labels pointed at a wrapper `div`, so clicking them didn't focus the input; over-budget shown only in red (now also in words); every row's name field was announced as "Item name".
+  - Process: an `i` typed into the open migration file got committed with `git add -A`. Restored, and `database/test/migration-lock.test.ts` now fingerprints applied migrations (SHA-256), proven to fail on a one-space edit. I now read the staged diff before every commit; doing so immediately kept an unrelated deletion out of a content commit.
+  - Honesty fixes: several Phase 1/3 pages said the AI Guide uses "reviewed" sources; the guides are AI-drafted and pending expert review, so the wording is now "curated". Feature statuses on public pages were updated to match what's built, and a promised mentor "availability" filter (never built) was removed from the list.
 
 ### Phase 4 — complete (2026-10-25)
 - **2026-10-25 (database):** Built an offline test harness: PGlite (Postgres 18 in WebAssembly) + Supabase stubs (`database/test/harness.ts`) runs every migration and tests SQL in seconds without Docker. Migration 3: goals/milestones, resumes (private bucket), interview practice, mentor profiles/verifications/availability, bookings with two exclusion constraints (no mentor or mentee overlaps), reviews, and SECURITY DEFINER booking functions (`mentor_open_slots`, `request_booking`, `respond_to_booking`, `cancel_booking`, `reschedule_booking`, `submit_mentor_review`). Wrapped in `begin/commit`. **29 PGlite tests**, incl. a daylight-saving test (US clocks change 1 Nov 2026) and mutation testing (deleting the overlap constraint or weakening the 12-hour rule makes tests fail). The user applied the migration; `db:verify` extended to **69 checks** on Supabase (btree_gist overlap confirmed via error 23P01, private bucket, direct uploads refused).
@@ -204,6 +209,9 @@
 | 2026-10-26 | Cloudinary deferred; resources use links and YouTube embeds | No account needed yet; images are optional | Admins can't upload cover images until it's added |
 | 2026-10-26 | Journal private via RLS only (no app-level encryption); never shown to admins, analytics or AI | Standard protection, keeps search, no key-loss risk | A full database leak would expose entries; revisit before launch |
 | 2026-10-26 | Wellness/finance content AI-drafted and labelled "pending expert review" | Same approach as the knowledge base | Needs expert review before launch |
+| 2026-10-26 | Money as integer paise; parse typed rupees as text | Floats can't represent 0.1 or 1.15 exactly; text parsing avoids `x × 100` errors | Convert at the edges (input and display) |
+| 2026-10-26 | Applied migrations are fingerprinted and must never change | A database never re-runs an applied migration, so edits silently split the repo from the real schema | New fingerprint to add after each applied migration |
+| 2026-10-26 | Read the staged diff before every commit (no blind `git add -A`) | A stray character reached a migration through a blind commit | A few seconds per commit |
 | 2026-10-24 | Light theme only for now | Focus on one polished theme first; semantic tokens make dark mode a later remap | No dark mode yet |
 
 ---
@@ -236,6 +244,9 @@
 - Notifications are polled; consider realtime/push (Phase 6). Email copies of booking notifications come with n8n (Phase 6).
 - `npm run format:check` flags existing docs/JSON/tsconfig files; decide whether to format them or add a `.prettierignore`.
 - Mentor E2E scripts live in the session scratchpad; move them into the repo as Playwright tests in Phase 6.
+- Deleting a savings entry is checked in the server, not locked in SQL, so two simultaneous deletes of a person's own entries could leave their goal below zero. Only affects their own record; a `delete_savings_entry` SQL function with a row lock would close it (next migration).
+- Mentor directory has no availability filter (search covers name, headline, job title, company, plus expertise).
+- `resources-page.tsx` still says resources "ground the AI Guide", which isn't true; rewrite with the resource library (5d).
 - Changing the sign-in email address (needs Supabase email-change confirmation flow).
 - JWTs stay valid until expiry (~1h) after sign-out/deletion; consider shorter expiry when going live.
 - Generate DB types with the Supabase CLI and apply migrations via CI.
