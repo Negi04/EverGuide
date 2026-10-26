@@ -4,7 +4,9 @@ import type {
   ConversationDetail,
   ConversationSummary,
   Goal,
+  Habit,
   InterviewQuestion,
+  JournalEntry,
   Me,
 } from '@everguide/shared'
 import { vi } from 'vitest'
@@ -141,6 +143,44 @@ export const fakeApi = {
   decideMentorApplication: vi.fn(),
   listNotifications: vi.fn(),
   markNotificationsRead: vi.fn(),
+  listJournal: vi.fn(),
+  createJournalEntry: vi.fn(),
+  updateJournalEntry: vi.fn(),
+  deleteJournalEntry: vi.fn(),
+  listHabits: vi.fn(),
+  createHabit: vi.fn(),
+  updateHabit: vi.fn(),
+  deleteHabit: vi.fn(),
+  setHabitCheckin: vi.fn(),
+}
+
+/** "Today" for wellness fakes: a Wednesday, so the week has days before and after it. */
+export const wellnessToday = '2026-10-28'
+
+export function fakeJournalEntry(overrides: Partial<JournalEntry> = {}): JournalEntry {
+  return {
+    id: 'entry-1',
+    entryDate: '2026-10-27',
+    mood: 4,
+    title: 'A good walk',
+    body: 'Walked by the lake and felt calmer.',
+    createdAt: '2026-10-27T18:00:00Z',
+    updatedAt: '2026-10-27T18:00:00Z',
+    ...overrides,
+  }
+}
+
+export function fakeHabit(overrides: Partial<Habit> = {}): Habit {
+  return {
+    id: 'habit-1',
+    name: 'Walk',
+    targetPerWeek: 7,
+    archived: false,
+    createdAt: '2026-10-01T10:00:00Z',
+    checkins: ['2026-10-27', '2026-10-26'],
+    stats: { streak: 2, streakUnit: 'day', thisWeek: 2 },
+    ...overrides,
+  }
 }
 
 export const mentorId = '9c8b7a6f-5e4d-4c3b-8a2f-1e0d9c8b7a6f'
@@ -385,6 +425,32 @@ export function resetFakeApi() {
   fakeApi.decideMentorApplication.mockResolvedValue(undefined)
   fakeApi.listNotifications.mockResolvedValue([])
   fakeApi.markNotificationsRead.mockResolvedValue(undefined)
+  fakeApi.listJournal.mockResolvedValue({ entries: [fakeJournalEntry()], nextOffset: null })
+  fakeApi.createJournalEntry.mockImplementation(async (input) =>
+    fakeJournalEntry({ id: 'entry-new', ...input, title: input.title || null }),
+  )
+  fakeApi.updateJournalEntry.mockImplementation(async (id, patch) =>
+    fakeJournalEntry({ id, ...patch }),
+  )
+  fakeApi.deleteJournalEntry.mockResolvedValue(undefined)
+  fakeApi.listHabits.mockResolvedValue({ today: wellnessToday, habits: [fakeHabit()] })
+  fakeApi.createHabit.mockImplementation(async (input) =>
+    fakeHabit({
+      id: 'habit-new',
+      checkins: [],
+      stats: { streak: 0, streakUnit: 'day', thisWeek: 0 },
+      ...input,
+    }),
+  )
+  fakeApi.updateHabit.mockImplementation(async (id, patch) =>
+    fakeHabit({ id, ...(patch.archived === undefined ? {} : { archived: patch.archived }) }),
+  )
+  fakeApi.deleteHabit.mockResolvedValue(undefined)
+  fakeApi.setHabitCheckin.mockImplementation(async (id, date, done) => {
+    const base = fakeHabit({ id })
+    const checkins = done ? [date, ...base.checkins] : base.checkins.filter((d) => d !== date)
+    return { ...base, checkins }
+  })
   fakeApi.analyseResume.mockImplementation(async (_id, input) => ({
     id: 'analysis-1',
     targetRole: input.targetRole || null,

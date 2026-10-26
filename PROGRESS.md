@@ -7,7 +7,7 @@
 
 - **Active phase:** Phase 5 (branch `phase-5-wellness-finance-admin`, branched from the Phase 4 tip; the Phase 4 PR is awaiting the user's merge).
 - **Last updated:** 2026-10-26
-- **Next step:** Phase 5a: migration 4 (wellness, finance, resources, admin analytics) + PGlite tests.
+- **Next step:** Phase 5c: Finance (budget planner, savings goals, glossary, SIP/EMI/compound-interest calculators).
 
 ---
 
@@ -64,7 +64,7 @@
 - [x] Phase wrap-up: explanation, company practices, `docs/learning/phase-4.md` (quiz 1/4)
 
 ### Phase 5 — Wellness, Finance, Resources & Admin Portal
-- [ ] Wellness tools (breathing, journal, habits, resources)
+- [x] Wellness tools (breathing, journal, habits, support)
 - [ ] Finance tools (budget, savings goals, glossary, calculators)
 - [ ] Resource library (links + video embeds; Cloudinary deferred)
 - [ ] Admin portal (users, mentor verification, content, KB docs, feedback, analytics, audit log)
@@ -84,6 +84,9 @@
 ### Phase 5 (in progress)
 - **2026-10-26 (5a database):** Migration `20261026000004_wellness_finance_admin.sql`: journal (writer-only, excluded from admin/analytics/AI), habits + check-ins (composite key to the owner), monthly budgets + items, savings goals with a ledger (`record_savings_entry` locks the goal row, so balances can't go negative), learning resources (published-only for visitors, full-text search via a generated `tsvector` + GIN index, https-only links) + private bookmarks, and server-only admin functions (`admin_overview`, `admin_signups_by_week`, `set_admin_role` with an advisory lock). Money stored as integer paise. **20 new PGlite tests** + a new guard that every `public` table has RLS on; mutation-tested (4 deliberate bugs, all caught). `db:verify` extended with Phase 5 checks (to run after the user applies the migration).
   - Found while writing it: a `current_date` CHECK would break restoring backups (moved to the server); a "keep at least one admin" check was unreachable (the caller must be an admin and can't remove themselves); the `has_role` backlog item had already been done in migration 2.
+- **2026-10-26 (5b Wellness):** The user applied migration 4; `db:verify` passes on Supabase with 16 new Phase 5 checks. API: `services/wellness-service.ts`, `routes/wellness.ts` (journal CRUD + search + paging; habits, idempotent PUT/DELETE check-ins, archive). Date logic in `shared/src/dates.ts` and `habitStats` (pure, tested: "today" per time zone, unfinished days don't break streaks, weekly targets count weeks). UI: `/app/wellness` tabs Breathe (two patterns, reduced-motion aware, step changes announced to screen readers), Journal (privacy notice, mood, search, gentle support pointer after a "very low" entry), Habits (7-day grid, optimistic ticks with rollback, archive/restore), Support (helplines + AI-drafted labelled guides).
+  - **Verified:** typecheck 0, lint clean, client 125, server 150, database 49, shared 27; wellness integration 7/7 on real Supabase; real-browser E2E 14/14 (desktop + 390 px phone).
+  - Bugs caught: Supabase's API silently caps responses at 1000 rows, so streaks for many habits would quietly be wrong (now paged; an integration test with 1200 check-ins showed 167 instead of 200 without the fix); journal search flashed a spinner on every pause in typing (now keeps previous results, dimmed); uneven wrapping of day labels on phones; a false claim in my own copy ("reviewed sources") corrected; an old test that used Wellness as its "coming soon" example.
 
 ### Phase 4 — complete (2026-10-25)
 - **2026-10-25 (database):** Built an offline test harness: PGlite (Postgres 18 in WebAssembly) + Supabase stubs (`database/test/harness.ts`) runs every migration and tests SQL in seconds without Docker. Migration 3: goals/milestones, resumes (private bucket), interview practice, mentor profiles/verifications/availability, bookings with two exclusion constraints (no mentor or mentee overlaps), reviews, and SECURITY DEFINER booking functions (`mentor_open_slots`, `request_booking`, `respond_to_booking`, `cancel_booking`, `reschedule_booking`, `submit_mentor_review`). Wrapped in `begin/commit`. **29 PGlite tests**, incl. a daylight-saving test (US clocks change 1 Nov 2026) and mutation testing (deleting the overlap constraint or weakening the 12-hour rule makes tests fail). The user applied the migration; `db:verify` extended to **69 checks** on Supabase (btree_gist overlap confirmed via error 23P01, private bucket, direct uploads refused).

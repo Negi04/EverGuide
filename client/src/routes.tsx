@@ -20,6 +20,7 @@ const builtAppPages = new Set([
   '/app/guide',
   '/app/career',
   '/app/mentors',
+  '/app/wellness',
 ])
 
 export const routes: RouteObject[] = [
@@ -94,6 +95,22 @@ export const routes: RouteObject[] = [
                       {
                         path: ':mentorId',
                         lazy: page(() => import('@/pages/mentors/app-mentor-detail-page')),
+                      },
+                    ],
+                  },
+                  {
+                    path: 'wellness',
+                    lazy: page(() => import('@/pages/wellness/wellness-layout')),
+                    children: [
+                      { index: true, lazy: page(() => import('@/pages/wellness/breathing-page')) },
+                      {
+                        path: 'journal',
+                        lazy: page(() => import('@/pages/wellness/journal-page')),
+                      },
+                      { path: 'habits', lazy: page(() => import('@/pages/wellness/habits-page')) },
+                      {
+                        path: 'support',
+                        lazy: page(() => import('@/pages/wellness/support-page')),
                       },
                     ],
                   },

@@ -1,4 +1,12 @@
 import type {
+  Habit,
+  HabitCreate,
+  HabitList,
+  HabitUpdate,
+  JournalEntry,
+  JournalEntryCreate,
+  JournalEntryUpdate,
+  JournalPage,
   AiUsage,
   AppNotification,
   AvailabilityWindow,
@@ -302,4 +310,25 @@ export const api = {
   listNotifications: () => request<AppNotification[]>('/api/v1/notifications'),
   markNotificationsRead: (ids?: string[]) =>
     request<void>('/api/v1/notifications/read', { method: 'POST', body: { ids } }),
+
+  listJournal: (query: { q?: string; offset?: number } = {}) => {
+    const params = new URLSearchParams()
+    if (query.q) params.set('q', query.q)
+    if (query.offset) params.set('offset', String(query.offset))
+    const qs = params.toString()
+    return request<JournalPage>(`/api/v1/journal${qs ? `?${qs}` : ''}`)
+  },
+  createJournalEntry: (input: JournalEntryCreate) =>
+    request<JournalEntry>('/api/v1/journal', { method: 'POST', body: input }),
+  updateJournalEntry: (id: string, patch: JournalEntryUpdate) =>
+    request<JournalEntry>(`/api/v1/journal/${id}`, { method: 'PATCH', body: patch }),
+  deleteJournalEntry: (id: string) => request<void>(`/api/v1/journal/${id}`, { method: 'DELETE' }),
+  listHabits: () => request<HabitList>('/api/v1/habits'),
+  createHabit: (input: HabitCreate) =>
+    request<Habit>('/api/v1/habits', { method: 'POST', body: input }),
+  updateHabit: (id: string, patch: HabitUpdate) =>
+    request<Habit>(`/api/v1/habits/${id}`, { method: 'PATCH', body: patch }),
+  deleteHabit: (id: string) => request<void>(`/api/v1/habits/${id}`, { method: 'DELETE' }),
+  setHabitCheckin: (id: string, date: string, done: boolean) =>
+    request<Habit>(`/api/v1/habits/${id}/checkins/${date}`, { method: done ? 'PUT' : 'DELETE' }),
 }

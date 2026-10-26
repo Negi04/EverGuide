@@ -42,3 +42,24 @@ export function formatSession(startsAt: string, endsAt: string, timeZone: string
 export function dayKey(iso: string, timeZone: string): string {
   return new Date(iso).toLocaleDateString('en-CA', { timeZone })
 }
+
+/** Dates are stored as YYYY-MM-DD and shown without any time-zone shift. */
+export function formatDate(isoDate: string): string {
+  const [year, month, day] = isoDate.split('-').map(Number)
+  return new Date(Date.UTC(year!, month! - 1, day!)).toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
+}
+
+/** A calendar date (YYYY-MM-DD) as a short weekday label, e.g. "Mon 26". */
+export function formatWeekday(isoDate: string): string {
+  const [year, month, day] = isoDate.split('-').map(Number)
+  return new Date(Date.UTC(year!, month! - 1, day!)).toLocaleDateString('en-IN', {
+    weekday: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  })
+}

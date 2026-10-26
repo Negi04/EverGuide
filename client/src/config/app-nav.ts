@@ -23,13 +23,7 @@ export const appNav: AppNavItem[] = [
   { label: 'AI Guide', to: '/app/guide', icon: Sparkles },
   { label: 'Career Studio', to: '/app/career', icon: Compass },
   { label: 'Mentors', to: '/app/mentors', icon: UsersRound },
-  {
-    label: 'Wellness',
-    to: '/app/wellness',
-    icon: HeartPulse,
-    phase: 5,
-    description: 'Breathing exercises, journaling and habit tracking.',
-  },
+  { label: 'Wellness', to: '/app/wellness', icon: HeartPulse },
   {
     label: 'Finance',
     to: '/app/finance',
