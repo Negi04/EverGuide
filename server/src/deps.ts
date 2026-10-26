@@ -15,6 +15,7 @@ import { createAiStore } from './services/ai-store.ts'
 import { createAuthService } from './services/auth-service.ts'
 import { createCareerService } from './services/career-service.ts'
 import { createContactService } from './services/contact-service.ts'
+import { createFinanceService } from './services/finance-service.ts'
 import { createInterviewService } from './services/interview-service.ts'
 import { createMentorService } from './services/mentor-service.ts'
 import { createNotificationService } from './services/notification-service.ts'
@@ -52,6 +53,7 @@ export function createDeps(config: Config, logger: Logger): AppDeps {
     mentors: createMentorService(admin, clientFor),
     notifications: createNotificationService(clientFor),
     wellness: createWellnessService(clientFor),
+    finance: createFinanceService(clientFor),
     checkDatabase: async () => {
       const { error } = await admin
         .from('profiles')

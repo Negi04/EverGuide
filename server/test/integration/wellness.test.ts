@@ -50,15 +50,12 @@ describe('journal', () => {
   let entryId = ''
 
   it('writes, finds and pages entries', async () => {
-    const created = await request(app)
-      .post('/api/v1/journal')
-      .set(alice.headers)
-      .send({
-        entryDate: '2026-10-26',
-        mood: 2,
-        title: 'Interview nerves',
-        body: 'Felt anxious before the call.',
-      })
+    const created = await request(app).post('/api/v1/journal').set(alice.headers).send({
+      entryDate: '2026-10-26',
+      mood: 2,
+      title: 'Interview nerves',
+      body: 'Felt anxious before the call.',
+    })
     expect(created.status).toBe(201)
     entryId = created.body.id
     await request(app)

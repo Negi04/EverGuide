@@ -56,7 +56,7 @@ create table public.habits (
   created_at       timestamptz not null default now(),
   unique (id, user_id)
 );
-
+i 
 create index habits_user_idx on public.habits (user_id, created_at);
 
 create table public.habit_checkins (

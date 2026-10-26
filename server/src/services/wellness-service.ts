@@ -15,6 +15,7 @@ import {
   type JournalPage,
 } from '@everguide/shared'
 import { AppError, databaseError } from '../lib/errors.ts'
+import { fetchAllPages } from '../lib/paging.ts'
 import type { Db } from '../lib/supabase.ts'
 import type { UserContext } from './profile-service.ts'
 
@@ -37,8 +38,6 @@ const HABIT_COLUMNS = 'id, name, target_per_week, archived_at, created_at'
 const STATS_WINDOW_DAYS = 400
 /** Check-ins sent to the browser (enough for the last few weeks' grid). */
 const RECENT_CHECKIN_DAYS = 35
-/** Supabase's API returns at most 1000 rows per request (silently), so read in pages. */
-const PAGE_ROWS = 1000
 
 const entryNotFound = () => new AppError(404, 'not_found', 'Journal entry not found.')
 const habitNotFound = () => new AppError(404, 'not_found', 'Habit not found.')
@@ -104,20 +103,20 @@ export function createWellnessService(clientFor: (accessToken: string) => Db): W
   }
 
   async function checkinsFor(db: Db, habitIds: string[], since: string) {
-    const rows: { habit_id: string; checkin_date: string }[] = []
-    if (habitIds.length === 0) return rows
-    for (let from = 0; ; from += PAGE_ROWS) {
-      const { data, error } = await db
-        .from('habit_checkins')
-        .select('habit_id, checkin_date')
-        .in('habit_id', habitIds)
-        .gte('checkin_date', since)
-        .order('checkin_date', { ascending: false })
-        .order('habit_id')
-        .range(from, from + PAGE_ROWS - 1)
-      if (error) throw databaseError(error)
-      rows.push(...data)
-      if (data.length < PAGE_ROWS) return rows
+    if (habitIds.length === 0) return []
+    try {
+      return await fetchAllPages((from, to) =>
+        db
+          .from('habit_checkins')
+          .select('habit_id, checkin_date')
+          .in('habit_id', habitIds)
+          .gte('checkin_date', since)
+          .order('checkin_date', { ascending: false })
+          .order('habit_id')
+          .range(from, to),
+      )
+    } catch (error) {
+      throw databaseError(error)
     }
   }
 
