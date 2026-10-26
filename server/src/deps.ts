@@ -21,6 +21,7 @@ import { createNotificationService } from './services/notification-service.ts'
 import { createProfileService } from './services/profile-service.ts'
 import { createResumeService } from './services/resume-service.ts'
 import { createUsageMeter } from './services/usage-meter.ts'
+import { createWellnessService } from './services/wellness-service.ts'
 
 /** Real dependencies backed by Supabase. Tests pass fakes to createApp instead. */
 export function createDeps(config: Config, logger: Logger): AppDeps {
@@ -50,6 +51,7 @@ export function createDeps(config: Config, logger: Logger): AppDeps {
     resumes: createResumeService(admin, clientFor, aiTools),
     mentors: createMentorService(admin, clientFor),
     notifications: createNotificationService(clientFor),
+    wellness: createWellnessService(clientFor),
     checkDatabase: async () => {
       const { error } = await admin
         .from('profiles')

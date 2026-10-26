@@ -571,6 +571,179 @@ export type Database = {
         Update: never
         Relationships: []
       }
+      journal_entries: {
+        Row: {
+          id: string
+          user_id: string
+          entry_date: string
+          mood: number | null
+          title: string | null
+          body: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          entry_date: string
+          mood?: number | null
+          title?: string | null
+          body: string
+        }
+        Update: { entry_date?: string; mood?: number | null; title?: string | null; body?: string }
+        Relationships: []
+      }
+      habits: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          target_per_week: number
+          archived_at: string | null
+          created_at: string
+        }
+        Insert: { user_id: string; name: string; target_per_week?: number }
+        Update: { name?: string; target_per_week?: number; archived_at?: string | null }
+        Relationships: []
+      }
+      habit_checkins: {
+        Row: { habit_id: string; user_id: string; checkin_date: string; created_at: string }
+        Insert: { habit_id: string; user_id: string; checkin_date: string }
+        Update: never
+        Relationships: []
+      }
+      budgets: {
+        Row: {
+          id: string
+          user_id: string
+          month: string
+          income_paise: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: { user_id: string; month: string; income_paise?: number }
+        Update: { income_paise?: number }
+        Relationships: []
+      }
+      budget_items: {
+        Row: {
+          id: string
+          budget_id: string
+          user_id: string
+          label: string
+          kind: 'need' | 'want' | 'saving'
+          planned_paise: number
+          spent_paise: number
+          position: number
+          created_at: string
+        }
+        Insert: {
+          budget_id: string
+          user_id: string
+          label: string
+          kind: 'need' | 'want' | 'saving'
+          planned_paise?: number
+          spent_paise?: number
+          position?: number
+        }
+        Update: {
+          label?: string
+          kind?: 'need' | 'want' | 'saving'
+          planned_paise?: number
+          spent_paise?: number
+          position?: number
+        }
+        Relationships: []
+      }
+      savings_goals: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          target_paise: number
+          target_date: string | null
+          archived_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: { user_id: string; name: string; target_paise: number; target_date?: string | null }
+        Update: {
+          name?: string
+          target_paise?: number
+          target_date?: string | null
+          archived_at?: string | null
+        }
+        Relationships: []
+      }
+      savings_entries: {
+        Row: {
+          id: string
+          goal_id: string
+          user_id: string
+          amount_paise: number
+          note: string | null
+          entry_date: string
+          created_at: string
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      learning_resources: {
+        Row: {
+          id: string
+          slug: string
+          title: string
+          summary: string
+          kind: 'article' | 'video' | 'course' | 'tool'
+          domain: string
+          url: string
+          source_name: string
+          youtube_id: string | null
+          duration_minutes: number | null
+          level: 'beginner' | 'intermediate' | 'advanced'
+          status: 'draft' | 'published' | 'archived'
+          published_at: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          slug: string
+          title: string
+          summary: string
+          kind: 'article' | 'video' | 'course' | 'tool'
+          domain: string
+          url: string
+          source_name: string
+          youtube_id?: string | null
+          duration_minutes?: number | null
+          level?: 'beginner' | 'intermediate' | 'advanced'
+          status?: 'draft' | 'published' | 'archived'
+          published_at?: string | null
+          created_by?: string | null
+        }
+        Update: {
+          slug?: string
+          title?: string
+          summary?: string
+          kind?: 'article' | 'video' | 'course' | 'tool'
+          domain?: string
+          url?: string
+          source_name?: string
+          youtube_id?: string | null
+          duration_minutes?: number | null
+          level?: 'beginner' | 'intermediate' | 'advanced'
+          status?: 'draft' | 'published' | 'archived'
+          published_at?: string | null
+        }
+        Relationships: []
+      }
+      resource_bookmarks: {
+        Row: { user_id: string; resource_id: string; created_at: string }
+        Insert: { user_id: string; resource_id: string }
+        Update: never
+        Relationships: []
+      }
     }
     Views: { [_ in never]: never }
     Functions: {
@@ -620,6 +793,24 @@ export type Database = {
       reserve_ai_message: {
         Args: { p_user_id: string; p_monthly_limit: number }
         Returns: { reservation_id: string | null; used: number }[]
+      }
+      record_savings_entry: {
+        Args: {
+          p_goal_id: string
+          p_amount_paise: number
+          p_note?: string | null
+          p_entry_date?: string | null
+        }
+        Returns: string
+      }
+      admin_overview: { Args: Record<string, never>; Returns: unknown }
+      admin_signups_by_week: {
+        Args: { p_weeks?: number }
+        Returns: { week_start: string; signups: number }[]
+      }
+      set_admin_role: {
+        Args: { p_actor: string; p_target: string; p_grant: boolean }
+        Returns: undefined
       }
     }
     Enums: { app_role: AppRoleEnum }

@@ -12,6 +12,7 @@ import { registerAiRoutes } from './routes/ai.ts'
 import { registerCareerRoutes } from './routes/career.ts'
 import { registerInterviewRoutes } from './routes/interview.ts'
 import { registerMentorRoutes } from './routes/mentors.ts'
+import { registerWellnessRoutes } from './routes/wellness.ts'
 import { registerResumeRoutes } from './routes/resumes.ts'
 import { contactRouter } from './routes/contact.ts'
 import { healthRouter } from './routes/health.ts'
@@ -23,6 +24,7 @@ import type { CareerService } from './services/career-service.ts'
 import type { InterviewService } from './services/interview-service.ts'
 import type { MentorService } from './services/mentor-service.ts'
 import type { NotificationService } from './services/notification-service.ts'
+import type { WellnessService } from './services/wellness-service.ts'
 import type { ResumeService } from './services/resume-service.ts'
 import type { ContactService } from './services/contact-service.ts'
 import type { ProfileService } from './services/profile-service.ts'
@@ -44,6 +46,7 @@ export type AppDeps = {
   resumes: ResumeService
   mentors: MentorService
   notifications: NotificationService
+  wellness: WellnessService
   checkDatabase: () => Promise<boolean>
   /** Override individual limits (tests use small ones); the rest keep their defaults. */
   rateLimits?: Partial<
@@ -123,6 +126,7 @@ export function createApp(deps: AppDeps) {
     analysis: limits.aiAnswers,
   })
   registerMentorRoutes(api, deps.auth, deps.mentors, deps.notifications, limits.bookings)
+  registerWellnessRoutes(api, deps.auth, deps.wellness)
   app.use('/api/v1', api)
 
   app.use(notFoundHandler)
