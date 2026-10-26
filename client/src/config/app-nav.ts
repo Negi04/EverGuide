@@ -13,9 +13,6 @@ export type AppNavItem = {
   label: string
   to: string
   icon: LucideIcon
-  /** Build phase in which the module ships; shown on its placeholder page. */
-  phase?: number
-  description?: string
 }
 
 export const appNav: AppNavItem[] = [
@@ -24,12 +21,6 @@ export const appNav: AppNavItem[] = [
   { label: 'Career Studio', to: '/app/career', icon: Compass },
   { label: 'Mentors', to: '/app/mentors', icon: UsersRound },
   { label: 'Wellness', to: '/app/wellness', icon: HeartPulse },
-  {
-    label: 'Finance',
-    to: '/app/finance',
-    icon: PiggyBank,
-    phase: 5,
-    description: 'Budgets, savings goals and educational calculators.',
-  },
+  { label: 'Finance', to: '/app/finance', icon: PiggyBank },
   { label: 'Settings', to: '/app/settings', icon: Settings },
 ]

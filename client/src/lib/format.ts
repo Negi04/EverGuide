@@ -63,3 +63,30 @@ export function formatWeekday(isoDate: string): string {
     timeZone: 'UTC',
   })
 }
+
+const inr = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' })
+const inrWhole = new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  maximumFractionDigits: 0,
+})
+
+/** Integer paise as rupees, Indian style: 15000000 → "₹1,50,000", 150050 → "₹1,500.50". */
+export function formatPaise(paise: number): string {
+  return paise % 100 === 0 ? inrWhole.format(paise / 100) : inr.format(paise / 100)
+}
+
+/** A calculated rupee amount, rounded to the nearest rupee: 2323390.76 → "₹23,23,391". */
+export function formatRupees(rupees: number): string {
+  return inrWhole.format(Math.round(rupees))
+}
+
+/** 'YYYY-MM' as "October 2026". */
+export function formatMonth(month: string): string {
+  const [year, m] = month.split('-').map(Number)
+  return new Date(Date.UTC(year!, m! - 1, 1)).toLocaleDateString('en-IN', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
+}

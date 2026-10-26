@@ -1,4 +1,5 @@
 import type {
+  Budget,
   ChatMessage,
   ChatStreamEvent,
   ConversationDetail,
@@ -8,6 +9,7 @@ import type {
   InterviewQuestion,
   JournalEntry,
   Me,
+  SavingsGoal,
 } from '@everguide/shared'
 import { vi } from 'vitest'
 
@@ -152,6 +154,65 @@ export const fakeApi = {
   updateHabit: vi.fn(),
   deleteHabit: vi.fn(),
   setHabitCheckin: vi.fn(),
+  getBudget: vi.fn(),
+  setBudgetIncome: vi.fn(),
+  addBudgetItem: vi.fn(),
+  copyPreviousBudget: vi.fn(),
+  updateBudgetItem: vi.fn(),
+  deleteBudgetItem: vi.fn(),
+  listSavingsGoals: vi.fn(),
+  createSavingsGoal: vi.fn(),
+  updateSavingsGoal: vi.fn(),
+  deleteSavingsGoal: vi.fn(),
+  addSavingsEntry: vi.fn(),
+  deleteSavingsEntry: vi.fn(),
+}
+
+export function fakeBudget(month: string, overrides: Partial<Budget> = {}): Budget {
+  return {
+    month,
+    exists: true,
+    incomePaise: 5_000_000,
+    items: [
+      {
+        id: 'item-rent',
+        label: 'Rent',
+        kind: 'need',
+        plannedPaise: 2_000_000,
+        spentPaise: 2_000_000,
+      },
+      {
+        id: 'item-food',
+        label: 'Eating out',
+        kind: 'want',
+        plannedPaise: 300_000,
+        spentPaise: 380_000,
+      },
+    ],
+    ...overrides,
+  }
+}
+
+export function fakeSavingsGoal(overrides: Partial<SavingsGoal> = {}): SavingsGoal {
+  return {
+    id: 'goal-1',
+    name: 'Emergency fund',
+    targetPaise: 10_000_000,
+    targetDate: null,
+    archived: false,
+    createdAt: '2026-10-01T10:00:00Z',
+    savedPaise: 2_500_000,
+    entries: [
+      {
+        id: 'entry-a',
+        amountPaise: 2_500_000,
+        note: 'Bonus',
+        entryDate: '2026-10-05',
+        createdAt: '2026-10-05T10:00:00Z',
+      },
+    ],
+    ...overrides,
+  }
 }
 
 /** "Today" for wellness fakes: a Wednesday, so the week has days before and after it. */
@@ -425,6 +486,27 @@ export function resetFakeApi() {
   fakeApi.decideMentorApplication.mockResolvedValue(undefined)
   fakeApi.listNotifications.mockResolvedValue([])
   fakeApi.markNotificationsRead.mockResolvedValue(undefined)
+  fakeApi.getBudget.mockImplementation(async (month: string) => fakeBudget(month))
+  fakeApi.setBudgetIncome.mockImplementation(async (month: string, incomePaise: number) =>
+    fakeBudget(month, { incomePaise }),
+  )
+  fakeApi.addBudgetItem.mockImplementation(async (month: string) => fakeBudget(month))
+  fakeApi.copyPreviousBudget.mockImplementation(async (month: string) => fakeBudget(month))
+  fakeApi.updateBudgetItem.mockResolvedValue(fakeBudget('2026-10'))
+  fakeApi.deleteBudgetItem.mockResolvedValue(fakeBudget('2026-10'))
+  fakeApi.listSavingsGoals.mockResolvedValue([fakeSavingsGoal()])
+  fakeApi.createSavingsGoal.mockImplementation(async (input) =>
+    fakeSavingsGoal({ id: 'goal-new', savedPaise: 0, entries: [], ...input }),
+  )
+  fakeApi.updateSavingsGoal.mockImplementation(async (id, patch) =>
+    fakeSavingsGoal({ id, ...(patch.archived === undefined ? {} : { archived: patch.archived }) }),
+  )
+  fakeApi.deleteSavingsGoal.mockResolvedValue(undefined)
+  fakeApi.addSavingsEntry.mockImplementation(async (id, input) => {
+    const goal = fakeSavingsGoal({ id })
+    return { ...goal, savedPaise: goal.savedPaise + input.amountPaise }
+  })
+  fakeApi.deleteSavingsEntry.mockResolvedValue(fakeSavingsGoal({ savedPaise: 0, entries: [] }))
   fakeApi.listJournal.mockResolvedValue({ entries: [fakeJournalEntry()], nextOffset: null })
   fakeApi.createJournalEntry.mockImplementation(async (input) =>
     fakeJournalEntry({ id: 'entry-new', ...input, title: input.title || null }),

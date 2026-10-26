@@ -1,4 +1,11 @@
 import type {
+  Budget,
+  BudgetItemCreate,
+  BudgetItemUpdate,
+  SavingsEntryInput,
+  SavingsGoal,
+  SavingsGoalCreate,
+  SavingsGoalUpdate,
   Habit,
   HabitCreate,
   HabitList,
@@ -331,4 +338,30 @@ export const api = {
   deleteHabit: (id: string) => request<void>(`/api/v1/habits/${id}`, { method: 'DELETE' }),
   setHabitCheckin: (id: string, date: string, done: boolean) =>
     request<Habit>(`/api/v1/habits/${id}/checkins/${date}`, { method: done ? 'PUT' : 'DELETE' }),
+
+  getBudget: (month: string) => request<Budget>(`/api/v1/budgets/${month}`),
+  setBudgetIncome: (month: string, incomePaise: number) =>
+    request<Budget>(`/api/v1/budgets/${month}`, { method: 'PUT', body: { incomePaise } }),
+  addBudgetItem: (month: string, input: BudgetItemCreate) =>
+    request<Budget>(`/api/v1/budgets/${month}/items`, { method: 'POST', body: input }),
+  copyPreviousBudget: (month: string) =>
+    request<Budget>(`/api/v1/budgets/${month}/copy-previous`, { method: 'POST' }),
+  updateBudgetItem: (id: string, patch: BudgetItemUpdate) =>
+    request<Budget>(`/api/v1/budget-items/${id}`, { method: 'PATCH', body: patch }),
+  deleteBudgetItem: (id: string) =>
+    request<Budget>(`/api/v1/budget-items/${id}`, { method: 'DELETE' }),
+  listSavingsGoals: () => request<SavingsGoal[]>('/api/v1/savings-goals'),
+  createSavingsGoal: (input: SavingsGoalCreate) =>
+    request<SavingsGoal>('/api/v1/savings-goals', { method: 'POST', body: input }),
+  updateSavingsGoal: (id: string, patch: SavingsGoalUpdate) =>
+    request<SavingsGoal>(`/api/v1/savings-goals/${id}`, { method: 'PATCH', body: patch }),
+  deleteSavingsGoal: (id: string) =>
+    request<void>(`/api/v1/savings-goals/${id}`, { method: 'DELETE' }),
+  addSavingsEntry: (goalId: string, input: SavingsEntryInput) =>
+    request<SavingsGoal>(`/api/v1/savings-goals/${goalId}/entries`, {
+      method: 'POST',
+      body: input,
+    }),
+  deleteSavingsEntry: (id: string) =>
+    request<SavingsGoal>(`/api/v1/savings-entries/${id}`, { method: 'DELETE' }),
 }

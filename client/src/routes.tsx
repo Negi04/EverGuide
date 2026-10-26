@@ -4,7 +4,6 @@ import { RedirectIfSignedIn, RequireAuth, RequireOnboarding } from '@/auth/guard
 import { RequireRole } from '@/auth/require-role'
 import { AuthLayout } from '@/components/layout/auth-layout'
 import { PublicLayout } from '@/components/layout/public-layout'
-import { appNav } from '@/config/app-nav'
 import LandingPage from '@/pages/landing/landing-page'
 import NotFoundPage from '@/pages/not-found-page'
 import RouteErrorPage from '@/pages/route-error-page'
@@ -13,15 +12,6 @@ import RouteErrorPage from '@/pages/route-error-page'
 const page = (load: () => Promise<{ default: ComponentType }>) => async () => ({
   Component: (await load()).default,
 })
-
-const builtAppPages = new Set([
-  '/app',
-  '/app/settings',
-  '/app/guide',
-  '/app/career',
-  '/app/mentors',
-  '/app/wellness',
-])
 
 export const routes: RouteObject[] = [
   {
@@ -115,6 +105,22 @@ export const routes: RouteObject[] = [
                     ],
                   },
                   {
+                    path: 'finance',
+                    lazy: page(() => import('@/pages/finance/finance-layout')),
+                    children: [
+                      { index: true, lazy: page(() => import('@/pages/finance/budget-page')) },
+                      { path: 'savings', lazy: page(() => import('@/pages/finance/savings-page')) },
+                      {
+                        path: 'calculators',
+                        lazy: page(() => import('@/pages/finance/calculators-page')),
+                      },
+                      {
+                        path: 'glossary',
+                        lazy: page(() => import('@/pages/finance/glossary-page')),
+                      },
+                    ],
+                  },
+                  {
                     path: 'admin',
                     element: <RequireRole role="admin" />,
                     children: [
@@ -162,12 +168,6 @@ export const routes: RouteObject[] = [
                       },
                     ],
                   },
-                  ...appNav
-                    .filter((item) => !builtAppPages.has(item.to))
-                    .map((item) => ({
-                      path: item.to.replace('/app/', ''),
-                      lazy: page(() => import('@/pages/app/module-placeholder-page')),
-                    })),
                 ],
               },
             ],

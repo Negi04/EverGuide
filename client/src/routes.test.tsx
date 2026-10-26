@@ -1,6 +1,5 @@
 import { screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { fakeSession, setSession } from '@/test/fake-supabase'
 import { renderRoute } from '@/test/render-route'
 
 describe('routing', () => {
@@ -37,14 +36,5 @@ describe('routing', () => {
     expect(
       await screen.findByRole('heading', { name: /took a different path/i }),
     ).toBeInTheDocument()
-  })
-
-  it('shows an honest placeholder for workspace modules that are not built yet', async () => {
-    setSession(fakeSession())
-    renderRoute('/app/finance')
-    expect(
-      await screen.findByRole('heading', { level: 1, name: /finance is on the way/i }),
-    ).toBeInTheDocument()
-    expect(screen.getByText(/build phase 5/i)).toBeInTheDocument()
   })
 })
