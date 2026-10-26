@@ -7,7 +7,7 @@ import {
   createGenAI,
   type ChatModel,
 } from './lib/gemini.ts'
-import { createAdminClient, createUserClient } from './lib/supabase.ts'
+import { createAdminClient, createAnonClient, createUserClient } from './lib/supabase.ts'
 import { createRetriever, type Retriever } from './rag/retriever.ts'
 import { createAccountService } from './services/account-service.ts'
 import { createAiGuideService } from './services/ai-guide-service.ts'
@@ -20,6 +20,7 @@ import { createInterviewService } from './services/interview-service.ts'
 import { createMentorService } from './services/mentor-service.ts'
 import { createNotificationService } from './services/notification-service.ts'
 import { createProfileService } from './services/profile-service.ts'
+import { createResourcesService } from './services/resources-service.ts'
 import { createResumeService } from './services/resume-service.ts'
 import { createUsageMeter } from './services/usage-meter.ts'
 import { createWellnessService } from './services/wellness-service.ts'
@@ -54,6 +55,7 @@ export function createDeps(config: Config, logger: Logger): AppDeps {
     notifications: createNotificationService(clientFor),
     wellness: createWellnessService(clientFor),
     finance: createFinanceService(clientFor),
+    resources: createResourcesService(createAnonClient(config), admin, clientFor),
     checkDatabase: async () => {
       const { error } = await admin
         .from('profiles')

@@ -4,6 +4,7 @@ import type { InterviewService } from '../src/services/interview-service.ts'
 import type { MentorService } from '../src/services/mentor-service.ts'
 import type { NotificationService } from '../src/services/notification-service.ts'
 import type { FinanceService } from '../src/services/finance-service.ts'
+import type { ResourcesService } from '../src/services/resources-service.ts'
 import type { WellnessService } from '../src/services/wellness-service.ts'
 import type { ResumeService } from '../src/services/resume-service.ts'
 import { pino } from 'pino'
@@ -82,6 +83,7 @@ export function buildTestApp(overrides: Partial<AppDeps> = {}) {
     notifications: unusedService<NotificationService>('notifications'),
     wellness: unusedService<WellnessService>('wellness'),
     finance: unusedService<FinanceService>('finance'),
+    resources: unusedService<ResourcesService>('resources'),
     contact: {
       submit: async (message) => {
         calls.contact.push(message)
