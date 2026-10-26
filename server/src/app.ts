@@ -9,12 +9,21 @@ import type { Config } from './config/env.ts'
 import { errorHandler, notFoundHandler } from './middleware/errors.ts'
 import { createRateLimiter } from './middleware/rate-limit.ts'
 import { registerAiRoutes } from './routes/ai.ts'
+import { registerCareerRoutes } from './routes/career.ts'
+import { registerInterviewRoutes } from './routes/interview.ts'
+import { registerMentorRoutes } from './routes/mentors.ts'
+import { registerResumeRoutes } from './routes/resumes.ts'
 import { contactRouter } from './routes/contact.ts'
 import { healthRouter } from './routes/health.ts'
 import { meRouter } from './routes/me.ts'
 import type { AccountService } from './services/account-service.ts'
 import type { AiGuideService } from './services/ai-guide-service.ts'
 import type { AuthService } from './services/auth-service.ts'
+import type { CareerService } from './services/career-service.ts'
+import type { InterviewService } from './services/interview-service.ts'
+import type { MentorService } from './services/mentor-service.ts'
+import type { NotificationService } from './services/notification-service.ts'
+import type { ResumeService } from './services/resume-service.ts'
 import type { ContactService } from './services/contact-service.ts'
 import type { ProfileService } from './services/profile-service.ts'
 
@@ -30,9 +39,16 @@ export type AppDeps = {
   contact: ContactService
   /** Null when no Gemini key is configured: AI endpoints then answer 503. */
   aiGuide: AiGuideService | null
+  career: CareerService
+  interview: InterviewService
+  resumes: ResumeService
+  mentors: MentorService
+  notifications: NotificationService
   checkDatabase: () => Promise<boolean>
   /** Override individual limits (tests use small ones); the rest keep their defaults. */
-  rateLimits?: Partial<Record<'api' | 'contact' | 'aiAnswers', LimitOptions>>
+  rateLimits?: Partial<
+    Record<'api' | 'contact' | 'aiAnswers' | 'resumeUploads' | 'bookings', LimitOptions>
+  >
 }
 
 const defaultRateLimits = {
@@ -40,6 +56,8 @@ const defaultRateLimits = {
   contact: { windowMs: HOUR, limit: 5 },
   // Per-IP burst protection; the monthly allowance per user is enforced separately.
   aiAnswers: { windowMs: MINUTE, limit: 10 },
+  resumeUploads: { windowMs: HOUR, limit: 10 },
+  bookings: { windowMs: HOUR, limit: 20 },
 }
 
 // Accept a caller's request ID (e.g. from a load balancer) only if it looks safe to log.
@@ -83,7 +101,8 @@ export function createApp(deps: AppDeps) {
       // Requests without an Origin header (curl, server-to-server) are not browser
       // cross-origin requests; CORS does not apply to them and auth still does.
       origin: (origin, callback) => callback(null, !origin || allowedOrigins.has(origin)),
-      allowedHeaders: ['Authorization', 'Content-Type', 'X-Request-Id'],
+      // X-File-Name carries the original name of uploaded resumes.
+      allowedHeaders: ['Authorization', 'Content-Type', 'X-Request-Id', 'X-File-Name'],
       exposedHeaders: ['X-Request-Id', 'RateLimit', 'RateLimit-Policy', 'Retry-After'],
       maxAge: 600,
     }),
@@ -97,6 +116,13 @@ export function createApp(deps: AppDeps) {
   api.use('/contact', contactRouter(deps.contact, limits.contact))
   api.use('/me', meRouter(deps.auth, deps.profiles, deps.accounts))
   registerAiRoutes(api, deps.auth, deps.aiGuide, limits.aiAnswers)
+  registerCareerRoutes(api, deps.auth, deps.career)
+  registerInterviewRoutes(api, deps.auth, deps.interview, limits.aiAnswers)
+  registerResumeRoutes(api, deps.auth, deps.resumes, {
+    upload: limits.resumeUploads,
+    analysis: limits.aiAnswers,
+  })
+  registerMentorRoutes(api, deps.auth, deps.mentors, deps.notifications, limits.bookings)
   app.use('/api/v1', api)
 
   app.use(notFoundHandler)

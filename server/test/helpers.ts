@@ -1,4 +1,9 @@
 import type { ContactMessage, Me, Onboarding, ProfileUpdate } from '@everguide/shared'
+import type { CareerService } from '../src/services/career-service.ts'
+import type { InterviewService } from '../src/services/interview-service.ts'
+import type { MentorService } from '../src/services/mentor-service.ts'
+import type { NotificationService } from '../src/services/notification-service.ts'
+import type { ResumeService } from '../src/services/resume-service.ts'
 import { pino } from 'pino'
 import { createApp, type AppDeps } from '../src/app.ts'
 import type { AuthUser } from '../src/services/auth-service.ts'
@@ -68,6 +73,11 @@ export function buildTestApp(overrides: Partial<AppDeps> = {}) {
       },
     },
     aiGuide: null,
+    career: unusedService<CareerService>('career'),
+    interview: unusedService<InterviewService>('interview'),
+    resumes: unusedService<ResumeService>('resumes'),
+    mentors: unusedService<MentorService>('mentors'),
+    notifications: unusedService<NotificationService>('notifications'),
     contact: {
       submit: async (message) => {
         calls.contact.push(message)
@@ -79,4 +89,13 @@ export function buildTestApp(overrides: Partial<AppDeps> = {}) {
   }
 
   return { app: createApp(deps), calls }
+}
+
+/** A stand-in for services a test doesn't use: any call fails loudly. */
+export function unusedService<T extends object>(name: string): T {
+  return new Proxy({} as T, {
+    get: (_target, method) => () => {
+      throw new Error(`Unexpected call to ${name}.${String(method)} in this test`)
+    },
+  })
 }

@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { domainLabels, goalLabels } from '@/config/onboarding'
 import { useConversations, useUsage } from '@/hooks/use-ai'
+import { goalProgress, useGoals } from '@/hooks/use-career'
 import { useMe } from '@/hooks/use-me'
 import { formatRelative } from '@/lib/format'
 import { usePageTitle } from '@/hooks/use-page-title'
@@ -89,9 +90,7 @@ export default function DashboardPage() {
           </Button>
         </section>
 
-        <EmptyState icon={Target} title="No roadmap yet">
-          <p>Goals with milestones and dates arrive with the Career Studio.</p>
-        </EmptyState>
+        <RoadmapSummary />
         <RecentConversations />
         <EmptyState icon={CalendarDays} title="No upcoming sessions">
           <p>
@@ -176,6 +175,66 @@ function RecentConversations() {
             </Link>
           </li>
         ))}
+      </ul>
+    </section>
+  )
+}
+
+function RoadmapSummary() {
+  const goals = useGoals()
+  const active = goals.data?.filter((g) => g.status === 'active') ?? []
+
+  if (goals.isPending) {
+    return (
+      <div className="h-40 rounded-lg bg-surface-muted motion-safe:animate-pulse" aria-hidden />
+    )
+  }
+  if (active.length === 0) {
+    return (
+      <EmptyState
+        icon={Target}
+        title="No active goals"
+        action={
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/app/career">Set a goal</Link>
+          </Button>
+        }
+      >
+        <p>Break a goal into milestones and track your progress here.</p>
+      </EmptyState>
+    )
+  }
+  return (
+    <section
+      aria-labelledby="roadmap-title"
+      className="rounded-lg border border-border bg-surface p-6"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <h2 id="roadmap-title" className="text-lg font-semibold text-ink">
+          Your goals
+        </h2>
+        <Link to="/app/career" className="text-sm font-medium text-primary hover:underline">
+          Open roadmap
+        </Link>
+      </div>
+      <ul className="mt-4 space-y-4">
+        {active.slice(0, 3).map((goal) => {
+          const progress = goalProgress(goal)
+          return (
+            <li key={goal.id}>
+              <div className="flex justify-between gap-3 text-sm">
+                <span className="truncate font-medium">{goal.title}</span>
+                <span className="text-muted-foreground">{progress.percent}%</span>
+              </div>
+              <div
+                className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-muted"
+                aria-hidden
+              >
+                <div className="h-full bg-primary" style={{ width: `${progress.percent}%` }} />
+              </div>
+            </li>
+          )
+        })}
       </ul>
     </section>
   )

@@ -41,10 +41,10 @@ describe('routing', () => {
 
   it('shows an honest placeholder for workspace modules that are not built yet', async () => {
     setSession(fakeSession())
-    renderRoute('/app/career')
+    renderRoute('/app/wellness')
     expect(
-      await screen.findByRole('heading', { level: 1, name: /career studio is on the way/i }),
+      await screen.findByRole('heading', { level: 1, name: /wellness is on the way/i }),
     ).toBeInTheDocument()
-    expect(screen.getByText(/build phase 4/i)).toBeInTheDocument()
+    expect(screen.getByText(/build phase 5/i)).toBeInTheDocument()
   })
 })

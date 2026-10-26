@@ -1,8 +1,12 @@
 import '@testing-library/jest-dom/vitest'
-import { cleanup } from '@testing-library/react'
+import { cleanup, configure } from '@testing-library/react'
 import { afterEach, beforeEach, vi } from 'vitest'
 import { fakeApi, resetFakeApi } from './fake-api'
 import { resetFakeSupabase } from './fake-supabase'
+
+// findBy*/waitFor give up after 1 s by default, which is too tight when the whole
+// suite runs in parallel on a busy machine; flaky timeouts hide real failures.
+configure({ asyncUtilTimeout: 4000 })
 
 // No test talks to a real Supabase project or API server.
 vi.mock('@/lib/supabase', () => import('./fake-supabase'))

@@ -21,20 +21,8 @@ export type AppNavItem = {
 export const appNav: AppNavItem[] = [
   { label: 'Dashboard', to: '/app', icon: LayoutDashboard },
   { label: 'AI Guide', to: '/app/guide', icon: Sparkles },
-  {
-    label: 'Career Studio',
-    to: '/app/career',
-    icon: Compass,
-    phase: 4,
-    description: 'Build a roadmap, analyse your resume and practise interviews.',
-  },
-  {
-    label: 'Mentors',
-    to: '/app/mentors',
-    icon: UsersRound,
-    phase: 4,
-    description: 'Find verified mentors and manage your sessions.',
-  },
+  { label: 'Career Studio', to: '/app/career', icon: Compass },
+  { label: 'Mentors', to: '/app/mentors', icon: UsersRound },
   {
     label: 'Wellness',
     to: '/app/wellness',

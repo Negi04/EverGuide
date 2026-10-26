@@ -37,6 +37,19 @@ describe('CORS', () => {
   })
 })
 
+describe('CORS for uploads', () => {
+  it('lets the browser send the file-name header with a resume upload', async () => {
+    const { app } = buildTestApp()
+    const res = await request(app)
+      .options('/api/v1/resumes')
+      .set('Origin', ALLOWED_ORIGIN)
+      .set('Access-Control-Request-Method', 'POST')
+      .set('Access-Control-Request-Headers', 'authorization,content-type,x-file-name')
+    expect(res.status).toBe(204)
+    expect(res.headers['access-control-allow-headers']).toMatch(/x-file-name/i)
+  })
+})
+
 describe('error responses', () => {
   it('returns a consistent JSON error for unknown routes', async () => {
     const { app } = buildTestApp()

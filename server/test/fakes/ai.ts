@@ -145,6 +145,8 @@ type ChatBehaviour = {
   failAfter?: number
   hangUntilAborted?: boolean
   followUps?: string[] | Error
+  /** What generateJson returns (structured outputs such as interview feedback). */
+  json?: unknown
 }
 
 export function fakeChat(
@@ -168,6 +170,9 @@ export function fakeChat(
         yield { type: 'text', text }
       }
       yield { type: 'usage', inputTokens: 100, outputTokens: 20 }
+    },
+    async generateJson() {
+      return { data: behaviour.json ?? null, inputTokens: 50, outputTokens: 30 }
     },
     async suggestFollowUps() {
       if (behaviour.followUps instanceof Error) throw behaviour.followUps

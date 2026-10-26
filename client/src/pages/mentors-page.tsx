@@ -1,7 +1,7 @@
-import { BadgeCheck, CalendarCheck, MessageSquareText, UsersRound } from 'lucide-react'
+import { BadgeCheck, CalendarCheck, MessageSquareText } from 'lucide-react'
 import { Link } from 'react-router'
-import { EmptyState } from '@/components/common/empty-state'
 import { PageHeader } from '@/components/common/page-header'
+import { MentorDirectory } from '@/components/mentors/mentor-directory'
 import { Button } from '@/components/ui/button'
 import { usePageTitle } from '@/hooks/use-page-title'
 
@@ -35,12 +35,9 @@ export default function MentorsPage() {
       />
 
       <div className="container-page space-y-20 py-16 sm:py-20">
-        <EmptyState icon={UsersRound} title="The mentor directory opens soon">
-          <p>
-            We are onboarding and reviewing the first mentors now. Verified profiles will appear
-            here once their review is complete — we will not list anyone before that.
-          </p>
-        </EmptyState>
+        <section aria-label="Mentor directory">
+          <MentorDirectory basePath="/mentors" />
+        </section>
 
         <section aria-labelledby="principles-title">
           <h2 id="principles-title" className="text-2xl font-semibold text-ink sm:text-3xl">
@@ -72,7 +69,7 @@ export default function MentorsPage() {
             </p>
           </div>
           <Button variant="accent" size="lg" asChild>
-            <Link to="/contact?topic=mentorship">Apply to mentor</Link>
+            <Link to="/app/mentors/profile">Apply to mentor</Link>
           </Button>
         </section>
       </div>

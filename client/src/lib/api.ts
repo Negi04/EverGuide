@@ -1,5 +1,9 @@
 import type {
   AiUsage,
+  AppNotification,
+  AvailabilityWindow,
+  Booking,
+  BookingResponse,
   ApiErrorBody,
   ApiErrorCode,
   ChatStreamEvent,
@@ -8,10 +12,36 @@ import type {
   ConversationSummary,
   ConversationUpdate,
   Feedback,
+  Goal,
+  GoalCreate,
+  GoalUpdate,
   GuidanceDomain,
+  InterviewCategory,
+  InterviewQuestionDetail,
+  InterviewQuestionList,
+  InterviewRole,
   Me,
+  MentorApplication,
+  MentorApplicationForReview,
+  MentorCard,
+  MentorDetail,
+  MentorExpertise,
+  MentorProfileUpdate,
+  MentorReviewInput,
+  MyMentorProfile,
+  MilestoneCreate,
+  MilestoneUpdate,
   OnboardingInput,
+  PracticeAttempt,
+  PracticeAttemptInput,
   ProfileUpdate,
+  Recommendation,
+  ResumeAnalysis,
+  ResumeAnalysisRequest,
+  ResumeDetail,
+  ResumeSummary,
+  Slot,
+  VerificationDecision,
 } from '@everguide/shared'
 import { env } from './env'
 import { readSse } from './sse'
@@ -141,6 +171,28 @@ export async function streamMessage(
   }
 }
 
+/** Upload a PDF as the raw request body (not JSON), with the original name in a header. */
+async function uploadResume(file: File): Promise<ResumeSummary> {
+  let response: Response
+  try {
+    response = await fetch(`${env.apiUrl}/api/v1/resumes`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/pdf',
+        'X-File-Name': encodeURIComponent(file.name),
+        Authorization: await bearerToken(),
+      },
+      body: file,
+      signal: AbortSignal.timeout(60_000),
+    })
+  } catch (error) {
+    throw networkError(error)
+  }
+  if (!response.ok) throw await toApiError(response)
+  return (await response.json()) as ResumeSummary
+}
+
 export const api = {
   getMe: () => request<Me>('/api/v1/me'),
   updateProfile: (input: ProfileUpdate) =>
@@ -166,4 +218,88 @@ export const api = {
     request<void>(`/api/v1/messages/${messageId}/feedback`, { method: 'PUT', body: feedback }),
   getUsage: () => request<AiUsage>('/api/v1/ai/usage'),
   streamMessage,
+  listGoals: () => request<Goal[]>('/api/v1/goals'),
+  createGoal: (input: GoalCreate) =>
+    request<Goal>('/api/v1/goals', { method: 'POST', body: input }),
+  updateGoal: (id: string, patch: GoalUpdate) =>
+    request<Goal>(`/api/v1/goals/${id}`, { method: 'PATCH', body: patch }),
+  deleteGoal: (id: string) => request<void>(`/api/v1/goals/${id}`, { method: 'DELETE' }),
+  goalRecommendations: (id: string) =>
+    request<Recommendation[]>(`/api/v1/goals/${id}/recommendations`),
+  addMilestone: (goalId: string, input: MilestoneCreate) =>
+    request<Goal>(`/api/v1/goals/${goalId}/milestones`, { method: 'POST', body: input }),
+  updateMilestone: (id: string, patch: MilestoneUpdate) =>
+    request<Goal>(`/api/v1/milestones/${id}`, { method: 'PATCH', body: patch }),
+  deleteMilestone: (id: string) => request<Goal>(`/api/v1/milestones/${id}`, { method: 'DELETE' }),
+  listInterviewQuestions: (filters: {
+    role?: InterviewRole
+    category?: InterviewCategory
+    saved?: boolean
+  }) => {
+    const params = new URLSearchParams()
+    if (filters.role) params.set('role', filters.role)
+    if (filters.category) params.set('category', filters.category)
+    if (filters.saved) params.set('saved', 'true')
+    const query = params.toString()
+    return request<InterviewQuestionList>(`/api/v1/interview/questions${query ? `?${query}` : ''}`)
+  },
+  getInterviewQuestion: (id: string) =>
+    request<InterviewQuestionDetail>(`/api/v1/interview/questions/${id}`),
+  setQuestionSaved: (id: string, saved: boolean) =>
+    request<void>(`/api/v1/interview/questions/${id}/saved`, { method: 'PUT', body: { saved } }),
+  createPracticeAttempt: (id: string, input: PracticeAttemptInput) =>
+    request<PracticeAttempt>(`/api/v1/interview/questions/${id}/attempts`, {
+      method: 'POST',
+      body: input,
+    }),
+  deletePracticeAttempt: (id: string) =>
+    request<void>(`/api/v1/interview/attempts/${id}`, { method: 'DELETE' }),
+  listResumes: () => request<ResumeSummary[]>('/api/v1/resumes'),
+  getResume: (id: string) => request<ResumeDetail>(`/api/v1/resumes/${id}`),
+  uploadResume,
+  deleteResume: (id: string) => request<void>(`/api/v1/resumes/${id}`, { method: 'DELETE' }),
+  analyseResume: (id: string, input: ResumeAnalysisRequest) =>
+    request<ResumeAnalysis>(`/api/v1/resumes/${id}/analyses`, { method: 'POST', body: input }),
+  listMentors: (filters: { expertise?: MentorExpertise; q?: string; language?: string }) => {
+    const params = new URLSearchParams()
+    if (filters.expertise) params.set('expertise', filters.expertise)
+    if (filters.q) params.set('q', filters.q)
+    if (filters.language) params.set('language', filters.language)
+    const query = params.toString()
+    return request<MentorCard[]>(`/api/v1/mentors${query ? `?${query}` : ''}`, { auth: false })
+  },
+  getMentor: (id: string) => request<MentorDetail>(`/api/v1/mentors/${id}`, { auth: false }),
+  mentorSlots: (id: string, days = 14) =>
+    request<Slot[]>(`/api/v1/mentors/${id}/slots?days=${days}`, { auth: false }),
+  getMyMentorProfile: () => request<MyMentorProfile | null>('/api/v1/me/mentor-profile'),
+  applyAsMentor: (input: MentorApplication) =>
+    request<MyMentorProfile>('/api/v1/me/mentor-profile', { method: 'POST', body: input }),
+  updateMyMentorProfile: (patch: MentorProfileUpdate) =>
+    request<MyMentorProfile>('/api/v1/me/mentor-profile', { method: 'PATCH', body: patch }),
+  saveAvailability: (windows: AvailabilityWindow[]) =>
+    request<MyMentorProfile>('/api/v1/me/mentor-profile/availability', {
+      method: 'PUT',
+      body: { windows },
+    }),
+  listBookings: () => request<Booking[]>('/api/v1/bookings'),
+  requestBooking: (input: { mentorId: string; startsAt: string; topic: string }) =>
+    request<{ id: string }>('/api/v1/bookings', { method: 'POST', body: input }),
+  respondToBooking: (id: string, input: BookingResponse) =>
+    request<void>(`/api/v1/bookings/${id}/respond`, { method: 'POST', body: input }),
+  cancelBooking: (id: string, reason?: string) =>
+    request<void>(`/api/v1/bookings/${id}/cancel`, { method: 'POST', body: { reason } }),
+  rescheduleBooking: (id: string, startsAt: string) =>
+    request<void>(`/api/v1/bookings/${id}/reschedule`, { method: 'POST', body: { startsAt } }),
+  reviewBooking: (id: string, input: MentorReviewInput) =>
+    request<void>(`/api/v1/bookings/${id}/review`, { method: 'POST', body: input }),
+  listMentorApplications: () =>
+    request<MentorApplicationForReview[]>('/api/v1/admin/mentor-applications'),
+  decideMentorApplication: (id: string, input: VerificationDecision) =>
+    request<void>(`/api/v1/admin/mentor-applications/${id}/decision`, {
+      method: 'POST',
+      body: input,
+    }),
+  listNotifications: () => request<AppNotification[]>('/api/v1/notifications'),
+  markNotificationsRead: (ids?: string[]) =>
+    request<void>('/api/v1/notifications/read', { method: 'POST', body: { ids } }),
 }
