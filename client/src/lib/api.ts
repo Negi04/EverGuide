@@ -1,4 +1,10 @@
 import type {
+  AdminResource,
+  Resource,
+  ResourceCreate,
+  ResourcePage,
+  ResourceQuery,
+  ResourceUpdate,
   Budget,
   BudgetItemCreate,
   BudgetItemUpdate,
@@ -364,4 +370,28 @@ export const api = {
     }),
   deleteSavingsEntry: (id: string) =>
     request<SavingsGoal>(`/api/v1/savings-entries/${id}`, { method: 'DELETE' }),
+
+  listResources: (filters: ResourceQuery = {}) => {
+    const params = new URLSearchParams()
+    for (const key of ['q', 'domain', 'kind', 'level'] as const) {
+      const value = filters[key]
+      if (value) params.set(key, value)
+    }
+    if (filters.offset) params.set('offset', String(filters.offset))
+    const query = params.toString()
+    return request<ResourcePage>(`/api/v1/resources${query ? `?${query}` : ''}`, { auth: false })
+  },
+  getResource: (slug: string) => request<Resource>(`/api/v1/resources/${slug}`, { auth: false }),
+  listSavedResources: () => request<Resource[]>('/api/v1/me/saved-resources'),
+  setResourceSaved: (id: string, saved: boolean) =>
+    request<{ saved: boolean }>(`/api/v1/resources/${id}/save`, {
+      method: saved ? 'PUT' : 'DELETE',
+    }),
+  adminListResources: () => request<AdminResource[]>('/api/v1/admin/resources'),
+  adminCreateResource: (input: ResourceCreate) =>
+    request<AdminResource>('/api/v1/admin/resources', { method: 'POST', body: input }),
+  adminUpdateResource: (id: string, patch: ResourceUpdate) =>
+    request<AdminResource>(`/api/v1/admin/resources/${id}`, { method: 'PATCH', body: patch }),
+  adminDeleteResource: (id: string) =>
+    request<void>(`/api/v1/admin/resources/${id}`, { method: 'DELETE' }),
 }

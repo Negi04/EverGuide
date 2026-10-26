@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react'
-import type { RouteObject } from 'react-router'
+import { Navigate, type RouteObject } from 'react-router'
 import { RedirectIfSignedIn, RequireAuth, RequireOnboarding } from '@/auth/guards'
 import { RequireRole } from '@/auth/require-role'
 import { AuthLayout } from '@/components/layout/auth-layout'
@@ -27,6 +27,10 @@ export const routes: RouteObject[] = [
           { path: 'mentors', lazy: page(() => import('@/pages/mentors-page')) },
           { path: 'mentors/:mentorId', lazy: page(() => import('@/pages/mentor-detail-page')) },
           { path: 'resources', lazy: page(() => import('@/pages/resources-page')) },
+          {
+            path: 'resources/:slug',
+            lazy: page(() => import('@/pages/resource-detail-page')),
+          },
           { path: 'about', lazy: page(() => import('@/pages/about-page')) },
           { path: 'contact', lazy: page(() => import('@/pages/contact-page')) },
           { path: 'privacy', lazy: page(() => import('@/pages/legal/privacy-page')) },
@@ -121,12 +125,30 @@ export const routes: RouteObject[] = [
                     ],
                   },
                   {
+                    path: 'resources',
+                    lazy: page(() => import('@/pages/resources/app-resources-page')),
+                  },
+                  {
+                    path: 'resources/:slug',
+                    lazy: page(() => import('@/pages/resources/app-resource-detail-page')),
+                  },
+                  {
                     path: 'admin',
                     element: <RequireRole role="admin" />,
                     children: [
                       {
-                        path: 'mentors',
-                        lazy: page(() => import('@/pages/admin/mentor-applications-page')),
+                        lazy: page(() => import('@/pages/admin/admin-layout')),
+                        children: [
+                          { index: true, element: <Navigate to="mentors" replace /> },
+                          {
+                            path: 'mentors',
+                            lazy: page(() => import('@/pages/admin/mentor-applications-page')),
+                          },
+                          {
+                            path: 'resources',
+                            lazy: page(() => import('@/pages/admin/resources-admin-page')),
+                          },
+                        ],
                       },
                     ],
                   },

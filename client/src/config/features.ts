@@ -100,7 +100,7 @@ export const domains: Domain[] = [
     description:
       'Articles and videos chosen by the EverGuide team. Recommendations based on your roadmap are planned.',
     capabilities: [
-      { label: 'Curated articles and videos', status: 'in-development' },
+      { label: 'Curated articles and videos', status: 'available' },
       { label: 'Recommendations from your roadmap', status: 'planned' },
     ],
   },

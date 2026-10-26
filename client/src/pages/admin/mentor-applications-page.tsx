@@ -25,9 +25,8 @@ export default function MentorApplicationsPage() {
   })
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <p className="eyebrow">Admin</p>
-      <h1 className="mt-2 text-3xl font-semibold text-ink">Mentor applications</h1>
+    <div>
+      <h2 className="text-xl font-semibold text-ink">Mentor applications</h2>
       <p className="mt-2 text-muted-foreground">
         Verify a mentor only when the evidence supports their profile. A company name on a profile
         is not enough.

@@ -188,7 +188,7 @@ describe('admin verification page', () => {
       decision: 'verified',
       notes: 'Checked LinkedIn.',
     })
-    expect(screen.getAllByRole('link', { name: /admin: mentors/i }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('link', { name: 'Admin' }).length).toBeGreaterThan(0)
   })
 })
 

@@ -90,3 +90,11 @@ export function formatMonth(month: string): string {
     timeZone: 'UTC',
   })
 }
+
+/** "8 min", "1 h 30 min". */
+export function formatDuration(minutes: number | null): string | null {
+  if (!minutes) return null
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  return h === 0 ? `${m} min` : m === 0 ? `${h} h` : `${h} h ${m} min`
+}

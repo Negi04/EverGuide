@@ -1,4 +1,5 @@
 import type {
+  AdminResource,
   Budget,
   ChatMessage,
   ChatStreamEvent,
@@ -166,7 +167,49 @@ export const fakeApi = {
   deleteSavingsGoal: vi.fn(),
   addSavingsEntry: vi.fn(),
   deleteSavingsEntry: vi.fn(),
+  listResources: vi.fn(),
+  getResource: vi.fn(),
+  listSavedResources: vi.fn(),
+  setResourceSaved: vi.fn(),
+  adminListResources: vi.fn(),
+  adminCreateResource: vi.fn(),
+  adminUpdateResource: vi.fn(),
+  adminDeleteResource: vi.fn(),
 }
+
+export function fakeResource(overrides: Partial<AdminResource> = {}): AdminResource {
+  return {
+    id: 'resource-1',
+    slug: 'how-to-budget',
+    title: 'How to budget',
+    summary: 'A short guide to planning a monthly budget and sticking to it.',
+    kind: 'article',
+    domain: 'finance',
+    url: 'https://example.org/budget',
+    sourceName: 'Example Money',
+    youtubeId: null,
+    durationMinutes: 8,
+    level: 'beginner',
+    publishedAt: '2026-10-20T10:00:00Z',
+    status: 'published',
+    createdAt: '2026-10-20T10:00:00Z',
+    updatedAt: '2026-10-20T10:00:00Z',
+    ...overrides,
+  }
+}
+
+export const fakeVideo = () =>
+  fakeResource({
+    id: 'resource-2',
+    slug: 'interview-stories',
+    title: 'Telling interview stories',
+    summary: 'How to structure answers with situation, task, action and result.',
+    kind: 'video',
+    domain: 'interview',
+    url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    sourceName: 'Example channel',
+    youtubeId: 'dQw4w9WgXcQ',
+  })
 
 export function fakeBudget(month: string, overrides: Partial<Budget> = {}): Budget {
   return {
@@ -507,6 +550,32 @@ export function resetFakeApi() {
     return { ...goal, savedPaise: goal.savedPaise + input.amountPaise }
   })
   fakeApi.deleteSavingsEntry.mockResolvedValue(fakeSavingsGoal({ savedPaise: 0, entries: [] }))
+  fakeApi.listResources.mockResolvedValue({
+    resources: [fakeResource(), fakeVideo()],
+    nextOffset: null,
+  })
+  fakeApi.getResource.mockImplementation(async (slug: string) =>
+    slug === 'interview-stories' ? fakeVideo() : fakeResource({ slug }),
+  )
+  fakeApi.listSavedResources.mockResolvedValue([])
+  fakeApi.setResourceSaved.mockImplementation(async (_id: string, saved: boolean) => ({ saved }))
+  fakeApi.adminListResources.mockResolvedValue([
+    fakeResource(),
+    fakeResource({
+      id: 'resource-3',
+      slug: 'draft-one',
+      title: 'Draft guide',
+      status: 'draft',
+      publishedAt: null,
+    }),
+  ])
+  fakeApi.adminCreateResource.mockImplementation(async (input) =>
+    fakeResource({ ...input, id: 'resource-new', status: input.status ?? 'draft' }),
+  )
+  fakeApi.adminUpdateResource.mockImplementation(async (id, patch) =>
+    fakeResource({ id, ...patch }),
+  )
+  fakeApi.adminDeleteResource.mockResolvedValue(undefined)
   fakeApi.listJournal.mockResolvedValue({ entries: [fakeJournalEntry()], nextOffset: null })
   fakeApi.createJournalEntry.mockImplementation(async (input) =>
     fakeJournalEntry({ id: 'entry-new', ...input, title: input.title || null }),
