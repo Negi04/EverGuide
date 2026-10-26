@@ -259,7 +259,7 @@ export function createCareerService(
     async recommendations(ctx, goalId) {
       const goal = await getGoal(ctx, goalId)
       if (!retriever) return []
-      // Same semantic search as the AI Guide, so suggestions come from reviewed guides only.
+      // Same semantic search as the AI Guide, so suggestions come from approved guides only.
       const chunks = await retriever.search(
         [goal.title, goal.description].filter(Boolean).join('. '),
       )

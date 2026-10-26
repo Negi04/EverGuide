@@ -5,7 +5,7 @@ const pipeline = [
   {
     icon: TextSearch,
     title: 'Retrieve',
-    body: 'Your question is matched against a curated, reviewed knowledge base — not the open web.',
+    body: 'Your question is matched against EverGuide’s curated knowledge base, not the open web.',
   },
   {
     icon: FileSearch,
@@ -28,7 +28,7 @@ export function GroundedAiSection() {
           tone="ink"
           eyebrow="Source-grounded AI"
           title="Advice you can check, not just trust."
-          lead="General-purpose chatbots can sound confident while being wrong. EverGuide grounds each answer in reviewed sources and is open about what it does not know."
+          lead="General-purpose chatbots can sound confident while being wrong. EverGuide grounds each answer in its own curated guides and is open about what it does not know."
         />
 
         <ol className="mt-14 grid gap-4 lg:grid-cols-[1fr_auto_1fr_auto_1fr] lg:items-stretch">

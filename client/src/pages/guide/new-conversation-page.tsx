@@ -43,7 +43,7 @@ export default function NewConversationPage() {
         </span>
         <h1 className="mt-5 text-3xl font-semibold text-ink">What would you like guidance on?</h1>
         <p className="mt-2 text-muted-foreground">
-          Answers are based on EverGuide’s reviewed guides, with numbered sources you can open.
+          Answers are based on EverGuide’s guides, with numbered sources you can open.
         </p>
 
         <fieldset className="mt-8">
