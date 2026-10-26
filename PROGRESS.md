@@ -7,7 +7,7 @@
 
 - **Active phase:** Phase 5 (branch `phase-5-wellness-finance-admin`, branched from the Phase 4 tip; the Phase 4 PR is awaiting the user's merge).
 - **Last updated:** 2026-10-26
-- **Next step:** Phase 5d: Resource library (curated articles and videos, search, bookmarks; admin-managed).
+- **Next step:** Phase 5e: Admin portal (overview analytics, users and roles, knowledge-base documents, AI feedback review, audit log viewer).
 
 ---
 
@@ -66,8 +66,8 @@
 ### Phase 5 — Wellness, Finance, Resources & Admin Portal
 - [x] Wellness tools (breathing, journal, habits, support)
 - [x] Finance tools (budget, savings goals, glossary, calculators)
-- [ ] Resource library (links + video embeds; Cloudinary deferred)
-- [ ] Admin portal (users, mentor verification, content, KB docs, feedback, analytics, audit log)
+- [x] Resource library (links + video embeds; Cloudinary deferred)
+- [ ] Admin portal (users, mentor verification, content, KB docs, feedback, analytics, audit log); mentor verification and resource management done, the rest is 5e
 - [ ] Phase wrap-up ritual
 
 ### Phase 6 — Payments, Automation & Production Launch
@@ -92,6 +92,10 @@
   - Bugs caught: **upsert needs UPDATE permission on every column it writes**, so setting income as the signed-in user failed with 42501 (Postgres's hint, "GRANT UPDATE ON budgets", would have let users move budgets between months or users; fixed in code instead); a screen-reader-only table heading escaped its scroll box (absolute positioning) and widened phone pages to 481 px, found by measuring positioned elements; the "Spent" column was off-screen on phones (rows are now responsive); calculator labels pointed at a wrapper `div`, so clicking them didn't focus the input; over-budget shown only in red (now also in words); every row's name field was announced as "Item name".
   - Process: an `i` typed into the open migration file got committed with `git add -A`. Restored, and `database/test/migration-lock.test.ts` now fingerprints applied migrations (SHA-256), proven to fail on a one-space edit. I now read the staged diff before every commit; doing so immediately kept an unrelated deletion out of a content commit.
   - Honesty fixes: several Phase 1/3 pages said the AI Guide uses "reviewed" sources; the guides are AI-drafted and pending expert review, so the wording is now "curated". Feature statuses on public pages were updated to match what's built, and a promised mentor "availability" filter (never built) was removed from the list.
+- **2026-10-26 (5d Resource library):** `shared/src/resources.ts` (`youtubeId` accepts only exact YouTube hosts, `slugify`, validation with https-only links; the update schema is written out because `.partial()` of a schema with defaults would reset level/status on every PATCH; a minimal `url.d.ts` keeps the shared package free of DOM/Node types). API (`services/resources-service.ts`, `routes/resources.ts`): public list/search (stored `tsvector` + websearch syntax) and detail, saved resources, admin create/update/publish/unpublish/archive/delete with unique slugs and an audit entry for every change. Public reads use a new **anonymous (publishable-key) client** so RLS hides drafts even if a filter is missing. UI: `/resources` (public) and `/app/resources` with search, filters, Save (optimistic with rollback) and "Saved only"; detail pages with a **click-to-load** YouTube player (nothing requested from YouTube before play; then youtube-nocookie.com) and `noopener noreferrer` links; admin area is now tabbed (`/app/admin` → Mentor applications, Resources) with a resource form (per-field errors, YouTube detection) that sends only changed fields.
+  - **Verified:** typecheck 0, lint clean, client 151, server 162, database 54, shared 45; resources integration 6/6 on real Supabase; real-browser E2E 16/16 (admin, reader and anonymous visitor; desktop + 390 px).
+  - Defence in depth demonstrated: with the code's "published only" filter removed, drafts stayed hidden (RLS via the anonymous client); with the filter removed **and** RLS bypassed (service-role client), the integration test caught the leak.
+  - Mutation checks: removing the optimistic rollback (and refetch) fails the "undo the save if the request fails" test.
 
 ### Phase 4 — complete (2026-10-25)
 - **2026-10-25 (database):** Built an offline test harness: PGlite (Postgres 18 in WebAssembly) + Supabase stubs (`database/test/harness.ts`) runs every migration and tests SQL in seconds without Docker. Migration 3: goals/milestones, resumes (private bucket), interview practice, mentor profiles/verifications/availability, bookings with two exclusion constraints (no mentor or mentee overlaps), reviews, and SECURITY DEFINER booking functions (`mentor_open_slots`, `request_booking`, `respond_to_booking`, `cancel_booking`, `reschedule_booking`, `submit_mentor_review`). Wrapped in `begin/commit`. **29 PGlite tests**, incl. a daylight-saving test (US clocks change 1 Nov 2026) and mutation testing (deleting the overlap constraint or weakening the 12-hour rule makes tests fail). The user applied the migration; `db:verify` extended to **69 checks** on Supabase (btree_gist overlap confirmed via error 23P01, private bucket, direct uploads refused).
@@ -212,6 +216,9 @@
 | 2026-10-26 | Money as integer paise; parse typed rupees as text | Floats can't represent 0.1 or 1.15 exactly; text parsing avoids `x × 100` errors | Convert at the edges (input and display) |
 | 2026-10-26 | Applied migrations are fingerprinted and must never change | A database never re-runs an applied migration, so edits silently split the repo from the real schema | New fingerprint to add after each applied migration |
 | 2026-10-26 | Read the staged diff before every commit (no blind `git add -A`) | A stray character reached a migration through a blind commit | A few seconds per commit |
+| 2026-10-26 | Public reads use an anonymous (publishable-key) Supabase client, not the service role | RLS still applies, so a missing filter can't expose drafts | A third client type to keep in mind |
+| 2026-10-26 | YouTube videos are click-to-load, from youtube-nocookie.com | No third-party requests (or tracking) until the person chooses to play; faster pages | One extra click to start a video |
+| 2026-10-26 | Admin edits send only changed fields | Meaningful audit entries; a stale form can't overwrite another admin's newer change | Diffing in the client |
 | 2026-10-24 | Light theme only for now | Focus on one polished theme first; semantic tokens make dark mode a later remap | No dark mode yet |
 
 ---
@@ -246,7 +253,9 @@
 - Mentor E2E scripts live in the session scratchpad; move them into the repo as Playwright tests in Phase 6.
 - Deleting a savings entry is checked in the server, not locked in SQL, so two simultaneous deletes of a person's own entries could leave their goal below zero. Only affects their own record; a `delete_savings_entry` SQL function with a row lock would close it (next migration).
 - Mentor directory has no availability filter (search covers name, headline, job title, company, plus expertise).
-- `resources-page.tsx` still says resources "ground the AI Guide", which isn't true; rewrite with the resource library (5d).
+- Resource search results are ordered by publish date, not relevance (ranking with `ts_rank` needs an SQL function).
+- When deploying (Phase 6), the site's Content Security Policy must allow `frame-src https://www.youtube-nocookie.com`.
+- Resource recommendations based on the roadmap are still planned.
 - Changing the sign-in email address (needs Supabase email-change confirmation flow).
 - JWTs stay valid until expiry (~1h) after sign-out/deletion; consider shorter expiry when going live.
 - Generate DB types with the Supabase CLI and apply migrations via CI.
