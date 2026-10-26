@@ -5,9 +5,9 @@
 
 ## Current status
 
-- **Active phase:** Phase 4 (branch `phase-4-career-mentors`). All features built and verified; the phase wrap-up is next.
-- **Last updated:** 2026-10-25
-- **Next step:** Phase 4 wrap-up (learning doc, quiz), then the user opens the PR. The user's admin-role insert matched 0 rows (as of 2026-10-25, no admin exists); a corrected query was given.
+- **Active phase:** Phase 5 (branch `phase-5-wellness-finance-admin`, branched from the Phase 4 tip; the Phase 4 PR is awaiting the user's merge).
+- **Last updated:** 2026-10-26
+- **Next step:** Phase 5a: migration 4 (wellness, finance, resources, admin analytics) + PGlite tests.
 
 ---
 
@@ -61,12 +61,12 @@
 - [x] Mentor database: profiles, verification states, availability, bookings (exclusion constraints), reviews, booking functions (migration `20261025000003_career_and_mentors.sql`, applied by the user)
 - [x] Mentor marketplace API + UI (directory, profiles, booking, sessions, reviews, applications, availability, admin review queue, notifications)
 - [x] Tests: booking conflicts, review eligibility, document isolation
-- [ ] Phase wrap-up ritual
+- [x] Phase wrap-up: explanation, company practices, `docs/learning/phase-4.md` (quiz 1/4)
 
 ### Phase 5 — Wellness, Finance, Resources & Admin Portal
 - [ ] Wellness tools (breathing, journal, habits, resources)
 - [ ] Finance tools (budget, savings goals, glossary, calculators)
-- [ ] Resource library + Cloudinary
+- [ ] Resource library (links + video embeds; Cloudinary deferred)
 - [ ] Admin portal (users, mentor verification, content, KB docs, feedback, analytics, audit log)
 - [ ] Phase wrap-up ritual
 
@@ -81,7 +81,11 @@
 
 ## Phase log
 
-### Phase 4 (in progress)
+### Phase 5 (in progress)
+- **2026-10-26 (5a database):** Migration `20261026000004_wellness_finance_admin.sql`: journal (writer-only, excluded from admin/analytics/AI), habits + check-ins (composite key to the owner), monthly budgets + items, savings goals with a ledger (`record_savings_entry` locks the goal row, so balances can't go negative), learning resources (published-only for visitors, full-text search via a generated `tsvector` + GIN index, https-only links) + private bookmarks, and server-only admin functions (`admin_overview`, `admin_signups_by_week`, `set_admin_role` with an advisory lock). Money stored as integer paise. **20 new PGlite tests** + a new guard that every `public` table has RLS on; mutation-tested (4 deliberate bugs, all caught). `db:verify` extended with Phase 5 checks (to run after the user applies the migration).
+  - Found while writing it: a `current_date` CHECK would break restoring backups (moved to the server); a "keep at least one admin" check was unreachable (the caller must be an admin and can't remove themselves); the `has_role` backlog item had already been done in migration 2.
+
+### Phase 4 — complete (2026-10-25)
 - **2026-10-25 (database):** Built an offline test harness: PGlite (Postgres 18 in WebAssembly) + Supabase stubs (`database/test/harness.ts`) runs every migration and tests SQL in seconds without Docker. Migration 3: goals/milestones, resumes (private bucket), interview practice, mentor profiles/verifications/availability, bookings with two exclusion constraints (no mentor or mentee overlaps), reviews, and SECURITY DEFINER booking functions (`mentor_open_slots`, `request_booking`, `respond_to_booking`, `cancel_booking`, `reschedule_booking`, `submit_mentor_review`). Wrapped in `begin/commit`. **29 PGlite tests**, incl. a daylight-saving test (US clocks change 1 Nov 2026) and mutation testing (deleting the overlap constraint or weakening the 12-hour rule makes tests fail). The user applied the migration; `db:verify` extended to **69 checks** on Supabase (btree_gist overlap confirmed via error 23P01, private bucket, direct uploads refused).
 - **2026-10-25 (Career Studio):** Roadmap API/UI (`services/career-service.ts`, `pages/career/`); interview practice with a 32-question bank (`database/interview/questions.json`, `npm run interview:seed -w @everguide/server`) and structured AI feedback; resume analyser (`lib/pdf.ts`, `services/resume-service.ts`, raw-body upload after auth). Shared `usage-meter.ts` (one allowance for every AI feature) and `ChatModel.generateJson` with zod validation of model output.
   - **Verified:** typecheck 0, lint clean, 267 unit/DB tests, integration (career 6, interview 6, resumes 6 with real Gemini + Storage), real-browser E2E **12/12** (goal + milestones, optimistic ticking, recommendations, real AI feedback, PDF upload + real report, dashboard progress + usage 2/30, deletion removes the stored file).
@@ -194,6 +198,9 @@
 | 2026-10-25 | Notifications by polling every 60 s (not realtime) | Simple and cheap at this scale; no websocket infrastructure | Up to a minute's delay; revisit with Supabase Realtime or n8n push in Phase 6 |
 | 2026-10-25 | Signed-in app shell lazy-loaded | Public visitors shouldn't download the sidebar and notification code | One extra request when entering `/app` |
 | 2026-10-25 | Convention test for `mutationFn: api.x` | A lint rule can't express it; a cheap grep test stops a known bug coming back | Text-based, so it can be fooled by unusual formatting |
+| 2026-10-26 | Cloudinary deferred; resources use links and YouTube embeds | No account needed yet; images are optional | Admins can't upload cover images until it's added |
+| 2026-10-26 | Journal private via RLS only (no app-level encryption); never shown to admins, analytics or AI | Standard protection, keeps search, no key-loss risk | A full database leak would expose entries; revisit before launch |
+| 2026-10-26 | Wellness/finance content AI-drafted and labelled "pending expert review" | Same approach as the knowledge base | Needs expert review before launch |
 | 2026-10-24 | Light theme only for now | Focus on one polished theme first; semantic tokens make dark mode a later remap | No dark mode yet |
 
 ---
@@ -209,7 +216,7 @@
 | Supabase Auth URL configuration (Site URL + redirect URLs) | Set by user for `http://localhost:5173` | Add production URLs at deploy |
 | Supabase dev project (URL, publishable key, secret key) | ✅ Configured in `.env` / `client/.env.local`. The Supabase connector in Claude is linked to a different account, so migrations are run by the user in the SQL Editor. | Phase 2 |
 | Razorpay (key id/secret, webhook secret, plan IDs) | Not configured | Phase 6 |
-| Cloudinary | Not configured | Phase 5 |
+| Cloudinary | Deferred (decided 2026-10-26) | Later |
 | n8n instance + webhook secret | Not configured | Phase 6 |
 | Real logo asset | Not provided (placeholder in use) | Any time |
 | Contact email, legal entity name/address for Privacy/Terms | Not provided | Before launch |
@@ -230,5 +237,4 @@
 - JWTs stay valid until expiry (~1h) after sign-out/deletion; consider shorter expiry when going live.
 - Generate DB types with the Supabase CLI and apply migrations via CI.
 - PKCE + custom email templates; captcha on signup/login.
-- Next migration: `revoke execute on function public.has_role from public, anon` (harmless today, since it returns false for anonymous callers, but tighter).
 - Pricing for Pro/Premium plans: not decided. The pricing UI reads from config and says "coming soon" until it's set.
