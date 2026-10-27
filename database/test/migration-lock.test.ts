@@ -18,6 +18,8 @@ const APPLIED: Record<string, string> = {
     'e88acaf25e7e6044f7a99afdc6d7a0ec068bd7bdd977f9e7b47b026a11eb285e',
   '20261026000004_wellness_finance_admin.sql':
     '54547c6dd48a9ae994e462ecdd6e8d7b8ca1377da0fa3149684155fc09bd69fd',
+  '20261027000005_resource_images.sql':
+    '128508a53391f235a0f9ddf16f5faa10ff81dfb6c9ce529b9607235136a1838b',
 }
 
 const sha256 = (file: string) =>
