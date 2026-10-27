@@ -7,7 +7,7 @@
 
 - **Active phase:** Phase 5 (branch `phase-5-wellness-finance-admin`, branched from the Phase 4 tip; the Phase 4 PR is awaiting the user's merge).
 - **Last updated:** 2026-10-26
-- **Next step:** Phase 5 wrap-up (learning doc `docs/learning/phase-5.md`, quiz, PR).
+- **Next step:** The user opens and merges the Phase 5 PR; then Phase 6 (Razorpay, n8n, hardening, deploy).
 
 ---
 
@@ -68,7 +68,7 @@
 - [x] Finance tools (budget, savings goals, glossary, calculators)
 - [x] Resource library (links + video embeds) and Cloudinary cover images
 - [x] Admin portal (overview analytics, users and roles, mentor verification, resources, knowledge-base documents, AI feedback, audit log)
-- [ ] Phase wrap-up ritual
+- [x] Phase wrap-up: `docs/learning/phase-5.md` (quiz skipped at the user's request on 2026-10-27; topics carried forward)
 
 ### Phase 6 — Payments, Automation & Production Launch
 - [ ] Razorpay subscriptions + verified webhooks + idempotency
@@ -254,6 +254,7 @@
 - Phase 2 (3/4): correct on defence in depth (user-scoped client + RLS), account enumeration and 401 vs 503. Missed again: why the main bundle matters (every visitor downloads it; route chunks load on demand; critical path). Ask about it again in Phase 3.
 - Phase 3 (4/4): citation validation, measured threshold, race conditions / atomic reservation, and the code-splitting critical path (third attempt) all correct. Next quiz: mix in Phase 2 security concepts as spaced repetition.
 - Phase 4 (1/4): correct on the booking race (check-then-insert gap). Missed: DST is why recurring times are stored as local time + IANA zone; client role checks are UX only, the server check is the security (Phase 2 concept); lazy-loading helps because public visitors stop downloading the code, not compression (bundle/critical path again). Re-ask all three in the Phase 5 quiz.
+- Phase 5: quiz skipped (the user found the phase a lot to take in). `docs/learning/phase-5.md` now starts with a plain-words summary. Before the next quiz, walk through it slowly; then re-ask the Phase 4 topics (DST, server-side role checks, bundle) plus Phase 5 basics (RLS, integer money, signed uploads).
 
 ## Open questions / backlog
 - Notifications are polled; consider realtime/push (Phase 6). Email copies of booking notifications come with n8n (Phase 6).
