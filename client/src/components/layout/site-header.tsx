@@ -1,6 +1,6 @@
 import { Menu } from 'lucide-react'
-import { useState } from 'react'
-import { Link, NavLink } from 'react-router'
+import { useEffect, useState } from 'react'
+import { Link, NavLink, useLocation } from 'react-router'
 import { useAuth } from '@/auth/use-auth'
 import { Logo } from '@/components/brand/logo'
 import { Button } from '@/components/ui/button'
@@ -18,12 +18,35 @@ export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
   const { status } = useAuth()
   const signedIn = status === 'signed-in'
+  const { pathname } = useLocation()
+  const [onDark, setOnDark] = useState(false)
+
+  // Over a dark hero (marked data-dark-hero) the header turns dark glass, like the hero.
+  useEffect(() => {
+    const hero = document.querySelector('[data-dark-hero]')
+    // Older browsers (and test environments) lack IntersectionObserver: keep the light header.
+    if (!hero || typeof IntersectionObserver === 'undefined') return
+    const observer = new IntersectionObserver(
+      ([entry]) => setOnDark(Boolean(entry?.isIntersecting)),
+      { rootMargin: '-64px 0px 0px 0px' },
+    )
+    observer.observe(hero)
+    return () => {
+      observer.disconnect()
+      setOnDark(false)
+    }
+  }, [pathname])
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/80 bg-background/85 backdrop-blur-md">
+    <header
+      className={cn(
+        'sticky top-0 z-40 border-b backdrop-blur-xl backdrop-saturate-150 transition-colors duration-300',
+        onDark ? 'border-white/10 bg-ink/75' : 'border-border/80 bg-background/80',
+      )}
+    >
       <div className="container-page flex h-16 items-center justify-between gap-6">
         <Link to="/" aria-label="EverGuide home" className="rounded-md">
-          <Logo />
+          <Logo tone={onDark ? 'ink' : 'default'} />
         </Link>
 
         <nav aria-label="Main" className="hidden lg:block">
@@ -34,8 +57,11 @@ export function SiteHeader() {
                   to={item.to}
                   className={({ isActive }) =>
                     cn(
-                      'rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground',
-                      isActive && 'text-foreground',
+                      'rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                      onDark
+                        ? 'text-ink-muted hover:text-white'
+                        : 'text-muted-foreground hover:text-foreground',
+                      isActive && (onDark ? 'text-white' : 'text-foreground'),
                     )
                   }
                 >
@@ -53,7 +79,7 @@ export function SiteHeader() {
             </Button>
           ) : (
             <>
-              <Button variant="ghost" asChild>
+              <Button variant={onDark ? 'ghost-ink' : 'ghost'} asChild>
                 <Link to="/login">Log in</Link>
               </Button>
               <Button asChild>
@@ -65,7 +91,12 @@ export function SiteHeader() {
 
         <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open menu">
+            <Button
+              variant={onDark ? 'ghost-ink' : 'ghost'}
+              size="icon"
+              className="lg:hidden"
+              aria-label="Open menu"
+            >
               <Menu className="size-5" aria-hidden />
             </Button>
           </SheetTrigger>
