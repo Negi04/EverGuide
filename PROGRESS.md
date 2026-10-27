@@ -66,7 +66,7 @@
 ### Phase 5 — Wellness, Finance, Resources & Admin Portal
 - [x] Wellness tools (breathing, journal, habits, support)
 - [x] Finance tools (budget, savings goals, glossary, calculators)
-- [x] Resource library (links + video embeds; Cloudinary deferred)
+- [x] Resource library (links + video embeds) and Cloudinary cover images
 - [ ] Admin portal (users, mentor verification, content, KB docs, feedback, analytics, audit log); mentor verification and resource management done, the rest is 5e
 - [ ] Phase wrap-up ritual
 
@@ -96,6 +96,9 @@
   - **Verified:** typecheck 0, lint clean, client 151, server 162, database 54, shared 45; resources integration 6/6 on real Supabase; real-browser E2E 16/16 (admin, reader and anonymous visitor; desktop + 390 px).
   - Defence in depth demonstrated: with the code's "published only" filter removed, drafts stayed hidden (RLS via the anonymous client); with the filter removed **and** RLS bypassed (service-role client), the integration test caught the leak.
   - Mutation checks: removing the optimistic rollback (and refetch) fails the "undo the save if the request fails" test.
+- **2026-10-27 (Cloudinary cover images):** Migration 5 (`20261027000005_resource_images.sql`, applied by the user): `image_public_id` (only `everguide/resources/<uuid>`) and `image_alt` (required with an image). `server/src/lib/cloudinary.ts` (no SDK): signed upload tickets that fix the id and allowed formats (signature verified against Cloudinary's documented example), server-side inspection of every upload before saving (format, ≤ 5 MB, ≥ 400 px wide; rejected uploads are deleted), deletion of replaced/removed images after the database change, 16:9 responsive delivery URLs with `f_auto,q_auto`. Config is all-or-nothing. Browser uploads straight to Cloudinary without our login token; admin form previews and requires alt text; cards use `srcset`/`sizes` + lazy loading, article pages load the cover first.
+  - **Verified:** client 155, server 175, database 58, shared 46; image integration 6/6 against the real Cloudinary account (signed upload, tampered upload refused with 401, too-small image refused and deleted, replace/delete clean up); real-browser E2E 6/6; Cloudinary folder empty afterwards.
+  - Found on the way: the user's first API key had no permissions (403 "missing permissions (actions=["create"])": new Cloudinary keys start with no role), which a connection-only check missed, so `cloudinary:check` now does a real upload/read/delete; later an "api_secret mismatch" from a key and secret of different pairs. Also: an image-test URL pattern was wrong (my test, not the product).
 
 ### Phase 4 — complete (2026-10-25)
 - **2026-10-25 (database):** Built an offline test harness: PGlite (Postgres 18 in WebAssembly) + Supabase stubs (`database/test/harness.ts`) runs every migration and tests SQL in seconds without Docker. Migration 3: goals/milestones, resumes (private bucket), interview practice, mentor profiles/verifications/availability, bookings with two exclusion constraints (no mentor or mentee overlaps), reviews, and SECURITY DEFINER booking functions (`mentor_open_slots`, `request_booking`, `respond_to_booking`, `cancel_booking`, `reschedule_booking`, `submit_mentor_review`). Wrapped in `begin/commit`. **29 PGlite tests**, incl. a daylight-saving test (US clocks change 1 Nov 2026) and mutation testing (deleting the overlap constraint or weakening the 12-hour rule makes tests fail). The user applied the migration; `db:verify` extended to **69 checks** on Supabase (btree_gist overlap confirmed via error 23P01, private bucket, direct uploads refused).
@@ -219,6 +222,8 @@
 | 2026-10-26 | Public reads use an anonymous (publishable-key) Supabase client, not the service role | RLS still applies, so a missing filter can't expose drafts | A third client type to keep in mind |
 | 2026-10-26 | YouTube videos are click-to-load, from youtube-nocookie.com | No third-party requests (or tracking) until the person chooses to play; faster pages | One extra click to start a video |
 | 2026-10-26 | Admin edits send only changed fields | Meaningful audit entries; a stale form can't overwrite another admin's newer change | Diffing in the client |
+| 2026-10-27 | Signed direct uploads to Cloudinary; the server picks the id and verifies each upload | Files never pass through our server; nobody can upload or overwrite without our signature; client claims aren't trusted | Abandoned uploads can leave orphan images |
+| 2026-10-27 | No Cloudinary SDK: signing and three API calls written with `fetch` | Small surface, fully tested, no extra dependency | Must follow Cloudinary API changes ourselves |
 | 2026-10-24 | Light theme only for now | Focus on one polished theme first; semantic tokens make dark mode a later remap | No dark mode yet |
 
 ---
@@ -234,7 +239,7 @@
 | Supabase Auth URL configuration (Site URL + redirect URLs) | Set by user for `http://localhost:5173` | Add production URLs at deploy |
 | Supabase dev project (URL, publishable key, secret key) | ✅ Configured in `.env` / `client/.env.local`. The Supabase connector in Claude is linked to a different account, so migrations are run by the user in the SQL Editor. | Phase 2 |
 | Razorpay (key id/secret, webhook secret, plan IDs) | Not configured | Phase 6 |
-| Cloudinary | Deferred (decided 2026-10-26) | Later |
+| Cloudinary | ✅ Configured in `.env` (2026-10-27); `npm run cloudinary:check -w @everguide/server` uploads, reads and deletes a test image. Use a separate Cloudinary product environment for production | Phase 5 |
 | n8n instance + webhook secret | Not configured | Phase 6 |
 | Real logo asset | Not provided (placeholder in use) | Any time |
 | Contact email, legal entity name/address for Privacy/Terms | Not provided | Before launch |
@@ -254,7 +259,9 @@
 - Deleting a savings entry is checked in the server, not locked in SQL, so two simultaneous deletes of a person's own entries could leave their goal below zero. Only affects their own record; a `delete_savings_entry` SQL function with a row lock would close it (next migration).
 - Mentor directory has no availability filter (search covers name, headline, job title, company, plus expertise).
 - Resource search results are ordered by publish date, not relevance (ranking with `ts_rank` needs an SQL function).
-- When deploying (Phase 6), the site's Content Security Policy must allow `frame-src https://www.youtube-nocookie.com`.
+- When deploying (Phase 6), the site's Content Security Policy must allow `frame-src https://www.youtube-nocookie.com`, `img-src https://res.cloudinary.com` and `connect-src https://api.cloudinary.com`.
+- Images uploaded in a form that is then cancelled stay in Cloudinary: add a periodic cleanup (Phase 6 job) that deletes unreferenced images in `everguide/resources/`.
+- Cloudinary hardening before launch: strict transformations (only our sizes) so nobody can generate unlimited variants on our quota.
 - Resource recommendations based on the roadmap are still planned.
 - Changing the sign-in email address (needs Supabase email-change confirmation flow).
 - JWTs stay valid until expiry (~1h) after sign-out/deletion; consider shorter expiry when going live.
