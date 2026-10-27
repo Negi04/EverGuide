@@ -5,9 +5,9 @@
 
 ## Current status
 
-- **Active phase:** Phase 6 (branch `phase-6-payments-automation`, from `main` after the Phase 5 merge, PR #3).
+- **Active phase:** UI refresh on branch `ui-refresh` (landing redesign + new palette); Phase 6 starts only after the user's explicit go-ahead.
 - **Last updated:** 2026-10-27
-- **Next step:** 6a: the user creates a Razorpay account and adds Test Mode keys to `.env`; build demo payments.
+- **Next step:** Continue the UI refresh as the user directs (login/sign-up and dashboard were suggested), then open the `ui-refresh` PR.
 
 ---
 
@@ -230,6 +230,8 @@ EverGuide is the user's college major project, shown to professors. Payments are
 | 2026-10-27 | Payments are a demo: Razorpay Test Mode only, live keys refused | College major project shown to professors; no real money should ever move | Real billing would need live keys, KYC and legal review |
 | 2026-10-27 | One-time "1 month" purchases instead of recurring subscriptions | Simple and reliable to demonstrate end to end on a laptop | No automatic renewals |
 | 2026-10-27 | Deployment removed from Claude's scope | The user will deploy later themselves | Deployment notes stay in the backlog for them |
+| 2026-10-27 | UI refresh: Apple-style landing (CSS 3D scroll/tilt, no 3D library) and the Off-White + Slate + Teal palette chosen by the user | Premium, clean look for the demo; CSS 3D adds almost no download size | Effects are calm/off under reduced motion |
+| 2026-10-27 | Accent teal #0D9488 for icons, large text, charts; deeper #0F766E for buttons and small text | #0D9488 with white text is 3.7:1, below WCAG AA's 4.5:1 | Two teal shades to keep straight (documented in index.css) |
 | 2026-10-24 | Light theme only for now | Focus on one polished theme first; semantic tokens make dark mode a later remap | No dark mode yet |
 
 ---
@@ -270,6 +272,7 @@ EverGuide is the user's college major project, shown to professors. Payments are
 - Images uploaded in a form that is then cancelled stay in Cloudinary: add a periodic cleanup (Phase 6 job) that deletes unreferenced images in `everguide/resources/`.
 - Cloudinary hardening before launch: strict transformations (only our sizes) so nobody can generate unlimited variants on our quota.
 - Resource recommendations based on the roadmap are still planned.
+- The browser contrast audit (scratchpad `contrast-audit.mjs`, 30 pages) should move into the repo with the Playwright tests in 6c.
 - The admin user list reads up to 10,000 accounts from Supabase Auth and filters in memory; move to server-side search before that scale.
 - AI feedback has no "reviewed" state yet; add one (and a link to the knowledge document to fix) when feedback volume grows.
 - Changing the sign-in email address (needs Supabase email-change confirmation flow).
