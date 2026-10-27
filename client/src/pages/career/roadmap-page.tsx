@@ -77,7 +77,7 @@ export default function RoadmapPage() {
               className={cn(
                 'rounded px-3 py-1.5 text-sm',
                 filter === status
-                  ? 'bg-blue-50 font-medium text-blue-700'
+                  ? 'bg-brand-50 font-medium text-brand-700'
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >

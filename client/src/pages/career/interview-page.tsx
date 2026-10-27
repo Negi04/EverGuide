@@ -55,7 +55,7 @@ export default function InterviewPage() {
             aria-valuenow={questions.data.progress.practised}
           >
             <div
-              className="h-full bg-primary"
+              className="h-full bg-brand-600"
               style={{
                 width: `${(questions.data.progress.practised / Math.max(questions.data.progress.total, 1)) * 100}%`,
               }}

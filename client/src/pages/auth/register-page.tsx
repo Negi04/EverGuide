@@ -53,7 +53,7 @@ export default function RegisterPage() {
   if (sentTo) {
     return (
       <div>
-        <span className="inline-flex size-12 items-center justify-center rounded-md bg-blue-50 text-blue-700">
+        <span className="inline-flex size-12 items-center justify-center rounded-md bg-brand-50 text-brand-700">
           <MailCheck className="size-6" aria-hidden />
         </span>
         <h1 className="mt-6 text-3xl font-semibold text-ink">Check your inbox</h1>

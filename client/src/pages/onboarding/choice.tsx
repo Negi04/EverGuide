@@ -12,7 +12,7 @@ export function Choice({ label, hint, className, ...input }: ChoiceProps) {
   return (
     <label
       className={cn(
-        'flex cursor-pointer items-start gap-3 rounded-md border border-border bg-surface px-4 py-3 transition-colors hover:border-border-strong has-[:checked]:border-primary has-[:checked]:bg-blue-50 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ring',
+        'flex cursor-pointer items-start gap-3 rounded-md border border-border bg-surface px-4 py-3 transition-colors hover:border-border-strong has-[:checked]:border-primary has-[:checked]:bg-brand-50 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ring',
         className,
       )}
     >

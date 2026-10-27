@@ -70,7 +70,7 @@ export function NotificationBell() {
                       onClick={() => open(n)}
                       className={cn(
                         'block w-full px-4 py-3 text-left hover:bg-surface-muted',
-                        !n.readAt && 'bg-blue-50/60',
+                        !n.readAt && 'bg-brand-50/60',
                       )}
                     >
                       <span className="block text-sm font-medium text-foreground">{n.title}</span>

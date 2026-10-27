@@ -21,13 +21,15 @@ import { api } from '@/lib/api'
 import { formatRelative } from '@/lib/format'
 import { UsageNote } from '@/pages/guide/workspace-notes'
 
-const alignmentLabel: Record<ResumeAlignment, { text: string; tone: 'blue' | 'gold' | 'neutral' }> =
-  {
-    strong: { text: 'Strong match', tone: 'blue' },
-    partial: { text: 'Partial match', tone: 'gold' },
-    limited: { text: 'Limited match', tone: 'neutral' },
-    not_assessed: { text: 'General review (no job description)', tone: 'neutral' },
-  }
+const alignmentLabel: Record<
+  ResumeAlignment,
+  { text: string; tone: 'brand' | 'amber' | 'neutral' }
+> = {
+  strong: { text: 'Strong match', tone: 'brand' },
+  partial: { text: 'Partial match', tone: 'amber' },
+  limited: { text: 'Limited match', tone: 'neutral' },
+  not_assessed: { text: 'General review (no job description)', tone: 'neutral' },
+}
 
 export default function ResumeDetailPage() {
   const { resumeId = '' } = useParams()
@@ -144,7 +146,7 @@ function ReportCard({ analysis }: { analysis: ResumeAnalysis }) {
       className="rounded-lg border border-border bg-surface p-5 sm:p-6"
     >
       <div className="flex flex-wrap items-center gap-2">
-        <span className="flex items-center gap-1.5 text-xs font-semibold text-blue-700">
+        <span className="flex items-center gap-1.5 text-xs font-semibold text-brand-700">
           <Sparkles className="size-3.5" aria-hidden /> AI-generated report
         </span>
         <Badge tone={alignment.tone}>{alignment.text}</Badge>
@@ -206,7 +208,7 @@ function ReportCard({ analysis }: { analysis: ResumeAnalysis }) {
           <ul className="mt-2 flex flex-wrap gap-1.5">
             {report.missingKeywords.map((k) => (
               <li key={k}>
-                <Badge tone="gold">{k}</Badge>
+                <Badge tone="amber">{k}</Badge>
               </li>
             ))}
           </ul>

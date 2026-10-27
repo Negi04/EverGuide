@@ -105,7 +105,7 @@ function UserRow({ user }: { user: AdminUser }) {
         {user.roles.map((role) => (
           <Badge
             key={role}
-            tone={role === 'admin' ? 'gold' : role === 'mentor' ? 'blue' : 'neutral'}
+            tone={role === 'admin' ? 'amber' : role === 'mentor' ? 'brand' : 'neutral'}
           >
             {role}
           </Badge>

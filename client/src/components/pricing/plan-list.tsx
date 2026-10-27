@@ -18,7 +18,7 @@ export function PlanList() {
         >
           <div className="flex items-center justify-between gap-3">
             <h3 className="text-xl font-semibold text-ink">{plan.name}</h3>
-            {plan.highlighted && <Badge tone="blue">For job seekers</Badge>}
+            {plan.highlighted && <Badge tone="brand">For job seekers</Badge>}
           </div>
           <p className="mt-2 text-sm text-muted-foreground">{plan.audience}</p>
           <p className="mt-6 font-display text-3xl font-semibold text-ink">
@@ -30,7 +30,7 @@ export function PlanList() {
           <ul className="mt-6 flex-1 space-y-3">
             {plan.includes.map((item) => (
               <li key={item} className="flex gap-2.5 text-sm text-foreground">
-                <Check className="mt-0.5 size-4 shrink-0 text-blue-600" aria-hidden />
+                <Check className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
                 {item}
               </li>
             ))}

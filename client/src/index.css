@@ -3,66 +3,76 @@
 @import '@fontsource-variable/figtree/wght.css';
 
 /*
- * EverGuide design tokens.
- * Raw brand values live in :root; semantic tokens (background, primary, …) point at them.
- * Components only use semantic tokens so the palette can change in one place.
+ * EverGuide design tokens: Off-White + Slate + Teal (chosen 2026-10-27).
+ * Raw values live in :root; semantic tokens (background, primary, …) point at them, and
+ * components use the semantic names or the `brand-*` ramp, so the palette changes here.
+ *
+ * Contrast (WCAG AA): the accent teal #0D9488 is 3.7:1 with white text, below the 4.5:1
+ * that normal-size text needs. So it's used where 3:1 is enough (icons, large headings,
+ * focus rings, charts, progress bars), and buttons and small teal text use the deeper
+ * #0F766E (5.5:1). Secondary text #64748B passes on the page and white cards; on grey
+ * panels small text uses `muted-strong` (#475569).
  */
 :root {
-  /* Brand palette */
-  --eg-navy-950: #070e22;
-  --eg-navy-900: #0b1530; /* Midnight Navy */
-  --eg-navy-800: #13214a;
-  --eg-navy-700: #1c2e63;
-  --eg-blue-700: #174ea6; /* Deep Blue */
-  --eg-blue-600: #2563eb; /* Cobalt Blue */
-  --eg-blue-100: #dbe7fd;
-  --eg-blue-50: #eef4fe;
-  --eg-sky-400: #38bdf8; /* Sky Blue */
-  --eg-sky-200: #bae6fd;
-  --eg-gold-400: #f4b860; /* Warm Gold */
-  --eg-gold-700: #8a5a12; /* Gold for text on light surfaces (AA contrast) */
-  --eg-gold-100: #fdf0db;
-  --eg-cloud: #f7f9fc; /* Cloud White */
+  /* Brand: teal ramp (600 is the accent) */
+  --eg-brand-50: #f0fdfa;
+  --eg-brand-100: #ccfbf1;
+  --eg-brand-200: #99f6e4;
+  --eg-brand-300: #5eead4;
+  --eg-brand-400: #2dd4bf;
+  --eg-brand-500: #14b8a6;
+  --eg-brand-600: #0d9488; /* Accent */
+  --eg-brand-700: #0f766e; /* Buttons and small teal text */
+  --eg-brand-800: #115e59;
+  --eg-brand-900: #134e4a;
+  --eg-cyan-600: #0891b2; /* Partner for brand gradients (3.5:1 on the page) */
+
+  /* Status, separate from the brand: amber for drafts, warnings and streaks */
+  --eg-amber-100: #fef3c7;
+  --eg-amber-400: #fbbf24;
+  --eg-amber-700: #b45309;
+  --eg-amber-800: #92400e;
 
   /* Neutrals (slate) */
-  --eg-slate-950: #0f172a;
+  --eg-offwhite: #f8fafc;
+  --eg-slate-900: #0f172a;
   --eg-slate-800: #1e293b;
   --eg-slate-700: #334155;
   --eg-slate-600: #475569;
   --eg-slate-500: #64748b;
+  --eg-slate-400: #94a3b8;
   --eg-slate-300: #cbd5e1;
   --eg-slate-200: #e2e8f0;
   --eg-slate-100: #f1f5f9;
 
   /* Semantic tokens */
-  --background: var(--eg-cloud);
-  --foreground: var(--eg-slate-950);
+  --background: var(--eg-offwhite);
+  --foreground: var(--eg-slate-900);
   --surface: #ffffff;
   --surface-muted: var(--eg-slate-100);
-  --muted-foreground: var(--eg-slate-600);
+  --muted-foreground: var(--eg-slate-500);
+  --muted-strong: var(--eg-slate-600);
   --border: var(--eg-slate-200);
   --border-strong: var(--eg-slate-300);
-  --primary: var(--eg-blue-600);
-  --primary-hover: var(--eg-blue-700);
+  --primary: var(--eg-brand-700);
+  --primary-hover: var(--eg-brand-800);
   --primary-foreground: #ffffff;
-  --accent: var(--eg-gold-400);
-  --accent-foreground: var(--eg-navy-900);
-  --accent-text: var(--eg-gold-700);
-  --ink: var(--eg-navy-900);
-  --ink-foreground: #e6ecf8;
-  --ink-muted: #9aa8c7;
+  --accent: var(--eg-brand-600);
+  --ink: var(--eg-slate-900); /* Dark bands and dark surfaces */
+  --ink-foreground: var(--eg-slate-200);
+  --ink-muted: var(--eg-slate-400);
   --ink-border: rgb(255 255 255 / 0.1);
   --danger: #b42318;
   --success: #067647;
-  --ring: var(--eg-blue-600);
+  --ring: var(--eg-brand-600);
 
   /* Shape, depth and motion */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
-  --shadow-sm: 0 1px 2px rgb(11 21 48 / 0.06);
-  --shadow-md: 0 1px 2px rgb(11 21 48 / 0.06), 0 8px 24px -8px rgb(11 21 48 / 0.12);
-  --shadow-lg: 0 2px 4px rgb(11 21 48 / 0.06), 0 24px 48px -16px rgb(11 21 48 / 0.22);
+  --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.05);
+  --shadow-md: 0 1px 2px rgb(15 23 42 / 0.05), 0 8px 24px -8px rgb(15 23 42 / 0.1);
+  --shadow-lg: 0 2px 4px rgb(15 23 42 / 0.05), 0 24px 48px -16px rgb(15 23 42 / 0.18);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --duration-fast: 150ms;
   --duration-base: 240ms;
@@ -77,14 +87,13 @@
   --color-surface: var(--surface);
   --color-surface-muted: var(--surface-muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-muted-strong: var(--muted-strong);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-primary-foreground: var(--primary-foreground);
   --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent-text: var(--accent-text);
   --color-ink: var(--ink);
   --color-ink-foreground: var(--ink-foreground);
   --color-ink-muted: var(--ink-muted);
@@ -93,18 +102,20 @@
   --color-success: var(--success);
   --color-ring: var(--ring);
 
-  --color-navy-950: var(--eg-navy-950);
-  --color-navy-900: var(--eg-navy-900);
-  --color-navy-800: var(--eg-navy-800);
-  --color-navy-700: var(--eg-navy-700);
-  --color-blue-700: var(--eg-blue-700);
-  --color-blue-600: var(--eg-blue-600);
-  --color-blue-100: var(--eg-blue-100);
-  --color-blue-50: var(--eg-blue-50);
-  --color-sky-400: var(--eg-sky-400);
-  --color-sky-200: var(--eg-sky-200);
-  --color-gold-400: var(--eg-gold-400);
-  --color-gold-100: var(--eg-gold-100);
+  --color-brand-50: var(--eg-brand-50);
+  --color-brand-100: var(--eg-brand-100);
+  --color-brand-200: var(--eg-brand-200);
+  --color-brand-300: var(--eg-brand-300);
+  --color-brand-400: var(--eg-brand-400);
+  --color-brand-500: var(--eg-brand-500);
+  --color-brand-600: var(--eg-brand-600);
+  --color-brand-700: var(--eg-brand-700);
+  --color-brand-800: var(--eg-brand-800);
+  --color-brand-900: var(--eg-brand-900);
+  --color-amber-100: var(--eg-amber-100);
+  --color-amber-400: var(--eg-amber-400);
+  --color-amber-700: var(--eg-amber-700);
+  --color-amber-800: var(--eg-amber-800);
 
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
@@ -190,8 +201,8 @@
   }
 
   ::selection {
-    background: var(--eg-sky-200);
-    color: var(--eg-navy-900);
+    background: var(--eg-brand-100);
+    color: var(--eg-slate-900);
   }
 }
 
@@ -226,7 +237,20 @@
   }
 
   .on-ink .eyebrow {
-    color: var(--eg-gold-400);
+    color: var(--eg-brand-300);
+  }
+
+  /* Brand gradient for large text: every stop is at least 3:1 on the page. */
+  .text-gradient-brand {
+    background-image: linear-gradient(
+      100deg,
+      var(--eg-brand-700),
+      var(--eg-brand-600) 55%,
+      var(--eg-cyan-600)
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 }
 
@@ -308,4 +332,3 @@
     animation: none;
   }
 }
-

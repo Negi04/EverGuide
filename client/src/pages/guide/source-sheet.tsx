@@ -15,7 +15,7 @@ export function SourceSheet({
       <SheetContent className="w-[min(28rem,100%)]">
         {citation && (
           <div className="flex h-full flex-col overflow-y-auto pr-2">
-            <p className="text-xs font-semibold tracking-wide text-blue-700 uppercase">
+            <p className="text-xs font-semibold tracking-wide text-brand-700 uppercase">
               Source {citation.number}
             </p>
             <SheetTitle className="mt-2 font-display text-xl font-semibold text-ink">
@@ -26,9 +26,10 @@ export function SourceSheet({
             </SheetDescription>
 
             <h3 className="mt-6 flex items-center gap-2 text-sm font-semibold text-ink">
-              <FileText className="size-4 text-blue-600" aria-hidden /> Passage used for this answer
+              <FileText className="size-4 text-brand-600" aria-hidden /> Passage used for this
+              answer
             </h3>
-            <blockquote className="mt-2 rounded-md border-l-4 border-blue-600 bg-blue-50/60 px-4 py-3 text-sm leading-relaxed whitespace-pre-line text-foreground">
+            <blockquote className="mt-2 rounded-md border-l-4 border-brand-600 bg-brand-50/60 px-4 py-3 text-sm leading-relaxed whitespace-pre-line text-foreground">
               {citation.excerpt}
             </blockquote>
 

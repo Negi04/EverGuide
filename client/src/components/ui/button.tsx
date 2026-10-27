@@ -9,7 +9,8 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary: 'bg-primary text-primary-foreground shadow-sm hover:bg-primary-hover',
-        accent: 'bg-accent text-accent-foreground shadow-sm hover:bg-[#f0a845]',
+        // For dark or teal bands: a white pill with deep teal text.
+        accent: 'bg-white text-brand-800 shadow-sm hover:bg-brand-50',
         outline:
           'border border-border-strong bg-surface text-foreground hover:border-foreground/40 hover:bg-surface-muted',
         ghost: 'text-foreground hover:bg-surface-muted',

@@ -76,9 +76,9 @@ const emptyForm: FormValues = {
 type ImageState = { publicId: string; previewUrl: string; alt: string } | null
 type FormErrors = Partial<Record<keyof FormValues | 'image', string>>
 
-const statusTone: Record<ResourceStatus, 'blue' | 'gold' | 'neutral'> = {
-  published: 'blue',
-  draft: 'gold',
+const statusTone: Record<ResourceStatus, 'brand' | 'amber' | 'neutral'> = {
+  published: 'brand',
+  draft: 'amber',
   archived: 'neutral',
 }
 

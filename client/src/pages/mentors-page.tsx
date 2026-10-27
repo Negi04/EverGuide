@@ -46,7 +46,7 @@ export default function MentorsPage() {
           <ul className="mt-10 grid gap-10 md:grid-cols-3">
             {principles.map(({ icon: Icon, title, body }) => (
               <li key={title}>
-                <Icon className="size-6 text-blue-600" aria-hidden />
+                <Icon className="size-6 text-brand-600" aria-hidden />
                 <h3 className="mt-4 text-lg font-semibold text-ink">{title}</h3>
                 <p className="mt-2 leading-relaxed text-muted-foreground">{body}</p>
               </li>

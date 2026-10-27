@@ -89,7 +89,7 @@ function Results({ label, rows }: { label: string; rows: [string, string, boolea
         <dl className="space-y-1.5">
           {rows.map(([name, value, strong]) => (
             <div key={name} className="flex justify-between gap-3">
-              <dt className="text-muted-foreground">{name}</dt>
+              <dt className="text-muted-strong">{name}</dt>
               <dd
                 className={
                   strong ? 'text-base font-semibold text-ink tabular-nums' : 'tabular-nums'

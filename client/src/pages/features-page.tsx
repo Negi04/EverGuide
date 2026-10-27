@@ -38,7 +38,7 @@ export default function FeaturesPage() {
               className="grid scroll-mt-24 gap-8 py-12 lg:grid-cols-[1fr_1.4fr] lg:gap-16"
             >
               <div>
-                <span className="inline-flex size-11 items-center justify-center rounded-md bg-ink text-sky-400">
+                <span className="inline-flex size-11 items-center justify-center rounded-md bg-ink text-brand-300">
                   <Icon className="size-5" aria-hidden />
                 </span>
                 <h2 id={`${id}-title`} className="mt-5 text-2xl font-semibold text-ink sm:text-3xl">

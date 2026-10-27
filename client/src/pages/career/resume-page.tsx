@@ -45,7 +45,7 @@ export default function ResumePage() {
   return (
     <div>
       <div className="flex gap-3 rounded-lg border border-border bg-surface p-4 text-sm text-muted-foreground">
-        <Lock className="mt-0.5 size-4 shrink-0 text-blue-600" aria-hidden />
+        <Lock className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
         <p>
           Your resume is stored privately and only you can access it. When you ask for an analysis,
           its text is sent to Google’s Gemini AI to produce the report. You can delete a resume and
@@ -108,7 +108,7 @@ function ResumeRow({ resume }: { resume: ResumeSummary }) {
   })
   return (
     <li className="flex items-center gap-3 px-4 py-3">
-      <FileText className="size-5 shrink-0 text-blue-600" aria-hidden />
+      <FileText className="size-5 shrink-0 text-brand-600" aria-hidden />
       <Link to={`/app/career/resume/${resume.id}`} className="group min-w-0 flex-1">
         <span className="block truncate text-sm font-medium group-hover:text-primary">
           {resume.fileName}

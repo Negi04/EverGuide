@@ -8,13 +8,13 @@ const states = [
     icon: Clock,
     name: 'Pending',
     body: 'A mentor has applied. Their profile is visible to reviewers only.',
-    className: 'text-accent-text bg-gold-100',
+    className: 'text-amber-800 bg-amber-100',
   },
   {
     icon: BadgeCheck,
     name: 'Verified',
     body: 'A reviewer has checked their background against the evidence they provided.',
-    className: 'text-blue-700 bg-blue-50',
+    className: 'text-brand-700 bg-brand-50',
   },
   {
     icon: CircleX,

@@ -66,7 +66,7 @@ export function ProductPreview() {
                         key={thread}
                         className={
                           index === 0
-                            ? 'rounded-md bg-blue-50 px-3 py-2 font-medium text-blue-700'
+                            ? 'rounded-md bg-brand-50 px-3 py-2 font-medium text-brand-700'
                             : 'rounded-md px-3 py-2 text-muted-foreground'
                         }
                       >
@@ -83,7 +83,7 @@ export function ProductPreview() {
                   </div>
 
                   <div className="max-w-2xl">
-                    <p className="flex items-center gap-1.5 text-xs font-semibold text-blue-700">
+                    <p className="flex items-center gap-1.5 text-xs font-semibold text-brand-700">
                       <Sparkles className="size-3.5" aria-hidden /> AI-generated · Career mode
                     </p>
                     <div className="mt-2 space-y-3 text-sm leading-relaxed text-foreground">
@@ -124,7 +124,7 @@ export function ProductPreview() {
 
 function Cite({ n }: { n: number }) {
   return (
-    <sup className="ml-0.5 inline-flex size-4 items-center justify-center rounded-sm bg-blue-100 text-[0.65rem] font-semibold text-blue-700">
+    <sup className="ml-0.5 inline-flex size-4 items-center justify-center rounded-sm bg-brand-100 text-[0.65rem] font-semibold text-brand-700">
       {n}
     </sup>
   )
@@ -133,7 +133,7 @@ function Cite({ n }: { n: number }) {
 function SourceChip({ n, title }: { n: number; title: string }) {
   return (
     <span className="inline-flex items-center gap-2 rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs text-muted-foreground">
-      <span className="font-semibold text-blue-700">{n}</span>
+      <span className="font-semibold text-brand-700">{n}</span>
       <FileText className="size-3.5" aria-hidden />
       {title}
     </span>

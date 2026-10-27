@@ -173,7 +173,7 @@ function HabitCard({ habit, week, today }: { habit: Habit; week: string[]; today
         <p
           className={cn(
             'flex items-center gap-1 text-sm font-medium',
-            streak > 0 ? 'text-accent-text' : 'text-muted-foreground',
+            streak > 0 ? 'text-amber-700' : 'text-muted-foreground',
           )}
         >
           <Flame className="size-4" aria-hidden />

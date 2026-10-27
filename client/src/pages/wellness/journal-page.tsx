@@ -46,7 +46,7 @@ export default function JournalPage() {
   return (
     <div className="space-y-8">
       <p className="flex items-start gap-2 text-sm text-muted-foreground">
-        <BookLock className="mt-0.5 size-4 shrink-0 text-blue-600" aria-hidden />
+        <BookLock className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
         Only you can read your journal. EverGuide’s admin tools never show journal entries, and
         they’re never used for AI or analytics.
       </p>
@@ -268,7 +268,7 @@ function EntryForm({
               className={cn(
                 'rounded-md border px-3 py-1.5 text-sm',
                 values.mood === m.value
-                  ? 'border-primary bg-blue-50 text-blue-700'
+                  ? 'border-primary bg-brand-50 text-brand-700'
                   : 'border-border hover:border-border-strong',
               )}
             >

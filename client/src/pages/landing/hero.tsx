@@ -41,42 +41,38 @@ export function Hero() {
   return (
     <section
       aria-labelledby="hero-title"
-      data-dark-hero
       onPointerMove={lean}
-      className="on-ink relative isolate -mt-16 overflow-hidden bg-ink"
+      className="relative isolate -mt-16 overflow-hidden bg-background"
     >
-      {/* Drifting colour light behind everything. */}
+      {/* Soft, drifting teal light behind everything. */}
       <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
-        <div className="aurora-blob top-[-12rem] left-[8%] size-[34rem] bg-blue-600/35" />
+        <div className="aurora-blob top-[-14rem] left-[6%] size-[36rem] bg-brand-200/45" />
         <div
-          className="aurora-blob top-[6rem] right-[4%] size-[28rem] bg-sky-400/25"
+          className="aurora-blob top-[4rem] right-[2%] size-[30rem] bg-cyan-200/40"
           style={{ animationDelay: '-6s' }}
         />
         <div
-          className="aurora-blob top-[26rem] left-[38%] size-[24rem] bg-gold-400/15"
+          className="aurora-blob top-[30rem] left-[36%] size-[26rem] bg-brand-100/60"
           style={{ animationDelay: '-11s' }}
         />
-        <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(rgb(255_255_255/0.035)_1px,transparent_1px),linear-gradient(90deg,rgb(255_255_255/0.035)_1px,transparent_1px)] [background-size:64px_64px] [mask-image:radial-gradient(ellipse_at_50%_30%,black,transparent_70%)]" />
+        <div className="absolute inset-0 opacity-60 [background-image:linear-gradient(rgb(15_23_42/0.035)_1px,transparent_1px),linear-gradient(90deg,rgb(15_23_42/0.035)_1px,transparent_1px)] [background-size:64px_64px] [mask-image:radial-gradient(ellipse_at_50%_30%,black,transparent_70%)]" />
       </div>
 
       {/* -mt-16 above slides the hero under the glass header; this padding makes up for it. */}
       <div className="container-page pt-36 pb-10 text-center sm:pt-44">
-        <p className="mx-auto inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-medium tracking-wide text-ink-foreground backdrop-blur motion-safe:animate-fade-up">
-          <span className="size-1.5 rounded-full bg-gold-400" aria-hidden />
+        <p className="mx-auto inline-flex items-center gap-2 rounded-full border border-border bg-white/70 px-4 py-1.5 text-xs font-medium tracking-wide text-muted-strong shadow-sm backdrop-blur motion-safe:animate-fade-up">
+          <span className="size-1.5 rounded-full bg-brand-600" aria-hidden />
           Guidance for a brighter tomorrow
         </p>
         <h1
           id="hero-title"
-          className="mx-auto mt-7 max-w-4xl text-[2.9rem] leading-[1.02] font-semibold tracking-tight text-white motion-safe:animate-fade-up sm:text-7xl lg:text-[5.5rem]"
+          className="mx-auto mt-7 max-w-4xl text-[2.9rem] leading-[1.02] font-semibold tracking-tight text-foreground motion-safe:animate-fade-up sm:text-7xl lg:text-[5.5rem]"
           style={{ animationDelay: '80ms' }}
         >
-          Your next chapter{' '}
-          <span className="bg-gradient-to-r from-gold-400 via-[#f7d08a] to-sky-400 bg-clip-text text-transparent">
-            starts here.
-          </span>
+          Your next chapter <span className="text-gradient-brand">starts here.</span>
         </h1>
         <p
-          className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-ink-muted motion-safe:animate-fade-up sm:text-xl"
+          className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground motion-safe:animate-fade-up sm:text-xl"
           style={{ animationDelay: '160ms' }}
         >
           Career planning, an AI guide that cites its sources, verified mentors, wellbeing and money
@@ -86,13 +82,13 @@ export function Hero() {
           className="mt-10 flex flex-col justify-center gap-3 motion-safe:animate-fade-up sm:flex-row"
           style={{ animationDelay: '240ms' }}
         >
-          <Button size="lg" variant="accent" asChild>
+          <Button size="lg" asChild>
             <Link to="/register">
               Start your journey
               <ArrowRight aria-hidden />
             </Link>
           </Button>
-          <Button size="lg" variant="outline-ink" asChild>
+          <Button size="lg" variant="outline" asChild>
             <Link to="/features">Explore EverGuide</Link>
           </Button>
         </div>
@@ -112,14 +108,14 @@ export function Hero() {
             <span
               key={label}
               aria-hidden
-              className={`float absolute hidden items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-2 text-sm font-medium text-white shadow-lg backdrop-blur-md md:inline-flex ${place}`}
+              className={`float absolute hidden items-center gap-2 rounded-full border border-border bg-white/85 px-3.5 py-2 text-sm font-medium text-foreground shadow-lg backdrop-blur-md md:inline-flex ${place}`}
               style={{ ['--z' as string]: z, animationDelay: `${i * -1.3}s` }}
             >
-              <Icon className="size-4 text-gold-400" />
+              <Icon className="size-4 text-brand-600" />
               {label}
             </span>
           ))}
-          <figcaption className="mt-5 text-center text-xs text-ink-muted">
+          <figcaption className="mt-5 text-center text-xs text-muted-foreground">
             Preview with example content.
           </figcaption>
         </figure>
@@ -134,64 +130,65 @@ function AppPreview() {
   return (
     <div
       aria-hidden
-      className="overflow-hidden rounded-2xl border border-white/15 bg-[#0e1a3a]/80 text-left shadow-[0_40px_120px_-20px_rgb(37_99_235/0.45)] ring-1 ring-white/5 backdrop-blur-xl"
+      className="overflow-hidden rounded-2xl border border-border bg-white/80 text-left shadow-[0_50px_120px_-40px_rgb(13_148_136/0.45),0_20px_40px_-20px_rgb(15_23_42/0.15)] ring-1 ring-black/[0.02] backdrop-blur-xl"
     >
-      <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
-        <span className="size-2.5 rounded-full bg-white/20" />
-        <span className="size-2.5 rounded-full bg-white/20" />
-        <span className="size-2.5 rounded-full bg-white/20" />
-        <span className="ml-3 text-xs text-ink-muted">EverGuide · Dashboard</span>
+      <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+        <span className="size-2.5 rounded-full bg-slate-200" />
+        <span className="size-2.5 rounded-full bg-slate-200" />
+        <span className="size-2.5 rounded-full bg-slate-200" />
+        <span className="ml-3 text-xs text-muted-foreground">EverGuide · Dashboard</span>
       </div>
       <div className="grid grid-cols-[3.25rem_1fr]">
-        <div className="flex flex-col items-center gap-4 border-r border-white/10 py-5">
+        <div className="flex flex-col items-center gap-4 border-r border-border bg-slate-50/60 py-5">
           {nav.map((Icon, i) => (
-            <Icon key={i} className={`size-4 ${i === 0 ? 'text-gold-400' : 'text-ink-muted'}`} />
+            <Icon key={i} className={`size-4 ${i === 0 ? 'text-brand-600' : 'text-slate-400'}`} />
           ))}
         </div>
-        <div className="grid gap-3 p-4 sm:grid-cols-6 sm:gap-4 sm:p-6">
+        <div className="grid gap-3 bg-slate-50/40 p-4 sm:grid-cols-6 sm:gap-4 sm:p-6">
           <PreviewCard className="sm:col-span-4">
-            <p className="text-xs text-ink-muted">Today’s focus</p>
-            <p className="mt-1 font-semibold text-white">Learn SQL basics</p>
-            <div className="mt-3 h-1.5 rounded-full bg-white/10">
-              <div className="h-full w-2/5 rounded-full bg-gradient-to-r from-blue-600 to-sky-400" />
+            <p className="text-xs text-muted-foreground">Today’s focus</p>
+            <p className="mt-1 font-semibold text-foreground">Learn SQL basics</p>
+            <div className="mt-3 h-1.5 rounded-full bg-slate-100">
+              <div className="h-full w-2/5 rounded-full bg-gradient-to-r from-brand-600 to-brand-400" />
             </div>
-            <p className="mt-2 text-xs text-ink-muted">Milestone 2 of 5 · Roadmap</p>
+            <p className="mt-2 text-xs text-muted-foreground">Milestone 2 of 5 · Roadmap</p>
           </PreviewCard>
           <PreviewCard className="sm:col-span-2">
-            <p className="text-xs text-ink-muted">Walk 10 minutes</p>
-            <p className="mt-1 flex items-center gap-1.5 text-2xl font-semibold text-white">
-              <Flame className="size-5 text-gold-400" /> 12
+            <p className="text-xs text-muted-foreground">Walk 10 minutes</p>
+            <p className="mt-1 flex items-center gap-1.5 text-2xl font-semibold text-foreground">
+              <Flame className="size-5 text-amber-400" /> 12
             </p>
-            <p className="text-xs text-ink-muted">day streak</p>
+            <p className="text-xs text-muted-foreground">day streak</p>
           </PreviewCard>
           <PreviewCard className="sm:col-span-4">
-            <p className="flex items-center gap-1.5 text-xs font-medium text-sky-400">
+            <p className="flex items-center gap-1.5 text-xs font-medium text-brand-700">
               <Sparkles className="size-3.5" /> AI Guide
             </p>
-            <p className="mt-2 text-sm leading-relaxed text-ink-foreground">
+            <p className="mt-2 text-sm leading-relaxed text-foreground">
               Start with spreadsheets and SQL, then one visualisation tool
-              <sup className="ml-0.5 rounded bg-blue-600/40 px-1 text-[0.6rem] text-white">1</sup>.
-              Build two small projects with data you know
-              <sup className="ml-0.5 rounded bg-blue-600/40 px-1 text-[0.6rem] text-white">2</sup>.
+              <sup className="ml-0.5 rounded bg-brand-100 px-1 text-[0.6rem] text-brand-700">1</sup>
+              . Build two small projects with data you know
+              <sup className="ml-0.5 rounded bg-brand-100 px-1 text-[0.6rem] text-brand-700">2</sup>
+              .
             </p>
           </PreviewCard>
           <PreviewCard className="sm:col-span-2">
-            <p className="text-xs text-ink-muted">Next session</p>
-            <p className="mt-1 flex items-center gap-1.5 font-semibold text-white">
-              <CalendarClock className="size-4 text-sky-400" /> Thu, 6:00 pm
+            <p className="text-xs text-muted-foreground">Next session</p>
+            <p className="mt-1 flex items-center gap-1.5 font-semibold text-foreground">
+              <CalendarClock className="size-4 text-brand-600" /> Thu, 6:00 pm
             </p>
-            <p className="mt-1 text-xs text-ink-muted">Verified mentor</p>
+            <p className="mt-1 text-xs text-muted-foreground">Verified mentor</p>
           </PreviewCard>
           <PreviewCard className="hidden sm:col-span-6 sm:block">
-            <div className="flex items-center justify-between text-xs text-ink-muted">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>October budget</span>
-              <span className="text-white">₹19,999 left to plan</span>
+              <span className="font-medium text-foreground">₹19,999 left to plan</span>
             </div>
             <div className="mt-3 flex h-2 gap-0.5 overflow-hidden rounded-full">
-              <div className="w-[40%] bg-blue-600" />
-              <div className="w-[12%] bg-sky-400" />
-              <div className="w-[20%] bg-gold-400" />
-              <div className="flex-1 bg-white/10" />
+              <div className="w-[40%] bg-brand-700" />
+              <div className="w-[12%] bg-brand-500" />
+              <div className="w-[20%] bg-brand-300" />
+              <div className="flex-1 bg-slate-100" />
             </div>
           </PreviewCard>
         </div>
@@ -202,7 +199,7 @@ function AppPreview() {
 
 function PreviewCard({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`rounded-xl border border-white/10 bg-white/[0.04] p-4 ${className ?? ''}`}>
+    <div className={`rounded-xl border border-border bg-white p-4 shadow-sm ${className ?? ''}`}>
       {children}
     </div>
   )

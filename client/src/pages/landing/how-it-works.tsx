@@ -30,7 +30,7 @@ export function HowItWorks() {
           {steps.map((step, index) => (
             <Reveal as="li" key={step.title} delay={index * 120} className="relative">
               <div className="flex items-center gap-4">
-                <span className="font-display text-5xl leading-none font-semibold bg-gradient-to-b from-blue-600 to-sky-400 bg-clip-text text-transparent">
+                <span className="font-display text-5xl leading-none font-semibold bg-gradient-to-b from-brand-600 to-brand-500 bg-clip-text text-transparent">
                   {String(index + 1).padStart(2, '0')}
                 </span>
                 {index < steps.length - 1 && (

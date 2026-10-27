@@ -109,7 +109,7 @@ function BookingCard({
   const open = booking.status === 'requested' || booking.status === 'confirmed'
   const isMentor = booking.role === 'mentor'
   const tone =
-    booking.status === 'confirmed' ? 'blue' : booking.status === 'requested' ? 'gold' : 'neutral'
+    booking.status === 'confirmed' ? 'brand' : booking.status === 'requested' ? 'amber' : 'neutral'
 
   return (
     <li className="rounded-lg border border-border bg-surface p-5">

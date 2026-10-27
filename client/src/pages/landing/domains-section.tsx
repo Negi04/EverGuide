@@ -43,10 +43,10 @@ export function DomainsSection() {
                       to={`/features#${domain.id}`}
                       className={cn(
                         'group flex h-full flex-col rounded-2xl border border-border bg-surface p-6 shadow-sm transition-shadow [transform-style:preserve-3d] hover:shadow-lg sm:p-8',
-                        large && 'bg-gradient-to-br from-surface via-surface to-blue-50',
+                        large && 'bg-gradient-to-br from-surface via-surface to-brand-50',
                       )}
                     >
-                      <span className="inline-flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-sky-400 text-white shadow-md [transform:translateZ(30px)]">
+                      <span className="inline-flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-500 text-white shadow-md [transform:translateZ(30px)]">
                         <Icon className="size-5" aria-hidden />
                       </span>
                       <h3
@@ -62,7 +62,10 @@ export function DomainsSection() {
                         <ul className="mt-5 space-y-1.5 text-sm text-foreground">
                           {available.slice(0, large ? 4 : 2).map((c) => (
                             <li key={c.label} className="flex items-start gap-2">
-                              <Check className="mt-0.5 size-4 shrink-0 text-blue-600" aria-hidden />
+                              <Check
+                                className="mt-0.5 size-4 shrink-0 text-brand-600"
+                                aria-hidden
+                              />
                               {c.label}
                             </li>
                           ))}
