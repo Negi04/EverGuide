@@ -3,6 +3,7 @@ import type { CareerService } from '../src/services/career-service.ts'
 import type { InterviewService } from '../src/services/interview-service.ts'
 import type { MentorService } from '../src/services/mentor-service.ts'
 import type { NotificationService } from '../src/services/notification-service.ts'
+import type { AdminService } from '../src/services/admin-service.ts'
 import type { FinanceService } from '../src/services/finance-service.ts'
 import type { ResourcesService } from '../src/services/resources-service.ts'
 import type { WellnessService } from '../src/services/wellness-service.ts'
@@ -84,6 +85,7 @@ export function buildTestApp(overrides: Partial<AppDeps> = {}) {
     wellness: unusedService<WellnessService>('wellness'),
     finance: unusedService<FinanceService>('finance'),
     resources: unusedService<ResourcesService>('resources'),
+    admin: unusedService<AdminService>('admin'),
     contact: {
       submit: async (message) => {
         calls.contact.push(message)

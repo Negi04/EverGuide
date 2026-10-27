@@ -5,14 +5,12 @@
  *
  *   npm run kb:ingest -w @everguide/server
  */
-import { createHash } from 'node:crypto'
 import { readdir, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { loadConfig } from '../src/config/env.ts'
 import { createGeminiEmbedder, createGenAI } from '../src/lib/gemini.ts'
 import { createAdminClient } from '../src/lib/supabase.ts'
-import { chunkMarkdown, embeddingText } from '../src/rag/chunker.ts'
-import { parseKnowledgeFile } from '../src/rag/front-matter.ts'
+import { ingestDocument } from '../src/rag/ingest.ts'
 
 const KNOWLEDGE_DIR = new URL('../../database/knowledge/', import.meta.url).pathname
 
@@ -34,74 +32,17 @@ let totalChunks = 0
 
 for (const file of files) {
   const raw = await readFile(join(KNOWLEDGE_DIR, file), 'utf8')
-  const { meta, body } = parseKnowledgeFile(raw)
-  if (seenSlugs.has(meta.slug)) throw new Error(`Duplicate slug "${meta.slug}" in ${file}`)
-  seenSlugs.add(meta.slug)
-
-  // The checksum covers the file and the embedding model, so switching models re-embeds.
-  const checksum = createHash('sha256').update(config.ai.embeddingModel).update(raw).digest('hex')
-  const existing = await admin
-    .from('knowledge_documents')
-    .select('id, checksum')
-    .eq('slug', meta.slug)
-    .maybeSingle()
-  if (existing.error) throw existing.error
-  if (existing.data?.checksum === checksum) {
+  const result = await ingestDocument(admin, embedder, config.ai.embeddingModel, raw)
+  if (seenSlugs.has(result.slug)) throw new Error(`Duplicate slug "${result.slug}" in ${file}`)
+  seenSlugs.add(result.slug)
+  if (result.unchanged) {
     skipped++
-    console.log(`skip     ${meta.slug} (unchanged)`)
-    continue
+    console.log(`skip     ${result.slug} (unchanged)`)
+  } else {
+    updated++
+    totalChunks += result.chunks
+    console.log(`ingest   ${result.slug} (${result.chunks} chunks)`)
   }
-
-  const chunks = chunkMarkdown(body)
-  const vectors = await embedder.embed(
-    chunks.map((chunk) => embeddingText(meta.title, chunk)),
-    'document',
-  )
-
-  // Mark the document as pending until its chunks are stored, so an interrupted run
-  // is retried next time instead of leaving a document with missing chunks.
-  const document = await admin
-    .from('knowledge_documents')
-    .upsert(
-      {
-        slug: meta.slug,
-        title: meta.title,
-        domain: meta.domain,
-        source_name: meta.source_name,
-        source_url: meta.source_url ?? null,
-        license: meta.license,
-        status: meta.status,
-        checksum: `pending:${checksum}`,
-      },
-      { onConflict: 'slug' },
-    )
-    .select('id')
-    .single()
-  if (document.error) throw document.error
-
-  const removed = await admin.from('knowledge_chunks').delete().eq('document_id', document.data.id)
-  if (removed.error) throw removed.error
-
-  const inserted = await admin.from('knowledge_chunks').insert(
-    chunks.map((chunk, i) => ({
-      document_id: document.data.id,
-      chunk_index: chunk.index,
-      heading: chunk.heading,
-      content: chunk.content,
-      embedding: vectors[i] ?? [],
-    })),
-  )
-  if (inserted.error) throw inserted.error
-
-  const done = await admin
-    .from('knowledge_documents')
-    .update({ checksum })
-    .eq('id', document.data.id)
-  if (done.error) throw done.error
-
-  updated++
-  totalChunks += chunks.length
-  console.log(`ingest   ${meta.slug} (${chunks.length} chunks, ${meta.status})`)
 }
 
 const all = await admin.from('knowledge_documents').select('slug, status')

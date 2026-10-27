@@ -107,7 +107,9 @@ describe.skipIf(!images)('cover images with Cloudinary', () => {
     resourceId = res.body.id
     resourceIds.push(resourceId)
     expect(res.body.image).toMatchObject({ publicId: firstImage, alt: 'A plain blue rectangle' })
-    expect(res.body.image.src).toMatch(/^https:\/\/res\.cloudinary\.com\/.+\/c_fill,g_auto,w_800,h_450,f_auto,q_auto\//)
+    expect(res.body.image.src).toMatch(
+      /^https:\/\/res\.cloudinary\.com\/.+\/c_fill,g_auto,w_800,h_450,f_auto,q_auto\//,
+    )
     const delivered = await fetch(res.body.image.src)
     expect(delivered.status).toBe(200)
     expect(delivered.headers.get('content-type')).toMatch(/^image\//)
