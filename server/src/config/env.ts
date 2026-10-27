@@ -77,6 +77,12 @@ const envSchema = z.object({
   RAZORPAY_KEY_SECRET: z.preprocess(blankToUndefined, z.string().min(10).optional()),
   // Optional: without it the webhook endpoint answers 503 and checkout still works.
   RAZORPAY_WEBHOOK_SECRET: z.preprocess(blankToUndefined, z.string().min(8).optional()),
+  // Automation: where to send signed events (an n8n Webhook node), and the shared secret.
+  N8N_WEBHOOK_URL: z.preprocess(blankToUndefined, z.url().optional()),
+  N8N_WEBHOOK_SECRET: z.preprocess(
+    blankToUndefined,
+    z.string().min(32, 'Use at least 32 random characters.').optional(),
+  ),
 })
 
 const CLOUDINARY_VARS = [
@@ -104,6 +110,8 @@ export type Config = {
   cloudinary: { cloudName: string; apiKey: string; apiSecret: string } | null
   /** Null when demo payments aren't configured. Always Test Mode keys. */
   razorpay: { keyId: string; keySecret: string; webhookSecret: string | null } | null
+  /** Null when automation isn't configured: events then wait in the outbox. */
+  automation: { webhookUrl: string; secret: string } | null
 }
 
 /**
@@ -131,6 +139,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   if (Boolean(e.RAZORPAY_KEY_ID) !== Boolean(e.RAZORPAY_KEY_SECRET)) {
     throw new Error(
       `Invalid server configuration:\n  - set both RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET, or neither to turn demo payments off.`,
+    )
+  }
+
+  if (Boolean(e.N8N_WEBHOOK_URL) !== Boolean(e.N8N_WEBHOOK_SECRET)) {
+    throw new Error(
+      `Invalid server configuration:\n  - set both N8N_WEBHOOK_URL and N8N_WEBHOOK_SECRET, or neither to turn automation off.`,
     )
   }
 
@@ -168,6 +182,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
             keySecret: e.RAZORPAY_KEY_SECRET,
             webhookSecret: e.RAZORPAY_WEBHOOK_SECRET ?? null,
           }
+        : null,
+    automation:
+      e.N8N_WEBHOOK_URL && e.N8N_WEBHOOK_SECRET
+        ? { webhookUrl: e.N8N_WEBHOOK_URL, secret: e.N8N_WEBHOOK_SECRET }
         : null,
   }
 }

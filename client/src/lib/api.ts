@@ -1,4 +1,5 @@
 import type {
+  AutomationOverview,
   BillingStatus,
   CheckoutOrder,
   PaidPlanId,
@@ -466,6 +467,9 @@ export const api = {
     return request<AuditPage>(`/api/v1/admin/audit-events${query ? `?${query}` : ''}`)
   },
 
+  adminAutomation: () => request<AutomationOverview>('/api/v1/admin/automation'),
+  adminRetryEvent: (id: number) =>
+    request<void>(`/api/v1/admin/automation/${id}/retry`, { method: 'POST' }),
   getBilling: () => request<BillingStatus>('/api/v1/billing'),
   startCheckout: (plan: PaidPlanId) =>
     request<CheckoutOrder>('/api/v1/billing/checkout', { method: 'POST', body: { plan } }),

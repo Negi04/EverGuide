@@ -786,6 +786,29 @@ export type Database = {
         Update: never
         Relationships: []
       }
+      outbox_events: {
+        Row: {
+          id: number
+          event_type: string
+          dedupe_key: string
+          payload: unknown
+          status: 'pending' | 'sending' | 'sent' | 'failed'
+          attempts: number
+          next_attempt_at: string
+          locked_until: string | null
+          last_error: string | null
+          created_at: string
+          sent_at: string | null
+        }
+        Insert: never
+        Update: {
+          status?: 'pending'
+          attempts?: number
+          next_attempt_at?: string
+          last_error?: string | null
+        }
+        Relationships: []
+      }
       payment_events: {
         Row: {
           event_id: string
@@ -872,6 +895,15 @@ export type Database = {
           p_amount_paise?: number | null
         }
         Returns: Database['public']['Tables']['plan_subscriptions']['Row']
+      }
+      enqueue_due_reminders: { Args: Record<string, never>; Returns: number }
+      claim_outbox_events: {
+        Args: { p_limit: number; p_lease_seconds: number }
+        Returns: Database['public']['Tables']['outbox_events']['Row'][]
+      }
+      finish_outbox_event: {
+        Args: { p_id: number; p_ok: boolean; p_error?: string | null; p_max_attempts?: number }
+        Returns: undefined
       }
       apply_payment_event: {
         Args: {

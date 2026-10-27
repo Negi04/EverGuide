@@ -198,6 +198,8 @@ export const fakeApi = {
   adminListFeedback: vi.fn(),
   adminAuditLog: vi.fn(),
   getBilling: vi.fn(),
+  adminAutomation: vi.fn(),
+  adminRetryEvent: vi.fn(),
   startCheckout: vi.fn(),
   confirmPayment: vi.fn(),
 }
@@ -477,6 +479,33 @@ export function resetFakeApi() {
   fakeApi.sendFeedback.mockResolvedValue(undefined)
   fakeApi.getUsage.mockResolvedValue({ used: 0, limit: 30, periodEnd: '2026-11-01T00:00:00.000Z' })
   fakeApi.getBilling.mockResolvedValue(fakeBilling())
+  fakeApi.adminAutomation.mockResolvedValue({
+    configured: true,
+    counts: { pending: 0, sending: 0, sent: 1, failed: 1 },
+    recent: [
+      {
+        id: 2,
+        type: 'payment.succeeded',
+        status: 'failed',
+        attempts: 8,
+        lastError: 'n8n returned 500',
+        createdAt: '2026-10-27T10:00:00.000Z',
+        sentAt: null,
+        nextAttemptAt: '2026-10-27T11:00:00.000Z',
+      },
+      {
+        id: 1,
+        type: 'user.welcome',
+        status: 'sent',
+        attempts: 1,
+        lastError: null,
+        createdAt: '2026-10-27T09:00:00.000Z',
+        sentAt: '2026-10-27T09:00:05.000Z',
+        nextAttemptAt: '2026-10-27T09:00:00.000Z',
+      },
+    ],
+  })
+  fakeApi.adminRetryEvent.mockResolvedValue(undefined)
   fakeApi.startCheckout.mockImplementation(async (plan: 'pro' | 'premium') => ({
     razorpayOrderId: 'order_Test1',
     keyId: 'rzp_test_Key1',

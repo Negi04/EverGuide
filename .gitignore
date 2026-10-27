@@ -14,3 +14,6 @@ coverage/
 # Supabase local
 supabase/.temp/
 .vercel
+
+# n8n local data (automation/n8n/n8n.sh)
+automation/n8n/.n8n-data/

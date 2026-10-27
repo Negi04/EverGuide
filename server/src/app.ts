@@ -24,6 +24,7 @@ import { meRouter } from './routes/me.ts'
 import type { AccountService } from './services/account-service.ts'
 import type { AiGuideService } from './services/ai-guide-service.ts'
 import type { AuthService } from './services/auth-service.ts'
+import type { AutomationService } from './services/automation-service.ts'
 import type { BillingService } from './services/billing-service.ts'
 import type { CareerService } from './services/career-service.ts'
 import type { InterviewService } from './services/interview-service.ts'
@@ -59,6 +60,7 @@ export type AppDeps = {
   resources: ResourcesService
   admin: AdminService
   billing: BillingService
+  automation: AutomationService
   checkDatabase: () => Promise<boolean>
   /** Override individual limits (tests use small ones); the rest keep their defaults. */
   rateLimits?: Partial<
@@ -149,7 +151,7 @@ export function createApp(deps: AppDeps) {
   registerWellnessRoutes(api, deps.auth, deps.wellness)
   registerFinanceRoutes(api, deps.auth, deps.finance)
   registerResourceRoutes(api, deps.auth, deps.resources)
-  registerAdminRoutes(api, deps.auth, deps.admin)
+  registerAdminRoutes(api, deps.auth, deps.admin, deps.automation)
   registerBillingRoutes(api, deps.auth, deps.billing, limits.checkout)
   app.use('/api/v1', api)
 

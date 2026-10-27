@@ -17,6 +17,7 @@ import { createAdminService } from './services/admin-service.ts'
 import { createAiGuideService } from './services/ai-guide-service.ts'
 import { createAiStore } from './services/ai-store.ts'
 import { createAuthService } from './services/auth-service.ts'
+import { createAutomationService } from './services/automation-service.ts'
 import { createBillingService } from './services/billing-service.ts'
 import { createCareerService } from './services/career-service.ts'
 import { createContactService } from './services/contact-service.ts'
@@ -78,6 +79,7 @@ export function createDeps(config: Config, logger: Logger): AppDeps {
       logger,
     ),
     billing,
+    automation: createAutomationService(admin, config.automation !== null),
     checkDatabase: async () => {
       const { error } = await admin
         .from('profiles')

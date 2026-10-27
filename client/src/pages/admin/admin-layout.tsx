@@ -8,6 +8,7 @@ const tabs = [
   { to: '/app/admin/resources', label: 'Resources', end: false },
   { to: '/app/admin/knowledge', label: 'Knowledge base', end: false },
   { to: '/app/admin/feedback', label: 'AI feedback', end: false },
+  { to: '/app/admin/automation', label: 'Automation', end: false },
   { to: '/app/admin/audit', label: 'Audit log', end: false },
 ]
 

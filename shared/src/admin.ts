@@ -81,3 +81,27 @@ export const auditQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).max(100_000).default(0),
 })
 export type AuditQuery = z.input<typeof auditQuerySchema>
+
+// ---------------------------------------------------------------------
+// Automation (outbox events sent to n8n)
+// ---------------------------------------------------------------------
+
+export type OutboxStatus = 'pending' | 'sending' | 'sent' | 'failed'
+
+export type OutboxEventSummary = {
+  id: number
+  type: string
+  status: OutboxStatus
+  attempts: number
+  lastError: string | null
+  createdAt: string
+  sentAt: string | null
+  nextAttemptAt: string
+}
+
+export type AutomationOverview = {
+  /** False until the server has N8N_WEBHOOK_URL and N8N_WEBHOOK_SECRET. */
+  configured: boolean
+  counts: Record<OutboxStatus, number>
+  recent: OutboxEventSummary[]
+}

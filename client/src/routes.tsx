@@ -152,6 +152,10 @@ export const routes: RouteObject[] = [
                           },
                           { path: 'audit', lazy: page(() => import('@/pages/admin/audit-page')) },
                           {
+                            path: 'automation',
+                            lazy: page(() => import('@/pages/admin/automation-page')),
+                          },
+                          {
                             path: 'mentors',
                             lazy: page(() => import('@/pages/admin/mentor-applications-page')),
                           },
