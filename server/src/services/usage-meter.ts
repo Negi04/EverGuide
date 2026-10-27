@@ -1,4 +1,5 @@
 import { databaseError } from '../lib/errors.ts'
+import type { ChatModel } from '../lib/gemini.ts'
 import type { Db } from '../lib/supabase.ts'
 
 /**
@@ -21,6 +22,14 @@ export interface UsageMeter {
     },
   ): Promise<void>
   fail(reservationId: string): Promise<void>
+}
+
+/** What the structured-output AI features (resume analysis, interview feedback) share. */
+export type AiTools = {
+  chat: ChatModel
+  meter: UsageMeter
+  /** The user's monthly allowance, from their plan. */
+  monthlyLimitFor: (userId: string) => Promise<number>
 }
 
 export function createUsageMeter(admin: Db): UsageMeter {

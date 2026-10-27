@@ -7,7 +7,7 @@ import { createFakeStore, fakeChat, fakeRetriever, source } from './fakes/ai.ts'
 
 const alice: UserContext = { userId: 'alice', email: 'a@example.com', accessToken: 'a.b.c' }
 const bob: UserContext = { userId: 'bob', email: 'b@example.com', accessToken: 'd.e.f' }
-const options = { monthlyMessageLimit: 3, minSimilarity: 0.6 }
+const options = { monthlyLimitFor: async () => 3, minSimilarity: 0.6 }
 
 async function runTurn(
   setup: {

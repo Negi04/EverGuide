@@ -37,7 +37,8 @@ export interface AiGuideService {
 }
 
 export type AiGuideOptions = {
-  monthlyMessageLimit: number
+  /** The user's monthly allowance, from their plan. */
+  monthlyLimitFor: (userId: string) => Promise<number>
   minSimilarity: number
   historyTurns?: number
   answerTimeoutMs?: number
@@ -79,9 +80,13 @@ export function createAiGuideService(
 
   async function getUsage(ctx: UserContext): Promise<AiUsage> {
     const { start, end } = monthWindow(now())
+    const [used, limit] = await Promise.all([
+      store.countUsage(ctx, start),
+      options.monthlyLimitFor(ctx.userId),
+    ])
     return {
-      used: await store.countUsage(ctx, start),
-      limit: options.monthlyMessageLimit,
+      used,
+      limit,
       periodEnd: end.toISOString(),
     }
   }
@@ -127,12 +132,13 @@ export function createAiGuideService(
       const crisis = detectCrisis(content)
       let reservationId: string | null = null
       if (!crisis) {
-        const reservation = await store.reserveUsage(ctx.userId, options.monthlyMessageLimit)
+        const limit = await options.monthlyLimitFor(ctx.userId)
+        const reservation = await store.reserveUsage(ctx.userId, limit)
         if (!reservation.reservationId) {
           throw new AppError(
             429,
             'quota_exceeded',
-            `You’ve used all ${options.monthlyMessageLimit} AI Guide answers for this month. Your allowance resets at the start of next month.`,
+            `You’ve used all ${limit} AI Guide answers for this month. Your allowance resets at the start of next month.`,
           )
         }
         reservationId = reservation.reservationId

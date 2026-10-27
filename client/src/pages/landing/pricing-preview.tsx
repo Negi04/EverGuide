@@ -14,7 +14,7 @@ export function PricingPreview() {
             id="pricing-title"
             eyebrow="Plans"
             title="Start free. Upgrade when you need more."
-            lead="Paid plan prices and exact usage allowances will be published before paid plans open."
+            lead="Paid plans raise your monthly AI allowance. Prices are a demo: checkout runs in Razorpay Test Mode."
           />
           <Link to="/pricing" className="text-sm font-medium text-primary hover:underline">
             Compare plans in detail

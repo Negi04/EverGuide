@@ -750,6 +750,53 @@ export type Database = {
         Update: never
         Relationships: []
       }
+      billing_orders: {
+        Row: {
+          id: string
+          user_id: string
+          plan: 'pro' | 'premium'
+          amount_paise: number
+          currency: 'INR'
+          razorpay_order_id: string
+          razorpay_payment_id: string | null
+          status: 'created' | 'paid'
+          created_at: string
+          paid_at: string | null
+        }
+        Insert: {
+          user_id: string
+          plan: 'pro' | 'premium'
+          amount_paise: number
+          razorpay_order_id: string
+        }
+        Update: never
+        Relationships: []
+      }
+      plan_subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          plan: 'pro' | 'premium'
+          order_id: string
+          starts_at: string
+          ends_at: string
+          created_at: string
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      payment_events: {
+        Row: {
+          event_id: string
+          event_type: string
+          razorpay_order_id: string | null
+          received_at: string
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
     }
     Views: { [_ in never]: never }
     Functions: {
@@ -817,6 +864,24 @@ export type Database = {
       set_admin_role: {
         Args: { p_actor: string; p_target: string; p_grant: boolean }
         Returns: undefined
+      }
+      confirm_plan_payment: {
+        Args: {
+          p_razorpay_order_id: string
+          p_razorpay_payment_id: string
+          p_amount_paise?: number | null
+        }
+        Returns: Database['public']['Tables']['plan_subscriptions']['Row']
+      }
+      apply_payment_event: {
+        Args: {
+          p_event_id: string
+          p_event_type: string
+          p_razorpay_order_id: string | null
+          p_razorpay_payment_id: string | null
+          p_amount_paise: number | null
+        }
+        Returns: boolean
       }
     }
     Enums: { app_role: AppRoleEnum }

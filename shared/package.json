@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Zod schemas and types shared by client and server (the API contract).",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./plans": "./src/plans.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

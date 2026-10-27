@@ -9,6 +9,7 @@ import type { Config } from './config/env.ts'
 import { errorHandler, notFoundHandler } from './middleware/errors.ts'
 import { createRateLimiter } from './middleware/rate-limit.ts'
 import { registerAiRoutes } from './routes/ai.ts'
+import { registerBillingRoutes, registerBillingWebhook } from './routes/billing.ts'
 import { registerCareerRoutes } from './routes/career.ts'
 import { registerInterviewRoutes } from './routes/interview.ts'
 import { registerMentorRoutes } from './routes/mentors.ts'
@@ -23,6 +24,7 @@ import { meRouter } from './routes/me.ts'
 import type { AccountService } from './services/account-service.ts'
 import type { AiGuideService } from './services/ai-guide-service.ts'
 import type { AuthService } from './services/auth-service.ts'
+import type { BillingService } from './services/billing-service.ts'
 import type { CareerService } from './services/career-service.ts'
 import type { InterviewService } from './services/interview-service.ts'
 import type { MentorService } from './services/mentor-service.ts'
@@ -56,10 +58,14 @@ export type AppDeps = {
   finance: FinanceService
   resources: ResourcesService
   admin: AdminService
+  billing: BillingService
   checkDatabase: () => Promise<boolean>
   /** Override individual limits (tests use small ones); the rest keep their defaults. */
   rateLimits?: Partial<
-    Record<'api' | 'contact' | 'aiAnswers' | 'resumeUploads' | 'bookings', LimitOptions>
+    Record<
+      'api' | 'contact' | 'aiAnswers' | 'resumeUploads' | 'bookings' | 'checkout' | 'webhooks',
+      LimitOptions
+    >
   >
 }
 
@@ -70,6 +76,9 @@ const defaultRateLimits = {
   aiAnswers: { windowMs: MINUTE, limit: 10 },
   resumeUploads: { windowMs: HOUR, limit: 10 },
   bookings: { windowMs: HOUR, limit: 20 },
+  checkout: { windowMs: HOUR, limit: 20 },
+  // Generous: Razorpay may deliver bursts, and every request is signature-checked.
+  webhooks: { windowMs: MINUTE, limit: 120 },
 }
 
 // Accept a caller's request ID (e.g. from a load balancer) only if it looks safe to log.
@@ -119,6 +128,8 @@ export function createApp(deps: AppDeps) {
       maxAge: 600,
     }),
   )
+  // Before the JSON parser: the webhook signature is checked against the raw body.
+  registerBillingWebhook(app, deps.billing, limits.webhooks)
   app.use(express.json({ limit: '100kb' }))
 
   app.use('/health', healthRouter(deps.checkDatabase))
@@ -139,6 +150,7 @@ export function createApp(deps: AppDeps) {
   registerFinanceRoutes(api, deps.auth, deps.finance)
   registerResourceRoutes(api, deps.auth, deps.resources)
   registerAdminRoutes(api, deps.auth, deps.admin)
+  registerBillingRoutes(api, deps.auth, deps.billing, limits.checkout)
   app.use('/api/v1', api)
 
   app.use(notFoundHandler)

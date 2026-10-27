@@ -58,6 +58,25 @@ const envSchema = z.object({
       .optional(),
   ),
   CLOUDINARY_API_SECRET: z.preprocess(blankToUndefined, z.string().min(10).optional()),
+  // Demo payments (Razorpay Test Mode). Key id and secret together, or neither.
+  RAZORPAY_KEY_ID: z.preprocess(
+    blankToUndefined,
+    z
+      .string()
+      .refine((value) => !value.startsWith('rzp_live_'), {
+        message:
+          'Live keys are refused: EverGuide only takes Razorpay Test Mode keys (rzp_test_…), so no real money can be charged.',
+      })
+      .pipe(
+        z
+          .string()
+          .regex(/^rzp_test_[A-Za-z0-9]+$/, 'Must be a Razorpay Test Mode key id (rzp_test_…).'),
+      )
+      .optional(),
+  ),
+  RAZORPAY_KEY_SECRET: z.preprocess(blankToUndefined, z.string().min(10).optional()),
+  // Optional: without it the webhook endpoint answers 503 and checkout still works.
+  RAZORPAY_WEBHOOK_SECRET: z.preprocess(blankToUndefined, z.string().min(8).optional()),
 })
 
 const CLOUDINARY_VARS = [
@@ -83,6 +102,8 @@ export type Config = {
   }
   /** Null when image uploads aren't configured. */
   cloudinary: { cloudName: string; apiKey: string; apiSecret: string } | null
+  /** Null when demo payments aren't configured. Always Test Mode keys. */
+  razorpay: { keyId: string; keySecret: string; webhookSecret: string | null } | null
 }
 
 /**
@@ -104,6 +125,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   if (missing.length > 0 && missing.length < CLOUDINARY_VARS.length) {
     throw new Error(
       `Invalid server configuration:\n  - set ${missing.join(', ')} too, or none of the CLOUDINARY_* variables to turn image uploads off.`,
+    )
+  }
+
+  if (Boolean(e.RAZORPAY_KEY_ID) !== Boolean(e.RAZORPAY_KEY_SECRET)) {
+    throw new Error(
+      `Invalid server configuration:\n  - set both RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET, or neither to turn demo payments off.`,
     )
   }
 
@@ -132,6 +159,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
             cloudName: e.CLOUDINARY_CLOUD_NAME,
             apiKey: e.CLOUDINARY_API_KEY,
             apiSecret: e.CLOUDINARY_API_SECRET,
+          }
+        : null,
+    razorpay:
+      e.RAZORPAY_KEY_ID && e.RAZORPAY_KEY_SECRET
+        ? {
+            keyId: e.RAZORPAY_KEY_ID,
+            keySecret: e.RAZORPAY_KEY_SECRET,
+            webhookSecret: e.RAZORPAY_WEBHOOK_SECRET ?? null,
           }
         : null,
   }

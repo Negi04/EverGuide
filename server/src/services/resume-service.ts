@@ -10,11 +10,10 @@ import {
 import { Type, type Schema } from '@google/genai'
 import { clampList, clampText, isRecord } from '../lib/ai-output.ts'
 import { AppError, databaseError, serviceUnavailable } from '../lib/errors.ts'
-import type { ChatModel } from '../lib/gemini.ts'
 import { readPdf, safeFileName } from '../lib/pdf.ts'
 import type { Db } from '../lib/supabase.ts'
 import type { UserContext } from './profile-service.ts'
-import type { UsageMeter } from './usage-meter.ts'
+import type { AiTools } from './usage-meter.ts'
 
 export const RESUME_BUCKET = 'resumes'
 const MAX_RESUMES = 10
@@ -140,7 +139,7 @@ type ResumeRow = {
 export function createResumeService(
   admin: Db,
   clientFor: (accessToken: string) => Db,
-  ai: { chat: ChatModel; meter: UsageMeter; monthlyLimit: number } | null,
+  ai: AiTools | null,
 ): ResumeService {
   async function ownResume(ctx: UserContext, resumeId: string) {
     const { data, error } = await clientFor(ctx.accessToken)
@@ -260,12 +259,13 @@ export function createResumeService(
       const resume = await ownResume(ctx, resumeId)
       if (!ai) throw serviceUnavailable('Resume analysis is not available right now.')
 
-      const reservation = await ai.meter.reserve(ctx.userId, ai.monthlyLimit)
+      const limit = await ai.monthlyLimitFor(ctx.userId)
+      const reservation = await ai.meter.reserve(ctx.userId, limit)
       if (!reservation.reservationId) {
         throw new AppError(
           429,
           'quota_exceeded',
-          `You’ve used all ${ai.monthlyLimit} AI answers for this month.`,
+          `You’ve used all ${limit} AI answers for this month.`,
         )
       }
       try {

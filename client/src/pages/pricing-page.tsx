@@ -4,20 +4,20 @@ import { usePageTitle } from '@/hooks/use-page-title'
 
 const faqs = [
   {
-    q: 'When will paid plan prices be announced?',
-    a: 'Before paid plans open. Until then, everything you can use is on the Free plan.',
+    q: 'Is this a real payment?',
+    a: 'No. EverGuide is a college project, and checkout runs in Razorpay Test Mode. You pay with Razorpay’s test card or test UPI details, no money moves, and the prices shown are for demonstration.',
   },
   {
     q: 'Is AI usage unlimited on any plan?',
-    a: 'No. Every plan has a monthly allowance for the AI Guide so the service stays reliable for everyone. Allowances will be listed here with the prices.',
+    a: 'No. Every plan has a monthly allowance shared by the AI Guide, resume analysis and interview feedback, so the service stays reliable for everyone. The allowance for each paid plan is listed above.',
   },
   {
-    q: 'How are payments handled?',
-    a: 'Subscriptions will be processed by Razorpay. EverGuide does not store your card or bank details, and a paid plan is only activated after the payment provider confirms it.',
+    q: 'How is a payment checked?',
+    a: 'The plan is switched on only after the server verifies Razorpay’s signature for that payment. EverGuide never sees or stores card or bank details: they go straight to Razorpay.',
   },
   {
-    q: 'Can I cancel?',
-    a: 'Yes. Cancelling stops the next renewal, and you keep paid features until the end of the period you paid for.',
+    q: 'Does a plan renew automatically?',
+    a: 'No. Each purchase gives one month. Buying the same plan again adds another month after the current one ends.',
   },
 ]
 
@@ -28,8 +28,8 @@ export default function PricingPage() {
     <>
       <PageHeader
         eyebrow="Pricing"
-        title="Simple plans, published before you pay."
-        lead="The Free plan covers the essentials. Pro and Premium add capacity and tools for an active job search or long-term growth."
+        title="Simple plans, priced up front."
+        lead="Every feature is on the Free plan. Pro and Premium raise your monthly AI allowance. Paid plans are a demo: no real money is charged."
       />
       <div className="container-page py-16 sm:py-20">
         <PlanList />

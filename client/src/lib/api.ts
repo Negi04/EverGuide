@@ -1,4 +1,8 @@
 import type {
+  BillingStatus,
+  CheckoutOrder,
+  PaidPlanId,
+  PaymentConfirmation,
   AdminFeedback,
   AdminOverview,
   AdminUser,
@@ -461,4 +465,10 @@ export const api = {
     const query = params.toString()
     return request<AuditPage>(`/api/v1/admin/audit-events${query ? `?${query}` : ''}`)
   },
+
+  getBilling: () => request<BillingStatus>('/api/v1/billing'),
+  startCheckout: (plan: PaidPlanId) =>
+    request<CheckoutOrder>('/api/v1/billing/checkout', { method: 'POST', body: { plan } }),
+  confirmPayment: (input: PaymentConfirmation) =>
+    request<BillingStatus>('/api/v1/billing/confirm', { method: 'POST', body: input }),
 }

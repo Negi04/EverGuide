@@ -1,5 +1,6 @@
 import type {
   AdminResource,
+  BillingStatus,
   Budget,
   ChatMessage,
   ChatStreamEvent,
@@ -97,6 +98,18 @@ export async function defaultStream(_id: string, question: string, { onEvent }: 
   onEvent({ type: 'followups', questions: ['How do I save for emergencies?'] })
 }
 
+export function fakeBilling(overrides: Partial<BillingStatus> = {}): BillingStatus {
+  return {
+    plan: 'free',
+    currentPeriodEnd: null,
+    aiMonthlyAllowance: 30,
+    paymentsEnabled: true,
+    demoMode: true,
+    purchases: [],
+    ...overrides,
+  }
+}
+
 export const fakeApi = {
   getMe: vi.fn(),
   updateProfile: vi.fn(),
@@ -184,6 +197,9 @@ export const fakeApi = {
   adminSetDocumentStatus: vi.fn(),
   adminListFeedback: vi.fn(),
   adminAuditLog: vi.fn(),
+  getBilling: vi.fn(),
+  startCheckout: vi.fn(),
+  confirmPayment: vi.fn(),
 }
 
 export const fakeOverview = {
@@ -460,6 +476,14 @@ export function resetFakeApi() {
   fakeApi.deleteConversation.mockResolvedValue(undefined)
   fakeApi.sendFeedback.mockResolvedValue(undefined)
   fakeApi.getUsage.mockResolvedValue({ used: 0, limit: 30, periodEnd: '2026-11-01T00:00:00.000Z' })
+  fakeApi.getBilling.mockResolvedValue(fakeBilling())
+  fakeApi.startCheckout.mockImplementation(async (plan: 'pro' | 'premium') => ({
+    razorpayOrderId: 'order_Test1',
+    keyId: 'rzp_test_Key1',
+    plan,
+    amountPaise: plan === 'pro' ? 19_900 : 49_900,
+    currency: 'INR',
+  }))
   fakeApi.streamMessage.mockImplementation(defaultStream)
   fakeApi.listGoals.mockResolvedValue([])
   fakeApi.createGoal.mockImplementation(async (input) => ({
