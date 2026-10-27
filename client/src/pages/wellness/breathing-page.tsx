@@ -52,7 +52,7 @@ export default function BreathingPage() {
           <div className="relative grid size-56 place-items-center" aria-hidden>
             <div
               className={cn(
-                'absolute inset-0 rounded-full bg-brand-200/60 ease-in-out',
+                'absolute inset-0 rounded-full bg-accent-subtle-strong ease-in-out',
                 !reducedMotion && 'transition-transform',
               )}
               style={{
@@ -137,7 +137,9 @@ export default function BreathingPage() {
                 key={m}
                 className={cn(
                   'cursor-pointer rounded-md border px-3 py-1.5 text-sm has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring',
-                  m === minutes ? 'border-primary bg-brand-50 text-brand-700' : 'border-border',
+                  m === minutes
+                    ? 'border-primary bg-accent-subtle text-accent-fg'
+                    : 'border-border',
                 )}
               >
                 <input

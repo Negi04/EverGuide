@@ -35,7 +35,7 @@ export function NotificationBell() {
       >
         <Bell className="size-5" aria-hidden />
         {unread > 0 && (
-          <span className="absolute top-1.5 right-1.5 inline-flex min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[0.65rem] font-semibold text-white">
+          <span className="absolute top-1.5 right-1.5 inline-flex min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[0.65rem] font-semibold text-danger-foreground">
             {unread > 9 ? '9+' : unread}
           </span>
         )}
@@ -70,7 +70,7 @@ export function NotificationBell() {
                       onClick={() => open(n)}
                       className={cn(
                         'block w-full px-4 py-3 text-left hover:bg-surface-muted',
-                        !n.readAt && 'bg-brand-50/60',
+                        !n.readAt && 'bg-accent-subtle/60',
                       )}
                     >
                       <span className="block text-sm font-medium text-foreground">{n.title}</span>

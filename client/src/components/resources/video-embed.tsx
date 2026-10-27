@@ -23,7 +23,7 @@ export function VideoEmbed({ videoId, title }: { videoId: string; title: string 
   }
 
   return (
-    <div className="flex aspect-video w-full flex-col items-center justify-center gap-3 rounded-lg border border-border bg-ink p-6 text-center">
+    <div className="flex aspect-video w-full flex-col items-center justify-center gap-3 rounded-lg border border-border bg-band p-6 text-center">
       <button
         type="button"
         onClick={() => setPlaying(true)}

@@ -46,21 +46,24 @@ export function Hero() {
     >
       {/* Soft, drifting teal light behind everything. */}
       <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
-        <div className="aurora-blob top-[-14rem] left-[6%] size-[36rem] bg-brand-200/45" />
         <div
-          className="aurora-blob top-[4rem] right-[2%] size-[30rem] bg-cyan-200/40"
-          style={{ animationDelay: '-6s' }}
+          className="aurora-blob top-[-14rem] left-[6%] size-[36rem]"
+          style={{ backgroundColor: 'var(--aurora-a)' }}
         />
         <div
-          className="aurora-blob top-[30rem] left-[36%] size-[26rem] bg-brand-100/60"
-          style={{ animationDelay: '-11s' }}
+          className="aurora-blob top-[4rem] right-[2%] size-[30rem]"
+          style={{ backgroundColor: 'var(--aurora-b)', animationDelay: '-6s' }}
         />
-        <div className="absolute inset-0 opacity-60 [background-image:linear-gradient(rgb(15_23_42/0.035)_1px,transparent_1px),linear-gradient(90deg,rgb(15_23_42/0.035)_1px,transparent_1px)] [background-size:64px_64px] [mask-image:radial-gradient(ellipse_at_50%_30%,black,transparent_70%)]" />
+        <div
+          className="aurora-blob top-[30rem] left-[36%] size-[26rem]"
+          style={{ backgroundColor: 'var(--aurora-c)', animationDelay: '-11s' }}
+        />
+        <div className="absolute inset-0 opacity-60 [background-image:linear-gradient(var(--grid-line)_1px,transparent_1px),linear-gradient(90deg,var(--grid-line)_1px,transparent_1px)] [background-size:64px_64px] [mask-image:radial-gradient(ellipse_at_50%_30%,black,transparent_70%)]" />
       </div>
 
       {/* -mt-16 above slides the hero under the glass header; this padding makes up for it. */}
       <div className="container-page pt-36 pb-10 text-center sm:pt-44">
-        <p className="mx-auto inline-flex items-center gap-2 rounded-full border border-border bg-white/70 px-4 py-1.5 text-xs font-medium tracking-wide text-muted-strong shadow-sm backdrop-blur motion-safe:animate-fade-up">
+        <p className="mx-auto inline-flex items-center gap-2 rounded-full border border-border bg-surface/70 px-4 py-1.5 text-xs font-medium tracking-wide text-muted-strong shadow-sm backdrop-blur motion-safe:animate-fade-up">
           <span className="size-1.5 rounded-full bg-brand-600" aria-hidden />
           Guidance for a brighter tomorrow
         </p>
@@ -108,10 +111,10 @@ export function Hero() {
             <span
               key={label}
               aria-hidden
-              className={`float absolute hidden items-center gap-2 rounded-full border border-border bg-white/85 px-3.5 py-2 text-sm font-medium text-foreground shadow-lg backdrop-blur-md md:inline-flex ${place}`}
+              className={`float absolute hidden items-center gap-2 rounded-full border border-border bg-surface/85 px-3.5 py-2 text-sm font-medium text-foreground shadow-lg backdrop-blur-md md:inline-flex ${place}`}
               style={{ ['--z' as string]: z, animationDelay: `${i * -1.3}s` }}
             >
-              <Icon className="size-4 text-brand-600" />
+              <Icon className="size-4 text-accent-fg" />
               {label}
             </span>
           ))}
@@ -130,25 +133,28 @@ function AppPreview() {
   return (
     <div
       aria-hidden
-      className="overflow-hidden rounded-2xl border border-border bg-white/80 text-left shadow-[0_50px_120px_-40px_rgb(13_148_136/0.45),0_20px_40px_-20px_rgb(15_23_42/0.15)] ring-1 ring-black/[0.02] backdrop-blur-xl"
+      className="overflow-hidden rounded-2xl border border-border bg-surface/80 text-left shadow-[0_50px_120px_-40px_var(--glow),0_20px_40px_-20px_rgb(0_0_0/0.25)] backdrop-blur-xl"
     >
       <div className="flex items-center gap-2 border-b border-border px-4 py-3">
-        <span className="size-2.5 rounded-full bg-slate-200" />
-        <span className="size-2.5 rounded-full bg-slate-200" />
-        <span className="size-2.5 rounded-full bg-slate-200" />
+        <span className="size-2.5 rounded-full bg-border-strong" />
+        <span className="size-2.5 rounded-full bg-border-strong" />
+        <span className="size-2.5 rounded-full bg-border-strong" />
         <span className="ml-3 text-xs text-muted-foreground">EverGuide · Dashboard</span>
       </div>
       <div className="grid grid-cols-[3.25rem_1fr]">
-        <div className="flex flex-col items-center gap-4 border-r border-border bg-slate-50/60 py-5">
+        <div className="flex flex-col items-center gap-4 border-r border-border bg-surface-muted/40 py-5">
           {nav.map((Icon, i) => (
-            <Icon key={i} className={`size-4 ${i === 0 ? 'text-brand-600' : 'text-slate-400'}`} />
+            <Icon
+              key={i}
+              className={`size-4 ${i === 0 ? 'text-accent-fg' : 'text-muted-foreground'}`}
+            />
           ))}
         </div>
-        <div className="grid gap-3 bg-slate-50/40 p-4 sm:grid-cols-6 sm:gap-4 sm:p-6">
+        <div className="grid gap-3 bg-surface-muted/30 p-4 sm:grid-cols-6 sm:gap-4 sm:p-6">
           <PreviewCard className="sm:col-span-4">
             <p className="text-xs text-muted-foreground">Today’s focus</p>
             <p className="mt-1 font-semibold text-foreground">Learn SQL basics</p>
-            <div className="mt-3 h-1.5 rounded-full bg-slate-100">
+            <div className="mt-3 h-1.5 rounded-full bg-surface-muted">
               <div className="h-full w-2/5 rounded-full bg-gradient-to-r from-brand-600 to-brand-400" />
             </div>
             <p className="mt-2 text-xs text-muted-foreground">Milestone 2 of 5 · Roadmap</p>
@@ -161,21 +167,25 @@ function AppPreview() {
             <p className="text-xs text-muted-foreground">day streak</p>
           </PreviewCard>
           <PreviewCard className="sm:col-span-4">
-            <p className="flex items-center gap-1.5 text-xs font-medium text-brand-700">
+            <p className="flex items-center gap-1.5 text-xs font-medium text-accent-fg">
               <Sparkles className="size-3.5" /> AI Guide
             </p>
             <p className="mt-2 text-sm leading-relaxed text-foreground">
               Start with spreadsheets and SQL, then one visualisation tool
-              <sup className="ml-0.5 rounded bg-brand-100 px-1 text-[0.6rem] text-brand-700">1</sup>
+              <sup className="ml-0.5 rounded bg-accent-subtle-strong px-1 text-[0.6rem] text-accent-fg">
+                1
+              </sup>
               . Build two small projects with data you know
-              <sup className="ml-0.5 rounded bg-brand-100 px-1 text-[0.6rem] text-brand-700">2</sup>
+              <sup className="ml-0.5 rounded bg-accent-subtle-strong px-1 text-[0.6rem] text-accent-fg">
+                2
+              </sup>
               .
             </p>
           </PreviewCard>
           <PreviewCard className="sm:col-span-2">
             <p className="text-xs text-muted-foreground">Next session</p>
             <p className="mt-1 flex items-center gap-1.5 font-semibold text-foreground">
-              <CalendarClock className="size-4 text-brand-600" /> Thu, 6:00 pm
+              <CalendarClock className="size-4 text-accent-fg" /> Thu, 6:00 pm
             </p>
             <p className="mt-1 text-xs text-muted-foreground">Verified mentor</p>
           </PreviewCard>
@@ -188,7 +198,7 @@ function AppPreview() {
               <div className="w-[40%] bg-brand-700" />
               <div className="w-[12%] bg-brand-500" />
               <div className="w-[20%] bg-brand-300" />
-              <div className="flex-1 bg-slate-100" />
+              <div className="flex-1 bg-surface-muted" />
             </div>
           </PreviewCard>
         </div>
@@ -199,7 +209,7 @@ function AppPreview() {
 
 function PreviewCard({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`rounded-xl border border-border bg-white p-4 shadow-sm ${className ?? ''}`}>
+    <div className={`rounded-xl border border-border bg-surface p-4 shadow-sm ${className ?? ''}`}>
       {children}
     </div>
   )

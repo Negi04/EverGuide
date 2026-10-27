@@ -36,7 +36,7 @@ function SignupsChart({ weeks }: { weeks: AdminOverview['signupsByWeek'] }) {
         </h3>
         <button
           type="button"
-          className="text-sm text-brand-700 underline-offset-4 hover:underline"
+          className="text-sm text-accent-fg underline-offset-4 hover:underline"
           aria-pressed={asTable}
           onClick={() => setAsTable(!asTable)}
         >
@@ -83,11 +83,11 @@ function SignupsChart({ weeks }: { weeks: AdminOverview['signupsByWeek'] }) {
                   onMouseLeave={() => setActive(null)}
                   onFocus={() => setActive(i)}
                   onBlur={() => setActive(null)}
-                  className="relative flex h-full flex-1 items-end outline-none focus-visible:bg-brand-50"
+                  className="relative flex h-full flex-1 items-end outline-none focus-visible:bg-accent-subtle"
                 >
                   <div
                     className={cn(
-                      'w-full rounded-t bg-brand-600 transition-opacity',
+                      'w-full rounded-t bg-fill transition-opacity',
                       active !== null && active !== i && 'opacity-50',
                     )}
                     style={{ height: `${(w.signups / max) * 100}%`, minHeight: w.signups ? 2 : 0 }}

@@ -123,7 +123,7 @@ export function ResourceLibrary({ basePath }: { basePath: string }) {
           size="sm"
           aria-pressed={savedOnly}
           onClick={() => setSavedOnly(!savedOnly)}
-          className={cn(savedOnly && 'border-primary bg-brand-50 text-brand-700')}
+          className={cn(savedOnly && 'border-primary bg-accent-subtle text-accent-fg')}
         >
           <BookmarkCheck className="size-4" aria-hidden /> Saved only
           {saved.data && ` (${saved.data.length})`}

@@ -156,7 +156,7 @@ export function GoalCard({ goal }: { goal: Goal }) {
           aria-valuenow={progress.percent}
         >
           <div
-            className={cn('h-full', completed ? 'bg-success' : 'bg-brand-600')}
+            className={cn('h-full', completed ? 'bg-success' : 'bg-fill')}
             style={{ width: `${progress.percent}%` }}
           />
         </div>

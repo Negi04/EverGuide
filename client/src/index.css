@@ -3,15 +3,17 @@
 @import '@fontsource-variable/figtree/wght.css';
 
 /*
- * EverGuide design tokens: Off-White + Slate + Teal (chosen 2026-10-27).
- * Raw values live in :root; semantic tokens (background, primary, …) point at them, and
- * components use the semantic names or the `brand-*` ramp, so the palette changes here.
+ * EverGuide design tokens. Two themes share one set of semantic names:
+ *   dark (default): deep midnight background, white text, teal accent;
+ *   light: Off-White + Slate + Teal (chosen 2026-10-27).
+ * Components use the semantic names (background, accent-fg, band, …), so a theme is just
+ * a set of values here. The <html data-theme> attribute picks one (see index.html).
  *
- * Contrast (WCAG AA): the accent teal #0D9488 is 3.7:1 with white text, below the 4.5:1
- * that normal-size text needs. So it's used where 3:1 is enough (icons, large headings,
- * focus rings, charts, progress bars), and buttons and small teal text use the deeper
- * #0F766E (5.5:1). Secondary text #64748B passes on the page and white cards; on grey
- * panels small text uses `muted-strong` (#475569).
+ * Contrast (WCAG AA, checked for both themes): on light, white text on the accent teal
+ * #0D9488 is only 3.7:1, so light buttons use #0F766E (5.5:1); on dark, buttons are
+ * bright teal with midnight text (7.7:1) and teal text is #2DD4BF (10:1). The accent
+ * #0D9488 itself is used for charts and progress in both themes (it passes the chart
+ * palette checks in both).
  */
 :root {
   /* Brand: teal ramp (600 is the accent) */
@@ -21,23 +23,29 @@
   --eg-brand-300: #5eead4;
   --eg-brand-400: #2dd4bf;
   --eg-brand-500: #14b8a6;
-  --eg-brand-600: #0d9488; /* Accent */
-  --eg-brand-700: #0f766e; /* Buttons and small teal text */
+  --eg-brand-600: #0d9488;
+  --eg-brand-700: #0f766e;
   --eg-brand-800: #115e59;
   --eg-brand-900: #134e4a;
-  --eg-cyan-600: #0891b2; /* Partner for brand gradients (3.5:1 on the page) */
+  --eg-cyan-300: #67e8f9;
+  --eg-cyan-600: #0891b2;
 
-  /* Status, separate from the brand: amber for drafts, warnings and streaks */
+  /* Status: amber, separate from the brand */
   --eg-amber-100: #fef3c7;
+  --eg-amber-300: #fcd34d;
   --eg-amber-400: #fbbf24;
   --eg-amber-700: #b45309;
   --eg-amber-800: #92400e;
 
-  /* Neutrals (slate) */
+  /* Neutrals */
+  --eg-midnight-950: #060912;
+  --eg-midnight-900: #0a0f1c;
+  --eg-midnight-850: #0f1626;
+  --eg-midnight-800: #151e31;
+  --eg-midnight-700: #1e293d;
+  --eg-midnight-600: #2b374d;
   --eg-offwhite: #f8fafc;
   --eg-slate-900: #0f172a;
-  --eg-slate-800: #1e293b;
-  --eg-slate-700: #334155;
   --eg-slate-600: #475569;
   --eg-slate-500: #64748b;
   --eg-slate-400: #94a3b8;
@@ -45,7 +53,66 @@
   --eg-slate-200: #e2e8f0;
   --eg-slate-100: #f1f5f9;
 
-  /* Semantic tokens */
+  /* Shape and motion (theme independent) */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 150ms;
+  --duration-base: 240ms;
+}
+
+/* Dark (default): deep midnight, white text, teal accent. */
+:root,
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --background: var(--eg-midnight-900);
+  --foreground: var(--eg-offwhite);
+  --surface: var(--eg-midnight-850);
+  --surface-muted: var(--eg-midnight-800);
+  --muted-foreground: var(--eg-slate-400);
+  --muted-strong: var(--eg-slate-300);
+  --border: var(--eg-midnight-700);
+  --border-strong: var(--eg-midnight-600);
+  --primary: var(--eg-brand-500);
+  --primary-hover: var(--eg-brand-400);
+  --primary-foreground: var(--eg-midnight-900);
+  --accent: var(--eg-brand-600);
+  --accent-fg: var(--eg-brand-400); /* teal text and icons */
+  --accent-subtle: rgb(20 184 166 / 0.12);
+  --accent-subtle-strong: rgb(45 212 191 / 0.18);
+  --accent-border: rgb(45 212 191 / 0.3);
+  --fill: var(--eg-brand-600); /* progress bars and charts */
+  --ink: #ffffff; /* headings */
+  --band: var(--eg-midnight-950); /* deep bands and the footer */
+  --ink-foreground: var(--eg-slate-200);
+  --ink-muted: var(--eg-slate-400);
+  --ink-border: rgb(255 255 255 / 0.08);
+  --overlay: rgb(2 6 23 / 0.72);
+  --warn-bg: rgb(251 191 36 / 0.14);
+  --warn-fg: var(--eg-amber-300);
+  --danger: #f97066;
+  --danger-foreground: var(--eg-midnight-900);
+  --success: #32d583;
+  --ring: var(--eg-brand-400);
+  --glare: rgb(255 255 255 / 0.07);
+  --glow: rgb(20 184 166 / 0.35);
+  --grid-line: rgb(255 255 255 / 0.04);
+  --aurora-a: rgb(20 184 166 / 0.3);
+  --aurora-b: rgb(8 145 178 / 0.22);
+  --aurora-c: rgb(45 212 191 / 0.12);
+  --grad-from: var(--eg-brand-300);
+  --grad-mid: var(--eg-brand-400);
+  --grad-to: var(--eg-cyan-300);
+  --selection: rgb(45 212 191 / 0.3);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35);
+  --shadow-md: 0 1px 2px rgb(0 0 0 / 0.35), 0 8px 24px -8px rgb(0 0 0 / 0.55);
+  --shadow-lg: 0 2px 4px rgb(0 0 0 / 0.35), 0 24px 48px -16px rgb(0 0 0 / 0.65);
+}
+
+/* Light: Off-White + Slate + Teal. */
+:root[data-theme='light'] {
+  color-scheme: light;
   --background: var(--eg-offwhite);
   --foreground: var(--eg-slate-900);
   --surface: #ffffff;
@@ -58,24 +125,36 @@
   --primary-hover: var(--eg-brand-800);
   --primary-foreground: #ffffff;
   --accent: var(--eg-brand-600);
-  --ink: var(--eg-slate-900); /* Dark bands and dark surfaces */
+  --accent-fg: var(--eg-brand-700);
+  --accent-subtle: var(--eg-brand-50);
+  --accent-subtle-strong: var(--eg-brand-100);
+  --accent-border: var(--eg-brand-200);
+  --fill: var(--eg-brand-600);
+  --ink: var(--eg-slate-900);
+  --band: var(--eg-slate-900);
   --ink-foreground: var(--eg-slate-200);
   --ink-muted: var(--eg-slate-400);
   --ink-border: rgb(255 255 255 / 0.1);
+  --overlay: rgb(15 23 42 / 0.6);
+  --warn-bg: var(--eg-amber-100);
+  --warn-fg: var(--eg-amber-800);
   --danger: #b42318;
+  --danger-foreground: #ffffff;
   --success: #067647;
   --ring: var(--eg-brand-600);
-
-  /* Shape, depth and motion */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  --glare: rgb(255 255 255 / 0.35);
+  --glow: rgb(13 148 136 / 0.45);
+  --grid-line: rgb(15 23 42 / 0.035);
+  --aurora-a: rgb(153 246 228 / 0.45);
+  --aurora-b: rgb(165 243 252 / 0.4);
+  --aurora-c: rgb(204 251 241 / 0.6);
+  --grad-from: var(--eg-brand-700);
+  --grad-mid: var(--eg-brand-600);
+  --grad-to: var(--eg-cyan-600);
+  --selection: var(--eg-brand-100);
   --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.05);
   --shadow-md: 0 1px 2px rgb(15 23 42 / 0.05), 0 8px 24px -8px rgb(15 23 42 / 0.1);
   --shadow-lg: 0 2px 4px rgb(15 23 42 / 0.05), 0 24px 48px -16px rgb(15 23 42 / 0.18);
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --duration-fast: 150ms;
-  --duration-base: 240ms;
 }
 
 @theme inline {
@@ -94,11 +173,21 @@
   --color-primary-hover: var(--primary-hover);
   --color-primary-foreground: var(--primary-foreground);
   --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-accent-subtle-strong: var(--accent-subtle-strong);
+  --color-accent-border: var(--accent-border);
+  --color-fill: var(--fill);
+  --color-band: var(--band);
+  --color-overlay: var(--overlay);
+  --color-warn-bg: var(--warn-bg);
+  --color-warn-fg: var(--warn-fg);
   --color-ink: var(--ink);
   --color-ink-foreground: var(--ink-foreground);
   --color-ink-muted: var(--ink-muted);
   --color-ink-border: var(--ink-border);
   --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
   --color-success: var(--success);
   --color-ring: var(--ring);
 
@@ -112,10 +201,7 @@
   --color-brand-700: var(--eg-brand-700);
   --color-brand-800: var(--eg-brand-800);
   --color-brand-900: var(--eg-brand-900);
-  --color-amber-100: var(--eg-amber-100);
   --color-amber-400: var(--eg-amber-400);
-  --color-amber-700: var(--eg-amber-700);
-  --color-amber-800: var(--eg-amber-800);
 
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
@@ -201,8 +287,8 @@
   }
 
   ::selection {
-    background: var(--eg-brand-100);
-    color: var(--eg-slate-900);
+    background: var(--selection);
+    color: var(--foreground);
   }
 }
 
@@ -233,7 +319,7 @@
     font-weight: 600;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--primary);
+    color: var(--accent-fg);
   }
 
   .on-ink .eyebrow {
@@ -244,9 +330,9 @@
   .text-gradient-brand {
     background-image: linear-gradient(
       100deg,
-      var(--eg-brand-700),
-      var(--eg-brand-600) 55%,
-      var(--eg-cyan-600)
+      var(--grad-from),
+      var(--grad-mid) 55%,
+      var(--grad-to)
     );
     -webkit-background-clip: text;
     background-clip: text;
@@ -301,7 +387,7 @@
     transition: opacity 300ms ease;
     background: radial-gradient(
       28rem circle at var(--gx, 50%) var(--gy, 50%),
-      rgb(255 255 255 / 0.35),
+      var(--glare),
       transparent 45%
     );
   }

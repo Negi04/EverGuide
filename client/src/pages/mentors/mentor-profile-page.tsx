@@ -73,7 +73,7 @@ function StatusCard({
 }) {
   return (
     <div className="flex gap-4 rounded-lg border border-border bg-surface p-6">
-      <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-800">
+      <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-md bg-warn-bg text-warn-fg">
         {icon}
       </span>
       <div>
@@ -225,7 +225,7 @@ function VerifiedMentor({ profile }: { profile: MyMentorProfile }) {
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border bg-surface p-6">
         <div>
           <p className="flex items-center gap-2 font-semibold text-ink">
-            <BadgeCheck className="size-5 text-brand-600" aria-hidden /> You’re a verified mentor
+            <BadgeCheck className="size-5 text-accent-fg" aria-hidden /> You’re a verified mentor
           </p>
           <p className="mt-1 text-sm text-muted-foreground">{profile.headline}</p>
         </div>

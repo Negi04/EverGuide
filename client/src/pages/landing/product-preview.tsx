@@ -66,7 +66,7 @@ export function ProductPreview() {
                         key={thread}
                         className={
                           index === 0
-                            ? 'rounded-md bg-brand-50 px-3 py-2 font-medium text-brand-700'
+                            ? 'rounded-md bg-accent-subtle px-3 py-2 font-medium text-accent-fg'
                             : 'rounded-md px-3 py-2 text-muted-foreground'
                         }
                       >
@@ -77,13 +77,13 @@ export function ProductPreview() {
                 </aside>
 
                 <div className="space-y-6 p-5 sm:p-8">
-                  <div className="ml-auto max-w-md rounded-lg rounded-br-sm bg-ink px-4 py-3 text-sm text-ink-foreground">
+                  <div className="ml-auto max-w-md rounded-lg rounded-br-sm bg-primary px-4 py-3 text-sm text-primary-foreground">
                     I work in customer support. What should I learn first to move into a data
                     analyst role?
                   </div>
 
                   <div className="max-w-2xl">
-                    <p className="flex items-center gap-1.5 text-xs font-semibold text-brand-700">
+                    <p className="flex items-center gap-1.5 text-xs font-semibold text-accent-fg">
                       <Sparkles className="size-3.5" aria-hidden /> AI-generated · Career mode
                     </p>
                     <div className="mt-2 space-y-3 text-sm leading-relaxed text-foreground">
@@ -124,7 +124,7 @@ export function ProductPreview() {
 
 function Cite({ n }: { n: number }) {
   return (
-    <sup className="ml-0.5 inline-flex size-4 items-center justify-center rounded-sm bg-brand-100 text-[0.65rem] font-semibold text-brand-700">
+    <sup className="ml-0.5 inline-flex size-4 items-center justify-center rounded-sm bg-accent-subtle-strong text-[0.65rem] font-semibold text-accent-fg">
       {n}
     </sup>
   )
@@ -133,7 +133,7 @@ function Cite({ n }: { n: number }) {
 function SourceChip({ n, title }: { n: number; title: string }) {
   return (
     <span className="inline-flex items-center gap-2 rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs text-muted-foreground">
-      <span className="font-semibold text-brand-700">{n}</span>
+      <span className="font-semibold text-accent-fg">{n}</span>
       <FileText className="size-3.5" aria-hidden />
       {title}
     </span>

@@ -146,7 +146,7 @@ function ReportCard({ analysis }: { analysis: ResumeAnalysis }) {
       className="rounded-lg border border-border bg-surface p-5 sm:p-6"
     >
       <div className="flex flex-wrap items-center gap-2">
-        <span className="flex items-center gap-1.5 text-xs font-semibold text-brand-700">
+        <span className="flex items-center gap-1.5 text-xs font-semibold text-accent-fg">
           <Sparkles className="size-3.5" aria-hidden /> AI-generated report
         </span>
         <Badge tone={alignment.tone}>{alignment.text}</Badge>

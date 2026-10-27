@@ -21,7 +21,7 @@ const pipeline = [
 
 export function GroundedAiSection() {
   return (
-    <section aria-labelledby="grounded-title" className="on-ink bg-ink py-20 sm:py-28">
+    <section aria-labelledby="grounded-title" className="on-ink bg-band py-20 sm:py-28">
       <div className="container-page">
         <SectionHeading
           id="grounded-title"

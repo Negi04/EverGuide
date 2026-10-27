@@ -7,7 +7,7 @@ const year = new Date().getFullYear()
 
 export function SiteFooter() {
   return (
-    <footer className="on-ink bg-ink text-ink-foreground">
+    <footer className="on-ink bg-band text-ink-foreground">
       <div className="container-page grid gap-12 py-16 lg:grid-cols-[1.2fr_2fr]">
         <div className="max-w-sm space-y-4">
           <Logo tone="ink" />

@@ -209,7 +209,7 @@ function GoalCard({ goal }: { goal: SavingsGoal }) {
         aria-valuenow={percent}
         className="mt-2 h-2 overflow-hidden rounded-full bg-surface-muted"
       >
-        <div className="h-full rounded-full bg-brand-600" style={{ width: `${percent}%` }} />
+        <div className="h-full rounded-full bg-fill" style={{ width: `${percent}%` }} />
       </div>
       {perMonth !== null && (
         <p className="mt-2 text-xs text-muted-foreground">

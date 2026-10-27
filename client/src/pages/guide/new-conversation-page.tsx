@@ -38,7 +38,7 @@ export default function NewConversationPage() {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
       <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6 lg:py-14">
-        <span className="inline-flex size-11 items-center justify-center rounded-md bg-ink text-brand-300">
+        <span className="inline-flex size-11 items-center justify-center rounded-md bg-accent-subtle-strong text-accent-fg">
           <Sparkles className="size-5" aria-hidden />
         </span>
         <h1 className="mt-5 text-3xl font-semibold text-ink">What would you like guidance on?</h1>
@@ -55,7 +55,7 @@ export default function NewConversationPage() {
                 className={cn(
                   'cursor-pointer rounded-full border px-3.5 py-1.5 text-sm transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ring',
                   domain === value
-                    ? 'border-primary bg-brand-50 text-brand-700'
+                    ? 'border-primary bg-accent-subtle text-accent-fg'
                     : 'border-border bg-surface text-muted-foreground hover:text-foreground',
                 )}
               >

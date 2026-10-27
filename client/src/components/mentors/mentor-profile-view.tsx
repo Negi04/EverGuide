@@ -164,7 +164,7 @@ function BookingPanel({ mentor }: { mentor: MentorDetail }) {
       className="h-fit min-w-0 rounded-lg border border-border bg-surface p-5 lg:sticky lg:top-6"
     >
       <h2 id="book-title" className="flex items-center gap-2 text-lg font-semibold text-ink">
-        <CalendarDays className="size-5 text-brand-600" aria-hidden /> Book a session
+        <CalendarDays className="size-5 text-accent-fg" aria-hidden /> Book a session
       </h2>
       {!mentor.isAccepting ? (
         <p className="mt-3 text-sm text-muted-foreground">
@@ -194,7 +194,7 @@ function BookingPanel({ mentor }: { mentor: MentorDetail }) {
                 className={cn(
                   'shrink-0 rounded-md border px-3 py-2 text-xs whitespace-nowrap',
                   key === activeDay
-                    ? 'border-primary bg-brand-50 text-brand-700'
+                    ? 'border-primary bg-accent-subtle text-accent-fg'
                     : 'border-border hover:border-border-strong',
                 )}
               >

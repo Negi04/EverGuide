@@ -29,7 +29,7 @@ export function SaveQuestionButton({
       aria-label={`${saved ? 'Unsave' : 'Save'} question: ${label}`}
       disabled={toggle.isPending}
       onClick={() => toggle.mutate()}
-      className={saved ? 'text-brand-700' : 'text-muted-foreground'}
+      className={saved ? 'text-accent-fg' : 'text-muted-foreground'}
     >
       <Icon aria-hidden />
     </Button>

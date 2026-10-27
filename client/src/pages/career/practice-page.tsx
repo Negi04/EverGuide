@@ -101,7 +101,7 @@ function Practice({ question }: { question: InterviewQuestionDetail }) {
 
       <details className="mt-5 rounded-md border border-border bg-surface p-4">
         <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium text-ink">
-          <Lightbulb className="size-4 text-amber-700" aria-hidden /> How to approach it
+          <Lightbulb className="size-4 text-warn-fg" aria-hidden /> How to approach it
         </summary>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{question.guidance}</p>
       </details>
@@ -188,8 +188,8 @@ function AttemptCard({ attempt, onDeleted }: { attempt: PracticeAttempt; onDelet
         {attempt.answer}
       </p>
       {attempt.feedback && (
-        <div className="mt-4 rounded-md border border-brand-100 bg-brand-50/50 p-4 text-sm">
-          <p className="flex items-center gap-1.5 text-xs font-semibold text-brand-700">
+        <div className="mt-4 rounded-md border border-accent-border bg-accent-subtle/50 p-4 text-sm">
+          <p className="flex items-center gap-1.5 text-xs font-semibold text-accent-fg">
             <Sparkles className="size-3.5" aria-hidden /> AI-generated feedback
           </p>
           <p className="mt-2 text-foreground">{attempt.feedback.summary}</p>

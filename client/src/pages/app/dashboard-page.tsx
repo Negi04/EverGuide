@@ -121,7 +121,7 @@ function AiUsageMeter() {
         aria-valuemax={usage.limit}
         aria-valuenow={usage.used}
       >
-        <div className="h-full bg-brand-600" style={{ width: `${percent}%` }} />
+        <div className="h-full bg-fill" style={{ width: `${percent}%` }} />
       </div>
     </div>
   )
@@ -230,7 +230,7 @@ function RoadmapSummary() {
                 className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-muted"
                 aria-hidden
               >
-                <div className="h-full bg-brand-600" style={{ width: `${progress.percent}%` }} />
+                <div className="h-full bg-fill" style={{ width: `${progress.percent}%` }} />
               </div>
             </li>
           )

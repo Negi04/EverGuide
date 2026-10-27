@@ -30,7 +30,7 @@ export function ResourceCard({ resource, basePath }: { resource: Resource; baseP
       )}
       <div className="flex flex-1 flex-col p-5">
         <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-          <KindIcon className="size-4 text-brand-600" aria-hidden />
+          <KindIcon className="size-4 text-accent-fg" aria-hidden />
           {kind}
           {duration && <span aria-hidden>·</span>}
           {duration}

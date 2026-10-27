@@ -48,7 +48,7 @@ export function ResourceDetail({ slug, basePath }: { slug: string; basePath: str
       {back}
       <header>
         <p className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
-          <KindIcon className="size-4 text-brand-600" aria-hidden />
+          <KindIcon className="size-4 text-accent-fg" aria-hidden />
           {kind}
           {duration && <span aria-hidden>·</span>}
           {duration}

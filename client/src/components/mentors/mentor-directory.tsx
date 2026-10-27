@@ -77,7 +77,7 @@ export function MentorDirectory({ basePath }: { basePath: string }) {
             {!search && !expertise && (
               <p className="mt-2">
                 Have experience to share?{' '}
-                <Link to="/app/mentors/profile" className="font-medium text-brand-700 underline">
+                <Link to="/app/mentors/profile" className="font-medium text-accent-fg underline">
                   Apply to become a mentor
                 </Link>
               </p>
@@ -130,7 +130,7 @@ function MentorCardItem({ mentor, href }: { mentor: MentorCard; href: string }) 
             </span>
           )}
           {!mentor.isAccepting && (
-            <span className="font-medium text-amber-700">Not taking requests</span>
+            <span className="font-medium text-warn-fg">Not taking requests</span>
           )}
         </p>
       </Link>

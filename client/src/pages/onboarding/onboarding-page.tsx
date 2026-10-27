@@ -146,7 +146,7 @@ function OnboardingWizard({
             aria-valuenow={stepIndex + 1}
           >
             <div
-              className="h-full bg-brand-600 transition-all"
+              className="h-full bg-fill transition-all"
               style={{ width: `${((stepIndex + 1) / steps.length) * 100}%` }}
             />
           </div>
@@ -155,7 +155,7 @@ function OnboardingWizard({
             {step.title}
           </h1>
           <p className="mt-3 flex gap-2 text-sm text-muted-foreground">
-            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
+            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-accent-fg" aria-hidden />
             <span>
               <span className="font-medium text-foreground">Why we ask: </span>
               {step.why}

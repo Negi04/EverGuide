@@ -30,7 +30,7 @@ export function PlanList() {
           <ul className="mt-6 flex-1 space-y-3">
             {plan.includes.map((item) => (
               <li key={item} className="flex gap-2.5 text-sm text-foreground">
-                <Check className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
+                <Check className="mt-0.5 size-4 shrink-0 text-accent-fg" aria-hidden />
                 {item}
               </li>
             ))}
