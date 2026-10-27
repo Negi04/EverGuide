@@ -1,6 +1,7 @@
 import type { Logger } from 'pino'
 import type { AppDeps } from './app.ts'
 import type { Config } from './config/env.ts'
+import { createImageStore } from './lib/cloudinary.ts'
 import {
   createGeminiChatModel,
   createGeminiEmbedder,
@@ -55,7 +56,13 @@ export function createDeps(config: Config, logger: Logger): AppDeps {
     notifications: createNotificationService(clientFor),
     wellness: createWellnessService(clientFor),
     finance: createFinanceService(clientFor),
-    resources: createResourcesService(createAnonClient(config), admin, clientFor),
+    resources: createResourcesService(
+      createAnonClient(config),
+      admin,
+      clientFor,
+      config.cloudinary ? createImageStore(config.cloudinary) : null,
+      logger,
+    ),
     checkDatabase: async () => {
       const { error } = await admin
         .from('profiles')

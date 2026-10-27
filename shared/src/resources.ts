@@ -12,6 +12,22 @@ export type ResourceStatus = (typeof resourceStatuses)[number]
 /** How many resources one person can save. */
 export const MAX_SAVED_RESOURCES = 200
 
+// Cover images (stored in Cloudinary; the database keeps the id and alt text).
+export const RESOURCE_IMAGE_MAX_BYTES = 5 * 1024 * 1024
+export const RESOURCE_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const
+/** Ids the server issues: EverGuide's folder plus a UUID (the database checks the same). */
+export const RESOURCE_IMAGE_ID =
+  /^everguide\/resources\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+
+export const resourceImageInputSchema = z.object({
+  publicId: z.string().regex(RESOURCE_IMAGE_ID, 'Upload the image again.'),
+  alt: z
+    .string({ error: 'Describe the image for people who can’t see it.' })
+    .trim()
+    .min(1, 'Describe the image for people who can’t see it.')
+    .max(200, 'Keep the description under 200 characters.'),
+})
+
 /**
  * The 11-character id of a YouTube video link, or null for anything else. Only exact
  * YouTube hosts count, so "youtube.com.example.net" or "notyoutube.com" don't.
@@ -90,6 +106,7 @@ export const resourceCreateSchema = z.object({
   durationMinutes: duration.nullable().optional(),
   level: z.enum(resourceLevels).default('beginner'),
   status: z.enum(['draft', 'published']).default('draft'),
+  image: resourceImageInputSchema.nullable().optional(),
 })
 
 // Written out rather than `resourceCreateSchema.partial()`: defaults would fill in
@@ -105,6 +122,8 @@ export const resourceUpdateSchema = z
     durationMinutes: duration.nullable(),
     level: z.enum(resourceLevels),
     status: z.enum(resourceStatuses),
+    /** null removes the image. */
+    image: resourceImageInputSchema.nullable(),
   })
   .partial()
   .refine((value) => Object.keys(value).length > 0, 'Nothing to update.')
@@ -120,6 +139,13 @@ export const resourceQuerySchema = z.object({
 export type ResourceCreate = z.input<typeof resourceCreateSchema>
 export type ResourceUpdate = z.infer<typeof resourceUpdateSchema>
 export type ResourceQuery = z.input<typeof resourceQuerySchema>
+export type ResourceImageInput = z.infer<typeof resourceImageInputSchema>
+
+/** A cover image, with sizes for responsive loading. */
+export type ResourceImage = { publicId: string; src: string; srcSet: string; alt: string }
+
+/** What the server hands the browser for one direct upload to Cloudinary. */
+export type UploadTicket = { uploadUrl: string; fields: Record<string, string> }
 
 export type Resource = {
   id: string
@@ -135,6 +161,7 @@ export type Resource = {
   durationMinutes: number | null
   level: ResourceLevel
   publishedAt: string | null
+  image: ResourceImage | null
 }
 
 export type AdminResource = Resource & {

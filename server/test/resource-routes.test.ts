@@ -1,6 +1,7 @@
 import type { AdminResource } from '@everguide/shared'
 import request from 'supertest'
 import { describe, expect, it } from 'vitest'
+import { AppError } from '../src/lib/errors.ts'
 import type { ResourcesService } from '../src/services/resources-service.ts'
 import { buildTestApp, testUser, VALID_TOKEN } from './helpers.ts'
 
@@ -20,12 +21,13 @@ const resource: AdminResource = {
   durationMinutes: 8,
   level: 'beginner',
   publishedAt: '2026-10-26T10:00:00Z',
+  image: null,
   status: 'published',
   createdAt: '2026-10-26T10:00:00Z',
   updatedAt: '2026-10-26T10:00:00Z',
 }
 
-function fakeResources(calls: unknown[] = []): ResourcesService {
+function fakeResources(calls: unknown[] = [], uploadsOn = true): ResourcesService {
   return {
     list: async (filters) => {
       calls.push(['list', filters])
@@ -52,12 +54,24 @@ function fakeResources(calls: unknown[] = []): ResourcesService {
     remove: async (adminId, id) => {
       calls.push(['remove', adminId, id])
     },
+    signImageUpload: () => {
+      if (!uploadsOn)
+        throw new AppError(
+          503,
+          'service_unavailable',
+          'Image uploads aren’t set up on this server.',
+        )
+      return {
+        uploadUrl: 'https://api.cloudinary.com/v1_1/demo/image/upload',
+        fields: { signature: 'x' },
+      }
+    },
   }
 }
 
-function appWith(roles: ('user' | 'mentor' | 'admin')[], calls: unknown[] = []) {
+function appWith(roles: ('user' | 'mentor' | 'admin')[], calls: unknown[] = [], uploadsOn = true) {
   return buildTestApp({
-    resources: fakeResources(calls),
+    resources: fakeResources(calls, uploadsOn),
     auth: {
       verifyAccessToken: async (t) => (t === VALID_TOKEN ? testUser : null),
       getRoles: async () => roles,
@@ -148,5 +162,39 @@ describe('admin content management', () => {
       .set(auth)
       .send({ status: 'published' })
     expect(calls[0]![3]).toEqual({ status: 'published' })
+  })
+})
+
+describe('image upload tickets', () => {
+  it('are for admins only', async () => {
+    const app = appWith(['user'])
+    expect((await request(app).post('/api/v1/admin/uploads/resource-image')).status).toBe(401)
+    expect((await request(app).post('/api/v1/admin/uploads/resource-image').set(auth)).status).toBe(
+      403,
+    )
+  })
+
+  it('are issued to admins', async () => {
+    const res = await request(appWith(['user', 'admin']))
+      .post('/api/v1/admin/uploads/resource-image')
+      .set(auth)
+    expect(res.status).toBe(200)
+    expect(res.body.uploadUrl).toMatch(/^https:\/\/api\.cloudinary\.com\//)
+  })
+
+  it('say clearly when uploads are not configured', async () => {
+    const res = await request(appWith(['user', 'admin'], [], false))
+      .post('/api/v1/admin/uploads/resource-image')
+      .set(auth)
+    expect(res.status).toBe(503)
+    expect(res.body.error.message).toMatch(/aren’t set up/)
+  })
+
+  it('reject image ids the server could not have issued', async () => {
+    const res = await request(appWith(['user', 'admin']))
+      .patch(`/api/v1/admin/resources/${resourceId}`)
+      .set(auth)
+      .send({ image: { publicId: 'someone/else/photo', alt: 'A photo' } })
+    expect(res.status).toBe(400)
   })
 })

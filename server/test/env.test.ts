@@ -37,4 +37,39 @@ describe('loadConfig', () => {
       expect(String(error)).not.toContain(secret)
     }
   })
+
+  describe('Cloudinary', () => {
+    const cloudinary = {
+      CLOUDINARY_CLOUD_NAME: 'everguide-dev',
+      CLOUDINARY_API_KEY: '123456789012345',
+      CLOUDINARY_API_SECRET: 'super-secret-value-123',
+    }
+
+    it('is off when none of the variables are set', () => {
+      expect(loadConfig(validEnv).cloudinary).toBeNull()
+    })
+
+    it('is on when all three are set', () => {
+      expect(loadConfig({ ...validEnv, ...cloudinary }).cloudinary).toEqual({
+        cloudName: 'everguide-dev',
+        apiKey: '123456789012345',
+        apiSecret: 'super-secret-value-123',
+      })
+    })
+
+    it('refuses a half-set configuration, naming what is missing but no values', () => {
+      const attempt = () =>
+        loadConfig({
+          ...validEnv,
+          CLOUDINARY_CLOUD_NAME: cloudinary.CLOUDINARY_CLOUD_NAME,
+          CLOUDINARY_API_SECRET: cloudinary.CLOUDINARY_API_SECRET,
+        })
+      expect(attempt).toThrow(/CLOUDINARY_API_KEY/)
+      try {
+        attempt()
+      } catch (error) {
+        expect((error as Error).message).not.toContain('super-secret-value-123')
+      }
+    })
+  })
 })

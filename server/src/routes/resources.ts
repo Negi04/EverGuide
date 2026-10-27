@@ -70,6 +70,11 @@ export function registerResourceRoutes(
     )
   })
 
+  // A signed ticket for one cover-image upload, made by the browser straight to Cloudinary.
+  api.post('/admin/uploads/resource-image', ...adminOnly, (_req, res) => {
+    res.json(resources.signImageUpload())
+  })
+
   api.delete('/admin/resources/:id', ...adminOnly, async (req, res) => {
     await resources.remove(userContext(req).userId, idParam(req.params.id), String(req.id))
     res.status(204).end()

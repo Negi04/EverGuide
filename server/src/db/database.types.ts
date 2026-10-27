@@ -706,6 +706,8 @@ export type Database = {
           created_by: string | null
           created_at: string
           updated_at: string
+          image_public_id: string | null
+          image_alt: string | null
         }
         Insert: {
           slug: string
@@ -721,6 +723,8 @@ export type Database = {
           status?: 'draft' | 'published' | 'archived'
           published_at?: string | null
           created_by?: string | null
+          image_public_id?: string | null
+          image_alt?: string | null
         }
         Update: {
           slug?: string
@@ -735,6 +739,8 @@ export type Database = {
           level?: 'beginner' | 'intermediate' | 'advanced'
           status?: 'draft' | 'published' | 'archived'
           published_at?: string | null
+          image_public_id?: string | null
+          image_alt?: string | null
         }
         Relationships: []
       }

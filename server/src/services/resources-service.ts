@@ -1,18 +1,23 @@
 import {
   MAX_SAVED_RESOURCES,
+  RESOURCE_IMAGE_MAX_BYTES,
   slugify,
   youtubeId,
   type AdminResource,
   type GuidanceDomain,
   type Resource,
   type ResourceCreate,
+  type ResourceImageInput,
   type ResourceKind,
   type ResourceLevel,
   type ResourcePage,
   type ResourceStatus,
   type ResourceUpdate,
+  type UploadTicket,
 } from '@everguide/shared'
-import { AppError, databaseError } from '../lib/errors.ts'
+import type { Logger } from 'pino'
+import { ALLOWED_IMAGE_FORMATS, type ImageStore } from '../lib/cloudinary.ts'
+import { AppError, databaseError, serviceUnavailable } from '../lib/errors.ts'
 import { fetchAllPages } from '../lib/paging.ts'
 import type { Db } from '../lib/supabase.ts'
 import type { UserContext } from './profile-service.ts'
@@ -39,14 +44,17 @@ export interface ResourcesService {
     requestId: string,
   ): Promise<AdminResource>
   remove(adminId: string, resourceId: string, requestId: string): Promise<void>
+  signImageUpload(): UploadTicket
 }
 
 const PAGE_SIZE = 24
 const PUBLIC_COLUMNS =
-  'id, slug, title, summary, kind, domain, url, source_name, youtube_id, duration_minutes, level, published_at'
+  'id, slug, title, summary, kind, domain, url, source_name, youtube_id, duration_minutes, level, published_at, image_public_id, image_alt'
 const ADMIN_COLUMNS = `${PUBLIC_COLUMNS}, status, created_at, updated_at`
 /** Ids per `.in()` filter, keeping request URLs well under gateway limits. */
 const IN_CHUNK = 100
+/** Narrower covers look blurry on large screens. */
+const MIN_IMAGE_WIDTH = 400
 
 const notFound = () => new AppError(404, 'not_found', 'Resource not found.')
 
@@ -63,10 +71,12 @@ type PublicRow = {
   duration_minutes: number | null
   level: Resource['level']
   published_at: string | null
+  image_public_id: string | null
+  image_alt: string | null
 }
 type AdminRow = PublicRow & { status: ResourceStatus; created_at: string; updated_at: string }
 
-const toResource = (row: PublicRow): Resource => ({
+const toResource = (row: PublicRow, images: ImageStore | null): Resource => ({
   id: row.id,
   slug: row.slug,
   title: row.title,
@@ -79,10 +89,14 @@ const toResource = (row: PublicRow): Resource => ({
   durationMinutes: row.duration_minutes,
   level: row.level,
   publishedAt: row.published_at,
+  image:
+    row.image_public_id && row.image_alt && images
+      ? { publicId: row.image_public_id, alt: row.image_alt, ...images.urls(row.image_public_id) }
+      : null,
 })
 
-const toAdminResource = (row: AdminRow): AdminResource => ({
-  ...toResource(row),
+const toAdminResource = (row: AdminRow, images: ImageStore | null): AdminResource => ({
+  ...toResource(row, images),
   status: row.status,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
@@ -95,13 +109,54 @@ const embedId = (kind: string, url: string) => (kind === 'video' ? youtubeId(url
  * The resource library. Public reads use an anonymous client and saved lists the
  * user's own client, so Row Level Security hides drafts even if a filter were missing.
  * Admin writes use the service-role client after the route has checked the admin role,
- * and every change is recorded in the audit log.
+ * and every change is recorded in the audit log. Cover images live in Cloudinary
+ * (`images` is null when uploads aren't configured).
  */
 export function createResourcesService(
   anon: Db,
   admin: Db,
   clientFor: (accessToken: string) => Db,
+  images: ImageStore | null,
+  logger: Logger,
 ): ResourcesService {
+  const imagesOff = () =>
+    new AppError(503, 'service_unavailable', 'Image uploads aren’t set up on this server.')
+
+  /** Best-effort: an image left behind only costs storage, so log and carry on. */
+  async function discard(publicId: string | null) {
+    if (!publicId || !images) return
+    await images.destroy(publicId).catch((error: unknown) => {
+      logger.warn({ err: error, publicId }, 'could not delete image from Cloudinary')
+    })
+  }
+
+  /** Never trust the browser's word about an upload: ask Cloudinary what it holds. */
+  async function checkImage(image: ResourceImageInput) {
+    if (!images) throw imagesOff()
+    let info: Awaited<ReturnType<ImageStore['inspect']>>
+    try {
+      info = await images.inspect(image.publicId)
+    } catch (error) {
+      const unavailable = serviceUnavailable('The image service didn’t respond. Please try again.')
+      unavailable.cause = error
+      throw unavailable
+    }
+    if (!info) {
+      throw new AppError(400, 'validation_failed', 'That image wasn’t found. Upload it again.')
+    }
+    const problem = !(ALLOWED_IMAGE_FORMATS as readonly string[]).includes(info.format)
+      ? 'Use a JPG, PNG or WebP image.'
+      : info.bytes > RESOURCE_IMAGE_MAX_BYTES
+        ? 'Images can be up to 5 MB.'
+        : info.width < MIN_IMAGE_WIDTH
+          ? `Use an image at least ${MIN_IMAGE_WIDTH} pixels wide.`
+          : null
+    if (problem) {
+      await discard(image.publicId)
+      throw new AppError(400, 'validation_failed', problem)
+    }
+  }
+
   async function audit(
     actorId: string,
     action: string,
@@ -163,7 +218,7 @@ export function createResourcesService(
       const { data, error } = await query
       if (error) throw databaseError(error)
       return {
-        resources: data.slice(0, PAGE_SIZE).map(toResource),
+        resources: data.slice(0, PAGE_SIZE).map((row) => toResource(row, images)),
         nextOffset: data.length > PAGE_SIZE ? offset + PAGE_SIZE : null,
       }
     },
@@ -177,7 +232,7 @@ export function createResourcesService(
         .maybeSingle()
       if (error) throw databaseError(error)
       if (!data) throw notFound()
-      return toResource(data)
+      return toResource(data, images)
     },
 
     async listSaved(ctx) {
@@ -209,7 +264,7 @@ export function createResourcesService(
       const byId = new Map(rows.map((r) => [r.id, r]))
       return ids.flatMap((id) => {
         const row = byId.get(id)
-        return row ? [toResource(row)] : []
+        return row ? [toResource(row, images)] : []
       })
     },
 
@@ -255,11 +310,12 @@ export function createResourcesService(
         .order('updated_at', { ascending: false })
         .limit(500)
       if (error) throw databaseError(error)
-      return data.map(toAdminResource)
+      return data.map((row) => toAdminResource(row, images))
     },
 
     async create(adminId, input, requestId) {
       const status = input.status ?? 'draft'
+      if (input.image) await checkImage(input.image)
       const row = {
         title: input.title,
         summary: input.summary,
@@ -273,6 +329,8 @@ export function createResourcesService(
         status,
         published_at: status === 'published' ? new Date().toISOString() : null,
         created_by: adminId,
+        image_public_id: input.image?.publicId ?? null,
+        image_alt: input.image?.alt ?? null,
       }
       let inserted = await admin
         .from('learning_resources')
@@ -288,9 +346,12 @@ export function createResourcesService(
           .select(ADMIN_COLUMNS)
           .single()
       }
-      if (inserted.error) throw databaseError(inserted.error)
+      if (inserted.error) {
+        await discard(row.image_public_id)
+        throw databaseError(inserted.error)
+      }
       await audit(adminId, 'resource.created', inserted.data.id, requestId, { status })
-      return toAdminResource(inserted.data)
+      return toAdminResource(inserted.data, images)
     },
 
     async update(adminId, resourceId, patch, requestId) {
@@ -304,6 +365,9 @@ export function createResourcesService(
           : existing.status === 'published'
             ? existing.published_at
             : new Date().toISOString()
+      const newImage =
+        patch.image && patch.image.publicId !== existing.image_public_id ? patch.image : null
+      if (newImage) await checkImage(newImage)
       const { data, error } = await admin
         .from('learning_resources')
         .update({
@@ -318,11 +382,20 @@ export function createResourcesService(
           status: patch.status,
           youtube_id: embedId(kind, url),
           published_at: publishedAt,
+          image_public_id: patch.image === undefined ? undefined : (patch.image?.publicId ?? null),
+          image_alt: patch.image === undefined ? undefined : (patch.image?.alt ?? null),
         })
         .eq('id', resourceId)
         .select(ADMIN_COLUMNS)
         .single()
-      if (error) throw databaseError(error)
+      if (error) {
+        if (newImage) await discard(newImage.publicId)
+        throw databaseError(error)
+      }
+      // The old image goes only after the database no longer points at it.
+      if (patch.image !== undefined && existing.image_public_id !== data.image_public_id) {
+        await discard(existing.image_public_id)
+      }
       const action =
         status === existing.status
           ? 'resource.updated'
@@ -332,18 +405,25 @@ export function createResourcesService(
               ? 'resource.archived'
               : 'resource.unpublished'
       await audit(adminId, action, resourceId, requestId, { fields: Object.keys(patch) })
-      return toAdminResource(data)
+      return toAdminResource(data, images)
     },
 
     async remove(adminId, resourceId, requestId) {
       const existing = await loadAdmin(resourceId)
       const { error } = await admin.from('learning_resources').delete().eq('id', resourceId)
       if (error) throw databaseError(error)
+      await discard(existing.image_public_id)
       // The row is gone, so the audit entry keeps enough to say what it was.
       await audit(adminId, 'resource.deleted', resourceId, requestId, {
         title: existing.title,
         slug: existing.slug,
       })
+    },
+
+    signImageUpload() {
+      if (!images) throw imagesOff()
+      const { uploadUrl, fields } = images.signUpload()
+      return { uploadUrl, fields }
     },
   }
 }

@@ -71,4 +71,19 @@ describe('resource validation', () => {
     // A .partial() of the create schema would add level: 'beginner' and status: 'draft' here.
     expect(resourceUpdateSchema.parse({ title: 'New title' })).toEqual({ title: 'New title' })
   })
+
+  it('accepts only server-issued image ids, and requires alt text', () => {
+    const image = {
+      publicId: 'everguide/resources/2f1c2b4a-5d6e-4f70-8a9b-0c1d2e3f4a5b',
+      alt: 'A notebook with a monthly budget',
+    }
+    expect(resourceCreateSchema.safeParse({ ...valid, image }).success).toBe(true)
+    expect(resourceCreateSchema.safeParse({ ...valid, image: null }).success).toBe(true)
+    for (const bad of [
+      { ...image, publicId: 'everguide/avatars/2f1c2b4a-5d6e-4f70-8a9b-0c1d2e3f4a5b' },
+      { ...image, publicId: 'everguide/resources/../../secret' },
+      { ...image, alt: '   ' },
+    ])
+      expect(resourceCreateSchema.safeParse({ ...valid, image: bad }).success).toBe(false)
+  })
 })
