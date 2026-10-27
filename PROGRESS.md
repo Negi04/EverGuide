@@ -5,9 +5,9 @@
 
 ## Current status
 
-- **Active phase:** Phase 5 (branch `phase-5-wellness-finance-admin`, branched from the Phase 4 tip; the Phase 4 PR is awaiting the user's merge).
-- **Last updated:** 2026-10-26
-- **Next step:** The user opens and merges the Phase 5 PR; then Phase 6 (Razorpay, n8n, hardening, deploy).
+- **Active phase:** Phase 6 (branch `phase-6-payments-automation`, from `main` after the Phase 5 merge, PR #3).
+- **Last updated:** 2026-10-27
+- **Next step:** 6a: the user creates a Razorpay account and adds Test Mode keys to `.env`; build demo payments.
 
 ---
 
@@ -70,12 +70,12 @@
 - [x] Admin portal (overview analytics, users and roles, mentor verification, resources, knowledge-base documents, AI feedback, audit log)
 - [x] Phase wrap-up: `docs/learning/phase-5.md` (quiz skipped at the user's request on 2026-10-27; topics carried forward)
 
-### Phase 6 — Payments, Automation & Production Launch
-- [ ] Razorpay subscriptions + verified webhooks + idempotency
-- [ ] n8n workflows (signed, deduped, minimal PII)
-- [ ] Playwright e2e, accessibility audit, security review
-- [ ] Deploy: Vercel (client), Node host (server), Supabase prod
-- [ ] Phase wrap-up ritual
+### Phase 6 — Demo payments, Automation & Hardening (revised 2026-10-27)
+EverGuide is the user's college major project, shown to professors. Payments are a **demo**: Razorpay Test Mode only, no real money. Deployment is out of scope (the user will deploy later).
+- [ ] 6a Razorpay Test Mode: one-time "1 month of Pro/Premium" (demo prices ₹199 / ₹499), signature verification, signed webhooks + idempotency, plan limits applied to the AI allowance, live keys refused, "demo" labels
+- [ ] 6b n8n (local, demo-friendly): signed outbound events with dedupe keys and minimal personal data, an outbox for retries, ready-made workflows (booking confirmations, reminders, payment receipt, admin alerts)
+- [ ] 6c Hardening: browser tests moved into the repo (Playwright), accessibility audit, security review
+- [ ] Phase wrap-up
 
 ---
 
@@ -227,6 +227,9 @@
 | 2026-10-26 | Admin edits send only changed fields | Meaningful audit entries; a stale form can't overwrite another admin's newer change | Diffing in the client |
 | 2026-10-27 | Signed direct uploads to Cloudinary; the server picks the id and verifies each upload | Files never pass through our server; nobody can upload or overwrite without our signature; client claims aren't trusted | Abandoned uploads can leave orphan images |
 | 2026-10-27 | No Cloudinary SDK: signing and three API calls written with `fetch` | Small surface, fully tested, no extra dependency | Must follow Cloudinary API changes ourselves |
+| 2026-10-27 | Payments are a demo: Razorpay Test Mode only, live keys refused | College major project shown to professors; no real money should ever move | Real billing would need live keys, KYC and legal review |
+| 2026-10-27 | One-time "1 month" purchases instead of recurring subscriptions | Simple and reliable to demonstrate end to end on a laptop | No automatic renewals |
+| 2026-10-27 | Deployment removed from Claude's scope | The user will deploy later themselves | Deployment notes stay in the backlog for them |
 | 2026-10-24 | Light theme only for now | Focus on one polished theme first; semantic tokens make dark mode a later remap | No dark mode yet |
 
 ---
