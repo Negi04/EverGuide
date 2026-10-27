@@ -1,5 +1,7 @@
 import {
   guidanceDomains,
+  RESOURCE_IMAGE_MAX_BYTES,
+  RESOURCE_IMAGE_TYPES,
   resourceCreateSchema,
   resourceKinds,
   resourceLevels,
@@ -16,6 +18,7 @@ import {
   Archive,
   BookOpen,
   Eye,
+  ImagePlus,
   PencilLine,
   Plus,
   RotateCcw,
@@ -23,7 +26,7 @@ import {
   Trash2,
   Undo2,
 } from 'lucide-react'
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
 import { useAuth } from '@/auth/use-auth'
 import { EmptyState } from '@/components/common/empty-state'
@@ -69,6 +72,9 @@ const emptyForm: FormValues = {
   durationMinutes: '',
   level: 'beginner',
 }
+
+type ImageState = { publicId: string; previewUrl: string; alt: string } | null
+type FormErrors = Partial<Record<keyof FormValues | 'image', string>>
 
 const statusTone: Record<ResourceStatus, 'blue' | 'gold' | 'neutral'> = {
   published: 'blue',
@@ -273,9 +279,38 @@ function ResourceForm({ resource, onDone }: { resource?: AdminResource; onDone: 
         }
       : emptyForm,
   )
-  const [errors, setErrors] = useState<Partial<Record<keyof FormValues, string>>>({})
+  const [image, setImage] = useState<ImageState>(
+    resource?.image
+      ? {
+          publicId: resource.image.publicId,
+          previewUrl: resource.image.src,
+          alt: resource.image.alt,
+        }
+      : null,
+  )
+  const [errors, setErrors] = useState<FormErrors>({})
+  const fileInput = useRef<HTMLInputElement>(null)
   const set = <K extends keyof FormValues>(key: K, value: FormValues[K]) =>
     setValues({ ...values, [key]: value })
+
+  const upload = useMutation({
+    mutationFn: (file: File) => api.uploadResourceImage(file),
+    onSuccess: ({ publicId, previewUrl }) =>
+      setImage((previous) => ({ publicId, previewUrl, alt: previous?.alt ?? '' })),
+  })
+
+  /** Quick checks in the browser; the server checks the uploaded file again with Cloudinary. */
+  const pickFile = (file: File | undefined) => {
+    if (!file) return
+    const problem = !(RESOURCE_IMAGE_TYPES as readonly string[]).includes(file.type)
+      ? 'Use a JPG, PNG or WebP image.'
+      : file.size > RESOURCE_IMAGE_MAX_BYTES
+        ? 'Images can be up to 5 MB.'
+        : undefined
+    setErrors({ ...errors, image: problem })
+    if (!problem) upload.mutate(file)
+  }
+  const imageInput = image ? { publicId: image.publicId, alt: image.alt } : null
 
   const save = useMutation({
     mutationFn: async ({ publish }: { publish: boolean }) => {
@@ -284,7 +319,11 @@ function ResourceForm({ resource, onDone }: { resource?: AdminResource; onDone: 
         durationMinutes: values.durationMinutes ? Number(values.durationMinutes) : null,
       }
       if (!resource)
-        return api.adminCreateResource({ ...input, status: publish ? 'published' : 'draft' })
+        return api.adminCreateResource({
+          ...input,
+          image: imageInput,
+          status: publish ? 'published' : 'draft',
+        })
       // Send only what changed: the audit log then says what was edited, and an old form
       // can't overwrite someone else's newer change to a field you didn't touch.
       const patch = Object.fromEntries(
@@ -292,6 +331,11 @@ function ResourceForm({ resource, onDone }: { resource?: AdminResource; onDone: 
           ([key, value]) => resource[key as keyof AdminResource] !== value,
         ),
       ) as ResourceUpdate
+      if (
+        (resource.image?.publicId ?? null) !== (imageInput?.publicId ?? null) ||
+        (resource.image?.alt ?? null) !== (imageInput?.alt ?? null)
+      )
+        patch.image = imageInput
       return Object.keys(patch).length > 0 ? api.adminUpdateResource(resource.id, patch) : resource
     },
     onSuccess: async () => {
@@ -305,11 +349,12 @@ function ResourceForm({ resource, onDone }: { resource?: AdminResource; onDone: 
     const checked = resourceCreateSchema.safeParse({
       ...values,
       durationMinutes: values.durationMinutes ? Number(values.durationMinutes) : null,
+      image: imageInput,
     })
     if (!checked.success) {
-      const next: Partial<Record<keyof FormValues, string>> = {}
+      const next: FormErrors = {}
       for (const issue of checked.error.issues) {
-        const key = issue.path[0] as keyof FormValues
+        const key = issue.path[0] as keyof FormErrors
         next[key] ??= issue.message
       }
       return setErrors(next)
@@ -419,17 +464,100 @@ function ResourceForm({ resource, onDone }: { resource?: AdminResource; onDone: 
           />
         </FormField>
       </div>
+
+      {/* relative: keeps the visually hidden file input inside this box (an escaped
+          sr-only element once widened a page). */}
+      <fieldset className="relative space-y-3">
+        <legend className="text-sm font-medium">Cover image (optional)</legend>
+        {image ? (
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+            <img
+              src={image.previewUrl}
+              alt="Cover image preview"
+              className="aspect-video w-full rounded-md border border-border object-cover sm:w-56"
+            />
+            <div className="min-w-0 flex-1 space-y-3">
+              <FormField
+                label="Describe the image"
+                hint="Read aloud by screen readers, e.g. “A person planning a budget at a desk”."
+                error={errors.image}
+              >
+                <Input
+                  value={image.alt}
+                  maxLength={200}
+                  onChange={(e) => setImage({ ...image, alt: e.target.value })}
+                />
+              </FormField>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={upload.isPending}
+                  onClick={() => fileInput.current?.click()}
+                >
+                  {upload.isPending ? 'Uploading…' : 'Replace'}
+                </Button>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setImage(null)}>
+                  Remove
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={upload.isPending}
+              onClick={() => fileInput.current?.click()}
+            >
+              <ImagePlus className="size-4" aria-hidden />
+              {upload.isPending ? 'Uploading…' : 'Choose image'}
+            </Button>
+            <p className="mt-1 text-xs text-muted-foreground">
+              JPG, PNG or WebP, up to 5 MB and at least 400 pixels wide. Landscape works best.
+            </p>
+            {errors.image && (
+              <p role="alert" className="mt-1 text-sm text-danger">
+                {errors.image}
+              </p>
+            )}
+          </div>
+        )}
+        {upload.error && (
+          <p role="alert" className="text-sm text-danger">
+            {upload.error.message}
+          </p>
+        )}
+        <input
+          ref={fileInput}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          aria-label="Cover image file"
+          className="sr-only"
+          onChange={(e) => {
+            pickFile(e.target.files?.[0])
+            e.target.value = '' // so choosing the same file again still triggers a change
+          }}
+        />
+      </fieldset>
+
       <div className="flex flex-wrap gap-2">
         {resource ? (
-          <Button type="submit" disabled={save.isPending}>
+          <Button type="submit" disabled={save.isPending || upload.isPending}>
             Save changes
           </Button>
         ) : (
           <>
-            <Button type="submit" variant="outline" disabled={save.isPending}>
+            <Button type="submit" variant="outline" disabled={save.isPending || upload.isPending}>
               Save as draft
             </Button>
-            <Button type="button" disabled={save.isPending} onClick={() => submit(true)()}>
+            <Button
+              type="button"
+              disabled={save.isPending || upload.isPending}
+              onClick={() => submit(true)()}
+            >
               <Send className="size-4" aria-hidden /> Publish
             </Button>
           </>

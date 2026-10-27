@@ -61,7 +61,23 @@ export function ResourceDetail({ slug, basePath }: { slug: string; basePath: str
         </div>
       </header>
 
-      {r.youtubeId && <VideoEmbed videoId={r.youtubeId} title={r.title} />}
+      {r.youtubeId ? (
+        <VideoEmbed videoId={r.youtubeId} title={r.title} />
+      ) : (
+        r.image && (
+          // The largest thing on the page, so it loads first rather than lazily.
+          <img
+            src={r.image.src}
+            srcSet={r.image.srcSet}
+            sizes="(min-width: 56rem) 56rem, 100vw"
+            alt={r.image.alt}
+            width={800}
+            height={450}
+            fetchPriority="high"
+            className="aspect-video w-full rounded-lg border border-border object-cover"
+          />
+        )
+      )}
 
       <p className="max-w-prose text-lg leading-relaxed text-foreground">{r.summary}</p>
 

@@ -1,7 +1,7 @@
 import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { fakeApi, fakeMe, fakeResource } from '@/test/fake-api'
+import { fakeApi, fakeImage, fakeMe, fakeResource, uploadedImageId } from '@/test/fake-api'
 import { fakeSession, setSession } from '@/test/fake-supabase'
 import { renderRoute } from '@/test/render-route'
 
@@ -214,5 +214,103 @@ describe('managing resources (admin)', () => {
     expect(fakeApi.adminDeleteResource).not.toHaveBeenCalled()
     await user.click(screen.getByRole('button', { name: 'Delete resource' }))
     await waitFor(() => expect(fakeApi.adminDeleteResource).toHaveBeenCalledWith('resource-1'))
+  })
+})
+
+describe('cover images', () => {
+  const asAdmin = () => {
+    setSession(fakeSession())
+    fakeApi.getMe.mockResolvedValue(fakeMe({ roles: ['user', 'admin'] }))
+  }
+  const png = () => new File(['png-bytes'], 'cover.png', { type: 'image/png' })
+
+  async function openNewForm(user: ReturnType<typeof userEvent.setup>) {
+    renderRoute('/app/admin/resources')
+    await user.click(await screen.findByRole('button', { name: /new resource/i }))
+    const form = screen.getByRole('form', { name: 'New resource' })
+    await user.type(within(form).getByLabelText('Title'), 'Saving for a goal')
+    await user.type(
+      within(form).getByLabelText('Summary'),
+      'Simple steps to put money aside for something you want.',
+    )
+    await user.type(within(form).getByLabelText('Link'), 'https://example.org/saving')
+    await user.type(within(form).getByLabelText(/^Source/), 'Example Money')
+    return form
+  }
+
+  it('upload, then must be described before publishing', async () => {
+    asAdmin()
+    const user = userEvent.setup()
+    const form = await openNewForm(user)
+    await user.upload(within(form).getByLabelText('Cover image file'), png())
+    expect(fakeApi.uploadResourceImage).toHaveBeenCalledWith(expect.any(File))
+    expect(await within(form).findByAltText('Cover image preview')).toBeInTheDocument()
+
+    await user.click(within(form).getByRole('button', { name: 'Publish' }))
+    expect(await within(form).findByText(/describe the image for people/i)).toBeInTheDocument()
+    expect(fakeApi.adminCreateResource).not.toHaveBeenCalled()
+
+    await user.type(within(form).getByLabelText('Describe the image'), 'A jar of coins')
+    await user.click(within(form).getByRole('button', { name: 'Publish' }))
+    await waitFor(() =>
+      expect(fakeApi.adminCreateResource).toHaveBeenCalledWith(
+        expect.objectContaining({
+          image: { publicId: uploadedImageId, alt: 'A jar of coins' },
+          status: 'published',
+        }),
+      ),
+    )
+  })
+
+  it('are checked in the browser before uploading', async () => {
+    asAdmin()
+    // applyAccept: false, so the file reaches our own check instead of being filtered out.
+    const user = userEvent.setup({ applyAccept: false })
+    const form = await openNewForm(user)
+    const input = within(form).getByLabelText('Cover image file')
+
+    await user.upload(input, new File(['gif'], 'cover.gif', { type: 'image/gif' }))
+    expect(within(form).getByRole('alert')).toHaveTextContent('Use a JPG, PNG or WebP image.')
+
+    const big = png()
+    Object.defineProperty(big, 'size', { value: 6 * 1024 * 1024 })
+    await user.upload(input, big)
+    expect(within(form).getByRole('alert')).toHaveTextContent('Images can be up to 5 MB.')
+    expect(fakeApi.uploadResourceImage).not.toHaveBeenCalled()
+  })
+
+  it('can be removed when editing, sending only that change', async () => {
+    asAdmin()
+    fakeApi.adminListResources.mockResolvedValue([
+      fakeResource({ image: fakeImage({ publicId: uploadedImageId, alt: 'A jar of coins' }) }),
+    ])
+    const user = userEvent.setup()
+    renderRoute('/app/admin/resources')
+    const card = (await screen.findByText('How to budget')).closest('article')!
+    await user.click(within(card).getByRole('button', { name: /edit/i }))
+    const form = screen.getByRole('form', { name: 'Edit How to budget' })
+    expect(within(form).getByLabelText('Describe the image')).toHaveValue('A jar of coins')
+    await user.click(within(form).getByRole('button', { name: 'Remove' }))
+    await user.click(within(form).getByRole('button', { name: /save changes/i }))
+    await waitFor(() =>
+      expect(fakeApi.adminUpdateResource).toHaveBeenCalledWith('resource-1', { image: null }),
+    )
+  })
+
+  it('show on cards and article pages with their description', async () => {
+    const image = fakeImage({ publicId: uploadedImageId, alt: 'A jar of coins' })
+    fakeApi.listResources.mockResolvedValue({
+      resources: [fakeResource({ image })],
+      nextOffset: null,
+    })
+    fakeApi.getResource.mockResolvedValue(fakeResource({ image }))
+    renderRoute('/resources')
+    const cardImage = await screen.findByAltText('A jar of coins')
+    expect(cardImage).toHaveAttribute('srcset', image.srcSet)
+    expect(cardImage).toHaveAttribute('loading', 'lazy')
+
+    await userEvent.setup().click(screen.getByRole('link', { name: 'How to budget' }))
+    const hero = await screen.findByAltText('A jar of coins')
+    expect(hero).toHaveAttribute('fetchpriority', 'high')
   })
 })

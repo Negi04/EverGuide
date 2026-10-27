@@ -5,6 +5,7 @@ import type {
   ResourcePage,
   ResourceQuery,
   ResourceUpdate,
+  UploadTicket,
   Budget,
   BudgetItemCreate,
   BudgetItemUpdate,
@@ -394,4 +395,36 @@ export const api = {
     request<AdminResource>(`/api/v1/admin/resources/${id}`, { method: 'PATCH', body: patch }),
   adminDeleteResource: (id: string) =>
     request<void>(`/api/v1/admin/resources/${id}`, { method: 'DELETE' }),
+
+  /**
+   * Upload a cover image: our server signs a one-time ticket, then the browser sends the
+   * file straight to Cloudinary (never through our server, and without our login token).
+   */
+  uploadResourceImage: async (file: File): Promise<{ publicId: string; previewUrl: string }> => {
+    const ticket = await request<UploadTicket>('/api/v1/admin/uploads/resource-image', {
+      method: 'POST',
+    })
+    const form = new FormData()
+    for (const [key, value] of Object.entries(ticket.fields)) form.set(key, value)
+    form.set('file', file)
+    let response: Response
+    try {
+      response = await fetch(ticket.uploadUrl, {
+        method: 'POST',
+        body: form,
+        signal: AbortSignal.timeout(60_000),
+      })
+    } catch {
+      throw new Error('The upload didn’t finish. Check your connection and try again.')
+    }
+    const body = (await response.json().catch(() => ({}))) as {
+      public_id?: string
+      secure_url?: string
+      error?: { message?: string }
+    }
+    if (!response.ok || !body.public_id || !body.secure_url) {
+      throw new Error(body.error?.message ?? 'The image upload was refused. Please try again.')
+    }
+    return { publicId: body.public_id, previewUrl: body.secure_url }
+  },
 }

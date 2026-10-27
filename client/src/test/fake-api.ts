@@ -175,7 +175,15 @@ export const fakeApi = {
   adminCreateResource: vi.fn(),
   adminUpdateResource: vi.fn(),
   adminDeleteResource: vi.fn(),
+  uploadResourceImage: vi.fn(),
 }
+
+/** What the server returns for an image the admin attached ({ publicId, alt }). */
+export function fakeImage(input: { publicId: string; alt: string }) {
+  const src = `https://res.cloudinary.com/demo/image/upload/w_800/${input.publicId}`
+  return { ...input, src, srcSet: `${src} 800w` }
+}
+export const uploadedImageId = 'everguide/resources/2f1c2b4a-5d6e-4f70-8a9b-0c1d2e3f4a5b'
 
 export function fakeResource(overrides: Partial<AdminResource> = {}): AdminResource {
   return {
@@ -191,6 +199,7 @@ export function fakeResource(overrides: Partial<AdminResource> = {}): AdminResou
     durationMinutes: 8,
     level: 'beginner',
     publishedAt: '2026-10-20T10:00:00Z',
+    image: null,
     status: 'published',
     createdAt: '2026-10-20T10:00:00Z',
     updatedAt: '2026-10-20T10:00:00Z',
@@ -570,11 +579,20 @@ export function resetFakeApi() {
     }),
   ])
   fakeApi.adminCreateResource.mockImplementation(async (input) =>
-    fakeResource({ ...input, id: 'resource-new', status: input.status ?? 'draft' }),
+    fakeResource({
+      ...input,
+      id: 'resource-new',
+      status: input.status ?? 'draft',
+      image: input.image ? fakeImage(input.image) : null,
+    }),
   )
   fakeApi.adminUpdateResource.mockImplementation(async (id, patch) =>
-    fakeResource({ id, ...patch }),
+    fakeResource({ id, ...patch, image: patch.image ? fakeImage(patch.image) : null }),
   )
+  fakeApi.uploadResourceImage.mockResolvedValue({
+    publicId: uploadedImageId,
+    previewUrl: `https://res.cloudinary.com/demo/image/upload/${uploadedImageId}.png`,
+  })
   fakeApi.adminDeleteResource.mockResolvedValue(undefined)
   fakeApi.listJournal.mockResolvedValue({ entries: [fakeJournalEntry()], nextOffset: null })
   fakeApi.createJournalEntry.mockImplementation(async (input) =>
