@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react'
-import { Navigate, type RouteObject } from 'react-router'
+import type { RouteObject } from 'react-router'
 import { RedirectIfSignedIn, RequireAuth, RequireOnboarding } from '@/auth/guards'
 import { RequireRole } from '@/auth/require-role'
 import { AuthLayout } from '@/components/layout/auth-layout'
@@ -139,7 +139,17 @@ export const routes: RouteObject[] = [
                       {
                         lazy: page(() => import('@/pages/admin/admin-layout')),
                         children: [
-                          { index: true, element: <Navigate to="mentors" replace /> },
+                          { index: true, lazy: page(() => import('@/pages/admin/overview-page')) },
+                          { path: 'users', lazy: page(() => import('@/pages/admin/users-page')) },
+                          {
+                            path: 'knowledge',
+                            lazy: page(() => import('@/pages/admin/knowledge-page')),
+                          },
+                          {
+                            path: 'feedback',
+                            lazy: page(() => import('@/pages/admin/feedback-page')),
+                          },
+                          { path: 'audit', lazy: page(() => import('@/pages/admin/audit-page')) },
                           {
                             path: 'mentors',
                             lazy: page(() => import('@/pages/admin/mentor-applications-page')),

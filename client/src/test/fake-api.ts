@@ -176,7 +176,37 @@ export const fakeApi = {
   adminUpdateResource: vi.fn(),
   adminDeleteResource: vi.fn(),
   uploadResourceImage: vi.fn(),
+  adminOverview: vi.fn(),
+  adminListUsers: vi.fn(),
+  adminSetAdmin: vi.fn(),
+  adminListDocuments: vi.fn(),
+  adminUploadDocument: vi.fn(),
+  adminSetDocumentStatus: vi.fn(),
+  adminListFeedback: vi.fn(),
+  adminAuditLog: vi.fn(),
 }
+
+export const fakeOverview = {
+  users: { total: 42, newLast7Days: 5, newLast30Days: 12, onboarded: 30 },
+  ai: { messagesThisMonth: 120, failedThisMonth: 2, helpfulFeedback: 18, notHelpfulFeedback: 4 },
+  mentors: { verified: 3, pending: 1 },
+  bookings: { requested: 2, confirmed: 5 },
+  content: { publishedResources: 7, approvedKnowledgeDocuments: 10 },
+  signupsByWeek: Array.from({ length: 12 }, (_, i) => ({
+    weekStart: `2026-${String(8 + Math.floor(i / 4)).padStart(2, '0')}-${String(1 + (i % 4) * 7).padStart(2, '0')}`,
+    signups: i,
+  })),
+}
+
+export const fakeAdminUser = (overrides: Record<string, unknown> = {}) => ({
+  id: 'user-2',
+  email: 'ravi@example.com',
+  fullName: 'Ravi Kumar',
+  roles: ['user'],
+  createdAt: '2026-10-20T10:00:00Z',
+  lastSignInAt: null,
+  ...overrides,
+})
 
 /** What the server returns for an image the admin attached ({ publicId, alt }). */
 export function fakeImage(input: { publicId: string; alt: string }) {
@@ -594,6 +624,75 @@ export function resetFakeApi() {
     previewUrl: `https://res.cloudinary.com/demo/image/upload/${uploadedImageId}.png`,
   })
   fakeApi.adminDeleteResource.mockResolvedValue(undefined)
+  fakeApi.adminOverview.mockResolvedValue(fakeOverview)
+  fakeApi.adminListUsers.mockResolvedValue([
+    fakeAdminUser({
+      id: 'user-1',
+      email: 'asha@example.com',
+      fullName: 'Asha Rao',
+      roles: ['user', 'admin'],
+    }),
+    fakeAdminUser(),
+  ])
+  fakeApi.adminSetAdmin.mockImplementation(async (id: string, admin: boolean) =>
+    fakeAdminUser({ id, roles: admin ? ['user', 'admin'] : ['user'] }),
+  )
+  fakeApi.adminListDocuments.mockResolvedValue([
+    {
+      id: 'doc-1',
+      slug: 'switching-careers',
+      title: 'Switching careers',
+      domain: 'career',
+      sourceName: 'EverGuide starter guide',
+      status: 'approved',
+      chunks: 5,
+      updatedAt: '2026-10-24T10:00:00Z',
+    },
+  ])
+  fakeApi.adminUploadDocument.mockResolvedValue({
+    id: 'doc-2',
+    slug: 'exam-stress',
+    title: 'Managing exam stress',
+    domain: 'mental_wellness',
+    sourceName: 'Example',
+    status: 'draft',
+    chunks: 3,
+    updatedAt: '2026-10-27T10:00:00Z',
+  })
+  fakeApi.adminSetDocumentStatus.mockResolvedValue({})
+  fakeApi.adminListFeedback.mockResolvedValue([
+    {
+      id: 'fb-1',
+      rating: 'not_helpful',
+      comment: 'It ignored my city.',
+      createdAt: '2026-10-26T10:00:00Z',
+      answer: 'Rent varies by city…',
+      grounded: true,
+    },
+  ])
+  fakeApi.adminAuditLog.mockResolvedValue({
+    entries: [
+      {
+        id: 2,
+        action: 'role.admin_granted',
+        actorName: 'Asha Rao',
+        targetType: 'user',
+        targetId: 'user-2',
+        metadata: {},
+        createdAt: '2026-10-27T09:00:00Z',
+      },
+      {
+        id: 1,
+        action: 'resource.deleted',
+        actorName: null,
+        targetType: 'learning_resource',
+        targetId: 'r',
+        metadata: { slug: 'old-guide' },
+        createdAt: '2026-10-26T09:00:00Z',
+      },
+    ],
+    nextOffset: 50,
+  })
   fakeApi.listJournal.mockResolvedValue({ entries: [fakeJournalEntry()], nextOffset: null })
   fakeApi.createJournalEntry.mockImplementation(async (input) =>
     fakeJournalEntry({ id: 'entry-new', ...input, title: input.title || null }),

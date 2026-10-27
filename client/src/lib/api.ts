@@ -1,4 +1,11 @@
 import type {
+  AdminFeedback,
+  AdminOverview,
+  AdminUser,
+  AuditPage,
+  AuditQuery,
+  KnowledgeDocumentSummary,
+  KnowledgeStatus,
   AdminResource,
   Resource,
   ResourceCreate,
@@ -426,5 +433,32 @@ export const api = {
       throw new Error(body.error?.message ?? 'The image upload was refused. Please try again.')
     }
     return { publicId: body.public_id, previewUrl: body.secure_url }
+  },
+
+  adminOverview: () => request<AdminOverview>('/api/v1/admin/overview'),
+  adminListUsers: (q?: string) =>
+    request<AdminUser[]>(`/api/v1/admin/users${q ? `?q=${encodeURIComponent(q)}` : ''}`),
+  adminSetAdmin: (id: string, admin: boolean) =>
+    request<AdminUser>(`/api/v1/admin/users/${id}/admin-role`, { method: 'POST', body: { admin } }),
+  adminListDocuments: () =>
+    request<KnowledgeDocumentSummary[]>('/api/v1/admin/knowledge-documents'),
+  adminUploadDocument: (markdown: string) =>
+    request<KnowledgeDocumentSummary>('/api/v1/admin/knowledge-documents', {
+      method: 'POST',
+      body: { markdown },
+    }),
+  adminSetDocumentStatus: (id: string, status: KnowledgeStatus) =>
+    request<KnowledgeDocumentSummary>(`/api/v1/admin/knowledge-documents/${id}`, {
+      method: 'PATCH',
+      body: { status },
+    }),
+  adminListFeedback: (rating?: AdminFeedback['rating']) =>
+    request<AdminFeedback[]>(`/api/v1/admin/ai-feedback${rating ? `?rating=${rating}` : ''}`),
+  adminAuditLog: ({ area, offset }: AuditQuery = {}) => {
+    const params = new URLSearchParams()
+    if (area) params.set('area', area)
+    if (offset) params.set('offset', String(offset))
+    const query = params.toString()
+    return request<AuditPage>(`/api/v1/admin/audit-events${query ? `?${query}` : ''}`)
   },
 }

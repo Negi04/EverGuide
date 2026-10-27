@@ -2,8 +2,13 @@ import { NavLink, Outlet } from 'react-router'
 import { cn } from '@/lib/utils'
 
 const tabs = [
-  { to: '/app/admin/mentors', label: 'Mentor applications' },
-  { to: '/app/admin/resources', label: 'Resources' },
+  { to: '/app/admin', label: 'Overview', end: true },
+  { to: '/app/admin/users', label: 'Users', end: false },
+  { to: '/app/admin/mentors', label: 'Mentors', end: false },
+  { to: '/app/admin/resources', label: 'Resources', end: false },
+  { to: '/app/admin/knowledge', label: 'Knowledge base', end: false },
+  { to: '/app/admin/feedback', label: 'AI feedback', end: false },
+  { to: '/app/admin/audit', label: 'Audit log', end: false },
 ]
 
 /** Admin area. Only a convenience for admins: the server checks the role on every call. */
@@ -17,6 +22,7 @@ export default function AdminLayout() {
           <NavLink
             key={tab.to}
             to={tab.to}
+            end={tab.end}
             className={({ isActive }) =>
               cn(
                 '-mb-px border-b-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-colors',

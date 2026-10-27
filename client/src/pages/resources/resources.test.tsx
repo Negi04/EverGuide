@@ -125,11 +125,10 @@ describe('managing resources (admin)', () => {
     expect(fakeApi.adminListResources).not.toHaveBeenCalled()
   })
 
-  it('opens on mentor applications, with a tab for resources', async () => {
+  it('opens on the overview, with a tab for resources', async () => {
     asAdmin()
-    const { router } = renderRoute('/app/admin')
-    await screen.findByRole('heading', { name: 'Mentor applications' })
-    expect(router.state.location.pathname).toBe('/app/admin/mentors')
+    renderRoute('/app/admin')
+    await screen.findByRole('heading', { name: 'Overview' })
     const tabs = screen.getByRole('navigation', { name: 'Admin' })
     expect(within(tabs).getByRole('link', { name: 'Resources' })).toHaveAttribute(
       'href',
