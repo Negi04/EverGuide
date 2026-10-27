@@ -7,7 +7,7 @@
 
 - **Active phase:** Phase 5 (branch `phase-5-wellness-finance-admin`, branched from the Phase 4 tip; the Phase 4 PR is awaiting the user's merge).
 - **Last updated:** 2026-10-26
-- **Next step:** Phase 5e: Admin portal (overview analytics, users and roles, knowledge-base documents, AI feedback review, audit log viewer).
+- **Next step:** Phase 5 wrap-up (learning doc `docs/learning/phase-5.md`, quiz, PR).
 
 ---
 
@@ -67,7 +67,7 @@
 - [x] Wellness tools (breathing, journal, habits, support)
 - [x] Finance tools (budget, savings goals, glossary, calculators)
 - [x] Resource library (links + video embeds) and Cloudinary cover images
-- [ ] Admin portal (users, mentor verification, content, KB docs, feedback, analytics, audit log); mentor verification and resource management done, the rest is 5e
+- [x] Admin portal (overview analytics, users and roles, mentor verification, resources, knowledge-base documents, AI feedback, audit log)
 - [ ] Phase wrap-up ritual
 
 ### Phase 6 — Payments, Automation & Production Launch
@@ -99,6 +99,9 @@
 - **2026-10-27 (Cloudinary cover images):** Migration 5 (`20261027000005_resource_images.sql`, applied by the user): `image_public_id` (only `everguide/resources/<uuid>`) and `image_alt` (required with an image). `server/src/lib/cloudinary.ts` (no SDK): signed upload tickets that fix the id and allowed formats (signature verified against Cloudinary's documented example), server-side inspection of every upload before saving (format, ≤ 5 MB, ≥ 400 px wide; rejected uploads are deleted), deletion of replaced/removed images after the database change, 16:9 responsive delivery URLs with `f_auto,q_auto`. Config is all-or-nothing. Browser uploads straight to Cloudinary without our login token; admin form previews and requires alt text; cards use `srcset`/`sizes` + lazy loading, article pages load the cover first.
   - **Verified:** client 155, server 175, database 58, shared 46; image integration 6/6 against the real Cloudinary account (signed upload, tampered upload refused with 401, too-small image refused and deleted, replace/delete clean up); real-browser E2E 6/6; Cloudinary folder empty afterwards.
   - Found on the way: the user's first API key had no permissions (403 "missing permissions (actions=["create"])": new Cloudinary keys start with no role), which a connection-only check missed, so `cloudinary:check` now does a real upload/read/delete; later an "api_secret mismatch" from a key and secret of different pairs. Also: an image-test URL pattern was wrong (my test, not the product).
+- **2026-10-27 (5e Admin portal):** Ingestion core moved to `server/src/rag/ingest.ts` (shared by `npm run kb:ingest` and browser uploads; re-run is idempotent and retrieval metrics are unchanged: hit@1 20/20, margin 0.535–0.670). `services/admin-service.ts` + `routes/admin.ts` (every route admin-only): overview from `admin_overview()`/`admin_signups_by_week()`; users with roles and admin grant/removal through `set_admin_role` (self-removal refused); knowledge upload **always stored as draft** (even if the file says approved), approve/draft/archive; AI feedback returning only answer + rating + comment (no user identity or question); paginated audit log with actor names. Every change is audited. UI: `/app/admin` tabs Overview (stat tiles + single-series bar chart with per-bar tooltip and table view, built per the dataviz guide; brand blue validated), Users, Mentors, Resources, Knowledge base, AI feedback, Audit log.
+  - **Verified:** client 162, server 179, database 58, shared 46; admin integration 6/6 on real Supabase + Gemini (an uploaded draft is not retrievable and becomes the top match once approved); real-browser E2E 13/13 (desktop + 390 px).
+  - Found on the way: the JSON body limit (100 KB) would have rejected the 200 KB documents the schema allowed (now 80,000 characters); screenshots showed the chart tooltip covering "Show as table", a duplicate "3" label on phones, and a long one-column phone layout (all fixed).
 
 ### Phase 4 — complete (2026-10-25)
 - **2026-10-25 (database):** Built an offline test harness: PGlite (Postgres 18 in WebAssembly) + Supabase stubs (`database/test/harness.ts`) runs every migration and tests SQL in seconds without Docker. Migration 3: goals/milestones, resumes (private bucket), interview practice, mentor profiles/verifications/availability, bookings with two exclusion constraints (no mentor or mentee overlaps), reviews, and SECURITY DEFINER booking functions (`mentor_open_slots`, `request_booking`, `respond_to_booking`, `cancel_booking`, `reschedule_booking`, `submit_mentor_review`). Wrapped in `begin/commit`. **29 PGlite tests**, incl. a daylight-saving test (US clocks change 1 Nov 2026) and mutation testing (deleting the overlap constraint or weakening the 12-hour rule makes tests fail). The user applied the migration; `db:verify` extended to **69 checks** on Supabase (btree_gist overlap confirmed via error 23P01, private bucket, direct uploads refused).
@@ -263,6 +266,8 @@
 - Images uploaded in a form that is then cancelled stay in Cloudinary: add a periodic cleanup (Phase 6 job) that deletes unreferenced images in `everguide/resources/`.
 - Cloudinary hardening before launch: strict transformations (only our sizes) so nobody can generate unlimited variants on our quota.
 - Resource recommendations based on the roadmap are still planned.
+- The admin user list reads up to 10,000 accounts from Supabase Auth and filters in memory; move to server-side search before that scale.
+- AI feedback has no "reviewed" state yet; add one (and a link to the knowledge document to fix) when feedback volume grows.
 - Changing the sign-in email address (needs Supabase email-change confirmation flow).
 - JWTs stay valid until expiry (~1h) after sign-out/deletion; consider shorter expiry when going live.
 - Generate DB types with the Supabase CLI and apply migrations via CI.
