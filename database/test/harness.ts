@@ -96,5 +96,13 @@ export async function createTestDb() {
     })
   }
 
-  return { db, files, createUser, asUser, asAnon }
+  /** Run queries as the server's secret key does: role `service_role`, which bypasses RLS. */
+  async function asService<T>(fn: (tx: Transaction) => Promise<T>): Promise<T> {
+    return db.transaction(async (tx) => {
+      await tx.exec('set local role service_role')
+      return fn(tx)
+    })
+  }
+
+  return { db, files, createUser, asUser, asAnon, asService }
 }

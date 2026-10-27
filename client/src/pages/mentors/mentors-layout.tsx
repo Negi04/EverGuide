@@ -1,13 +1,20 @@
 import { NavLink, Outlet } from 'react-router'
+import { useMyMentorProfile } from '@/hooks/use-mentors'
 import { cn } from '@/lib/utils'
 
-const tabs = [
-  { to: '/app/mentors', label: 'Find a mentor', end: true },
-  { to: '/app/mentors/sessions', label: 'My sessions', end: false },
-  { to: '/app/mentors/profile', label: 'Mentor profile', end: false },
-]
-
 export default function MentorsLayout() {
+  const ownProfile = useMyMentorProfile()
+  const tabs = [
+    { to: '/app/mentors', label: 'Find a mentor', end: true },
+    { to: '/app/mentors/sessions', label: 'My sessions', end: false },
+    {
+      to: '/app/mentors/profile',
+      // Says where to apply until the person has a mentor profile.
+      label: ownProfile.data === null ? 'Become a mentor' : 'Mentor profile',
+      end: false,
+    },
+  ]
+
   return (
     <div className="mx-auto max-w-5xl">
       <p className="eyebrow">Mentorship</p>

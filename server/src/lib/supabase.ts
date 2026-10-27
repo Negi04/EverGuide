@@ -37,3 +37,14 @@ export function createUserClient(config: Config, accessToken: string): Db {
     global: { fetch: fetchWithTimeout, headers: { Authorization: `Bearer ${accessToken}` } },
   })
 }
+
+/**
+ * Client for public reads, acting as an anonymous visitor (publishable key, no user
+ * token). Row Level Security applies, so even a missing filter can't expose drafts.
+ */
+export function createAnonClient(config: Config): Db {
+  return createClient<Database>(config.supabase.url, config.supabase.anonKey, {
+    auth: serverAuth,
+    global: { fetch: fetchWithTimeout },
+  })
+}

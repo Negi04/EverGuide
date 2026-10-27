@@ -22,7 +22,7 @@ export function ProductPreview() {
           id="preview-title"
           eyebrow="The AI Guide"
           title="Answers that show their work."
-          lead="Each answer is built from passages retrieved from EverGuide's reviewed knowledge base. Numbered citations take you to the exact source behind every claim."
+          lead="Each answer is built from passages retrieved from EverGuide's curated knowledge base. Numbered citations take you to the exact source behind every claim."
         />
 
         <figure className="mt-14">

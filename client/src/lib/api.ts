@@ -1,4 +1,33 @@
 import type {
+  AdminFeedback,
+  AdminOverview,
+  AdminUser,
+  AuditPage,
+  AuditQuery,
+  KnowledgeDocumentSummary,
+  KnowledgeStatus,
+  AdminResource,
+  Resource,
+  ResourceCreate,
+  ResourcePage,
+  ResourceQuery,
+  ResourceUpdate,
+  UploadTicket,
+  Budget,
+  BudgetItemCreate,
+  BudgetItemUpdate,
+  SavingsEntryInput,
+  SavingsGoal,
+  SavingsGoalCreate,
+  SavingsGoalUpdate,
+  Habit,
+  HabitCreate,
+  HabitList,
+  HabitUpdate,
+  JournalEntry,
+  JournalEntryCreate,
+  JournalEntryUpdate,
+  JournalPage,
   AiUsage,
   AppNotification,
   AvailabilityWindow,
@@ -302,4 +331,134 @@ export const api = {
   listNotifications: () => request<AppNotification[]>('/api/v1/notifications'),
   markNotificationsRead: (ids?: string[]) =>
     request<void>('/api/v1/notifications/read', { method: 'POST', body: { ids } }),
+
+  listJournal: (query: { q?: string; offset?: number } = {}) => {
+    const params = new URLSearchParams()
+    if (query.q) params.set('q', query.q)
+    if (query.offset) params.set('offset', String(query.offset))
+    const qs = params.toString()
+    return request<JournalPage>(`/api/v1/journal${qs ? `?${qs}` : ''}`)
+  },
+  createJournalEntry: (input: JournalEntryCreate) =>
+    request<JournalEntry>('/api/v1/journal', { method: 'POST', body: input }),
+  updateJournalEntry: (id: string, patch: JournalEntryUpdate) =>
+    request<JournalEntry>(`/api/v1/journal/${id}`, { method: 'PATCH', body: patch }),
+  deleteJournalEntry: (id: string) => request<void>(`/api/v1/journal/${id}`, { method: 'DELETE' }),
+  listHabits: () => request<HabitList>('/api/v1/habits'),
+  createHabit: (input: HabitCreate) =>
+    request<Habit>('/api/v1/habits', { method: 'POST', body: input }),
+  updateHabit: (id: string, patch: HabitUpdate) =>
+    request<Habit>(`/api/v1/habits/${id}`, { method: 'PATCH', body: patch }),
+  deleteHabit: (id: string) => request<void>(`/api/v1/habits/${id}`, { method: 'DELETE' }),
+  setHabitCheckin: (id: string, date: string, done: boolean) =>
+    request<Habit>(`/api/v1/habits/${id}/checkins/${date}`, { method: done ? 'PUT' : 'DELETE' }),
+
+  getBudget: (month: string) => request<Budget>(`/api/v1/budgets/${month}`),
+  setBudgetIncome: (month: string, incomePaise: number) =>
+    request<Budget>(`/api/v1/budgets/${month}`, { method: 'PUT', body: { incomePaise } }),
+  addBudgetItem: (month: string, input: BudgetItemCreate) =>
+    request<Budget>(`/api/v1/budgets/${month}/items`, { method: 'POST', body: input }),
+  copyPreviousBudget: (month: string) =>
+    request<Budget>(`/api/v1/budgets/${month}/copy-previous`, { method: 'POST' }),
+  updateBudgetItem: (id: string, patch: BudgetItemUpdate) =>
+    request<Budget>(`/api/v1/budget-items/${id}`, { method: 'PATCH', body: patch }),
+  deleteBudgetItem: (id: string) =>
+    request<Budget>(`/api/v1/budget-items/${id}`, { method: 'DELETE' }),
+  listSavingsGoals: () => request<SavingsGoal[]>('/api/v1/savings-goals'),
+  createSavingsGoal: (input: SavingsGoalCreate) =>
+    request<SavingsGoal>('/api/v1/savings-goals', { method: 'POST', body: input }),
+  updateSavingsGoal: (id: string, patch: SavingsGoalUpdate) =>
+    request<SavingsGoal>(`/api/v1/savings-goals/${id}`, { method: 'PATCH', body: patch }),
+  deleteSavingsGoal: (id: string) =>
+    request<void>(`/api/v1/savings-goals/${id}`, { method: 'DELETE' }),
+  addSavingsEntry: (goalId: string, input: SavingsEntryInput) =>
+    request<SavingsGoal>(`/api/v1/savings-goals/${goalId}/entries`, {
+      method: 'POST',
+      body: input,
+    }),
+  deleteSavingsEntry: (id: string) =>
+    request<SavingsGoal>(`/api/v1/savings-entries/${id}`, { method: 'DELETE' }),
+
+  listResources: (filters: ResourceQuery = {}) => {
+    const params = new URLSearchParams()
+    for (const key of ['q', 'domain', 'kind', 'level'] as const) {
+      const value = filters[key]
+      if (value) params.set(key, value)
+    }
+    if (filters.offset) params.set('offset', String(filters.offset))
+    const query = params.toString()
+    return request<ResourcePage>(`/api/v1/resources${query ? `?${query}` : ''}`, { auth: false })
+  },
+  getResource: (slug: string) => request<Resource>(`/api/v1/resources/${slug}`, { auth: false }),
+  listSavedResources: () => request<Resource[]>('/api/v1/me/saved-resources'),
+  setResourceSaved: (id: string, saved: boolean) =>
+    request<{ saved: boolean }>(`/api/v1/resources/${id}/save`, {
+      method: saved ? 'PUT' : 'DELETE',
+    }),
+  adminListResources: () => request<AdminResource[]>('/api/v1/admin/resources'),
+  adminCreateResource: (input: ResourceCreate) =>
+    request<AdminResource>('/api/v1/admin/resources', { method: 'POST', body: input }),
+  adminUpdateResource: (id: string, patch: ResourceUpdate) =>
+    request<AdminResource>(`/api/v1/admin/resources/${id}`, { method: 'PATCH', body: patch }),
+  adminDeleteResource: (id: string) =>
+    request<void>(`/api/v1/admin/resources/${id}`, { method: 'DELETE' }),
+
+  /**
+   * Upload a cover image: our server signs a one-time ticket, then the browser sends the
+   * file straight to Cloudinary (never through our server, and without our login token).
+   */
+  uploadResourceImage: async (file: File): Promise<{ publicId: string; previewUrl: string }> => {
+    const ticket = await request<UploadTicket>('/api/v1/admin/uploads/resource-image', {
+      method: 'POST',
+    })
+    const form = new FormData()
+    for (const [key, value] of Object.entries(ticket.fields)) form.set(key, value)
+    form.set('file', file)
+    let response: Response
+    try {
+      response = await fetch(ticket.uploadUrl, {
+        method: 'POST',
+        body: form,
+        signal: AbortSignal.timeout(60_000),
+      })
+    } catch {
+      throw new Error('The upload didn’t finish. Check your connection and try again.')
+    }
+    const body = (await response.json().catch(() => ({}))) as {
+      public_id?: string
+      secure_url?: string
+      error?: { message?: string }
+    }
+    if (!response.ok || !body.public_id || !body.secure_url) {
+      throw new Error(body.error?.message ?? 'The image upload was refused. Please try again.')
+    }
+    return { publicId: body.public_id, previewUrl: body.secure_url }
+  },
+
+  adminOverview: () => request<AdminOverview>('/api/v1/admin/overview'),
+  adminListUsers: (q?: string) =>
+    request<AdminUser[]>(`/api/v1/admin/users${q ? `?q=${encodeURIComponent(q)}` : ''}`),
+  adminSetAdmin: (id: string, admin: boolean) =>
+    request<AdminUser>(`/api/v1/admin/users/${id}/admin-role`, { method: 'POST', body: { admin } }),
+  adminListDocuments: () =>
+    request<KnowledgeDocumentSummary[]>('/api/v1/admin/knowledge-documents'),
+  adminUploadDocument: (markdown: string) =>
+    request<KnowledgeDocumentSummary>('/api/v1/admin/knowledge-documents', {
+      method: 'POST',
+      body: { markdown },
+    }),
+  adminSetDocumentStatus: (id: string, status: KnowledgeStatus) =>
+    request<KnowledgeDocumentSummary>(`/api/v1/admin/knowledge-documents/${id}`, {
+      method: 'PATCH',
+      body: { status },
+    }),
+  adminListFeedback: (rating?: AdminFeedback['rating']) =>
+    request<AdminFeedback[]>(`/api/v1/admin/ai-feedback${rating ? `?rating=${rating}` : ''}`),
+  adminAuditLog: ({ area, offset }: AuditQuery = {}) => {
+    const params = new URLSearchParams()
+    if (area) params.set('area', area)
+    if (offset) params.set('offset', String(offset))
+    const query = params.toString()
+    return request<AuditPage>(`/api/v1/admin/audit-events${query ? `?${query}` : ''}`)
+  },
 }

@@ -40,17 +40,6 @@ export function goalProgress(goal: Goal): { done: number; total: number; percent
   return { done, total, percent }
 }
 
-/** Dates are stored as YYYY-MM-DD and shown without any time-zone shift. */
-export function formatDate(isoDate: string): string {
-  const [year, month, day] = isoDate.split('-').map(Number)
-  return new Date(Date.UTC(year!, month! - 1, day!)).toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    timeZone: 'UTC',
-  })
-}
-
 export function isOverdue(isoDate: string | null, today = new Date()): boolean {
   if (!isoDate) return false
   const local = today.toLocaleDateString('en-CA') // YYYY-MM-DD in the user's time zone

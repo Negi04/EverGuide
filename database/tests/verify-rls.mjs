@@ -1,4 +1,4 @@
-// Database security regression test (Phase 2, 3 and 4 tables).
+// Database security regression test (Phase 2, 3, 4 and 5 tables).
 //
 // Run with:  npm run db:verify
 //
@@ -52,6 +52,7 @@ const admin = (path, init = {}) =>
 const stamp = Date.now()
 const password = `Rls-${crypto.randomUUID()}`
 const users = []
+let resourceSlug = null
 
 try {
   // --- Setup: two confirmed users, then sign in as each -----------------
@@ -687,11 +688,174 @@ try {
     },
   })
   check('Anonymous visitors cannot book', anonBook.status >= 400, `HTTP ${anonBook.status}`)
+
+  console.log('\n— Phase 5: journal, habits, budgets, savings, resources, admin')
+  const entry = await rest('journal_entries', {
+    token: a.token,
+    method: 'POST',
+    prefer: 'return=representation',
+    body: { user_id: a.id, entry_date: '2026-10-26', mood: 3, body: 'Private RLS test entry' },
+  })
+  check('User A can write a journal entry', entry.status === 201, `HTTP ${entry.status}`)
+  const bJournal = await rest('journal_entries?select=id', { token: b.token })
+  check(
+    "User B cannot read User A's journal",
+    bJournal.status === 200 && bJournal.data.length === 0,
+  )
+  const anonJournal = await rest('journal_entries?select=id')
+  check(
+    'Anonymous visitors cannot read journals',
+    denied(anonJournal.status),
+    `HTTP ${anonJournal.status}`,
+  )
+  const plantEntry = await rest('journal_entries', {
+    token: b.token,
+    method: 'POST',
+    body: { user_id: a.id, entry_date: '2026-10-26', body: 'Planted' },
+  })
+  check(
+    "User B cannot write into User A's journal",
+    denied(plantEntry.status),
+    `HTTP ${plantEntry.status}`,
+  )
+
+  const habit = await rest('habits', {
+    token: a.token,
+    method: 'POST',
+    prefer: 'return=representation',
+    body: { user_id: a.id, name: 'Walk' },
+  })
+  const habitId = habit.data?.[0]?.id
+  const foreignCheckin = await rest('habit_checkins', {
+    token: b.token,
+    method: 'POST',
+    body: { habit_id: habitId, user_id: b.id, checkin_date: '2026-10-25' },
+  })
+  check(
+    "User B cannot check in on User A's habit",
+    foreignCheckin.status >= 400,
+    `HTTP ${foreignCheckin.status}`,
+  )
+
+  const badMonth = await rest('budgets', {
+    token: a.token,
+    method: 'POST',
+    body: { user_id: a.id, month: '2026-10-15' },
+  })
+  check('A budget month must be the 1st', badMonth.status === 400, `HTTP ${badMonth.status}`)
+
+  const savingsGoal = await rest('savings_goals', {
+    token: a.token,
+    method: 'POST',
+    prefer: 'return=representation',
+    body: { user_id: a.id, name: 'Laptop', target_paise: 6000000 },
+  })
+  const savingsGoalId = savingsGoal.data?.[0]?.id
+  const deposit = await rest('rpc/record_savings_entry', {
+    token: a.token,
+    method: 'POST',
+    body: { p_goal_id: savingsGoalId, p_amount_paise: 100000 },
+  })
+  check('User A can record a deposit', deposit.status === 200, `HTTP ${deposit.status}`)
+  const overdraw = await rest('rpc/record_savings_entry', {
+    token: a.token,
+    method: 'POST',
+    body: { p_goal_id: savingsGoalId, p_amount_paise: -100001 },
+  })
+  check(
+    'Withdrawing more than was saved is refused',
+    overdraw.status >= 400,
+    `HTTP ${overdraw.status}`,
+  )
+  const directEntry = await rest('savings_entries', {
+    token: a.token,
+    method: 'POST',
+    body: { goal_id: savingsGoalId, user_id: a.id, amount_paise: 999999, entry_date: '2026-10-26' },
+  })
+  check(
+    'Savings entries cannot be written directly',
+    denied(directEntry.status),
+    `HTTP ${directEntry.status}`,
+  )
+  const bForeignGoal = await rest('rpc/record_savings_entry', {
+    token: b.token,
+    method: 'POST',
+    body: { p_goal_id: savingsGoalId, p_amount_paise: 100 },
+  })
+  check(
+    "User B cannot add to User A's goal",
+    bForeignGoal.status >= 400,
+    `HTTP ${bForeignGoal.status}`,
+  )
+
+  resourceSlug = `rls-test-${stamp}`
+  const draft = await rest('learning_resources', {
+    key: sec,
+    method: 'POST',
+    body: {
+      slug: resourceSlug,
+      title: 'RLS test resource',
+      summary: 'A draft resource used by the security check.',
+      kind: 'article',
+      domain: 'finance',
+      url: 'https://example.org/rls-test',
+      source_name: 'Example',
+    },
+  })
+  check('The server can create a resource', draft.status === 201, `HTTP ${draft.status}`)
+  const anonDraft = await rest(`learning_resources?slug=eq.${resourceSlug}&select=id`)
+  check(
+    'Draft resources are hidden from visitors',
+    anonDraft.status === 200 && anonDraft.data.length === 0,
+  )
+  const userResource = await rest('learning_resources', {
+    token: a.token,
+    method: 'POST',
+    body: {
+      slug: `${resourceSlug}-x`,
+      title: 'Sneaky',
+      summary: 'Users must not publish resources.',
+      kind: 'article',
+      domain: 'finance',
+      url: 'https://example.org/x',
+      source_name: 'Example',
+    },
+  })
+  check('Users cannot create resources', denied(userResource.status), `HTTP ${userResource.status}`)
+
+  const userOverview = await rest('rpc/admin_overview', {
+    token: a.token,
+    method: 'POST',
+    body: {},
+  })
+  check(
+    'Signed-in users cannot read admin analytics',
+    denied(userOverview.status) || userOverview.status === 404,
+    `HTTP ${userOverview.status}`,
+  )
+  const serverOverview = await rest('rpc/admin_overview', { key: sec, method: 'POST', body: {} })
+  check(
+    'The server can read admin analytics',
+    serverOverview.status === 200 && typeof serverOverview.data?.users?.total === 'number',
+    `HTTP ${serverOverview.status}`,
+  )
+  const selfAdmin = await rest('rpc/set_admin_role', {
+    token: a.token,
+    method: 'POST',
+    body: { p_actor: a.id, p_target: a.id, p_grant: true },
+  })
+  check(
+    'Users cannot make themselves admin',
+    denied(selfAdmin.status) || selfAdmin.status === 404,
+    `HTTP ${selfAdmin.status}`,
+  )
 } catch (error) {
   failures++
   console.log(`\nERROR  ${error.message}`)
 } finally {
   console.log('\n— Cleanup')
+  if (resourceSlug)
+    await rest(`learning_resources?slug=eq.${resourceSlug}`, { key: sec, method: 'DELETE' })
   for (const user of users) {
     const res = await admin(`users/${user.id}`, { method: 'DELETE' })
     const left = await rest(`profiles?id=eq.${user.id}&select=id`, { key: sec })

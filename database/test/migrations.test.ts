@@ -22,6 +22,14 @@ describe('migrations', () => {
     expect(roles.rows.map((r) => r.role)).toEqual(['user'])
   })
 
+  it('every table in the public schema has Row Level Security switched on', async () => {
+    const { db } = await createTestDb()
+    const open = await db.query<{ tablename: string }>(
+      "select tablename from pg_tables where schemaname = 'public' and not rowsecurity",
+    )
+    expect(open.rows.map((r) => r.tablename)).toEqual([])
+  })
+
   it('RLS is enforced for signed-in users (harness sanity check)', async () => {
     const { createUser, asUser } = await createTestDb()
     const alice = await createUser('Alice')

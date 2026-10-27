@@ -1,4 +1,5 @@
 import {
+  INTERVIEW_FEEDBACK_LIMITS as L,
   interviewFeedbackSchema,
   type InterviewCategory,
   type InterviewDifficulty,
@@ -10,6 +11,7 @@ import {
   type PracticeAttempt,
 } from '@everguide/shared'
 import { Type, type Schema } from '@google/genai'
+import { clampList, clampText, isRecord } from '../lib/ai-output.ts'
 import { AppError, databaseError, serviceUnavailable } from '../lib/errors.ts'
 import type { ChatModel } from '../lib/gemini.ts'
 import type { Db } from '../lib/supabase.ts'
@@ -59,20 +61,40 @@ const FEEDBACK_SYSTEM = `You are an experienced, encouraging interview coach. Gi
 const FEEDBACK_SCHEMA: Schema = {
   type: Type.OBJECT,
   properties: {
-    summary: { type: Type.STRING, description: 'Two or three sentences on the overall answer.' },
+    summary: {
+      type: Type.STRING,
+      description: `Two or three sentences on the overall answer. Under ${L.summary} characters.`,
+    },
     strengths: {
       type: Type.ARRAY,
-      items: { type: Type.STRING },
+      items: { type: Type.STRING, description: `Under ${L.point} characters.` },
+      maxItems: '3',
       description: 'Up to three things done well.',
     },
     improvements: {
       type: Type.ARRAY,
-      items: { type: Type.STRING },
+      items: { type: Type.STRING, description: `Under ${L.point} characters.` },
+      maxItems: '3',
       description: 'Up to three specific improvements.',
     },
-    suggestedStructure: { type: Type.STRING, description: 'A short outline of a stronger answer.' },
+    suggestedStructure: {
+      type: Type.STRING,
+      description: `A short outline of a stronger answer. Under ${L.suggestedStructure} characters.`,
+    },
   },
   required: ['summary', 'strengths', 'improvements', 'suggestedStructure'],
+}
+
+/** Trim over-long feedback to our limits; validation afterwards still checks its shape. */
+export function fitFeedback(raw: unknown): unknown {
+  if (!isRecord(raw)) return raw
+  return {
+    ...raw,
+    summary: clampText(raw.summary, L.summary),
+    strengths: clampList(raw.strengths, L.strengths, (s) => clampText(s, L.point)),
+    improvements: clampList(raw.improvements, L.improvements, (s) => clampText(s, L.point)),
+    suggestedStructure: clampText(raw.suggestedStructure, L.suggestedStructure),
+  }
 }
 
 export function createInterviewService(
@@ -150,7 +172,7 @@ export function createInterviewService(
         signal: AbortSignal.timeout(45_000),
       })
       // Never trust model output blindly: it must match the expected shape.
-      const feedback = interviewFeedbackSchema.parse(result.data)
+      const feedback = interviewFeedbackSchema.parse(fitFeedback(result.data))
       return { feedback, reservationId: reservation.reservationId, tokens: result }
     } catch (error) {
       await ai.meter.fail(reservation.reservationId).catch(() => {})

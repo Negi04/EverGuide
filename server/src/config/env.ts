@@ -42,7 +42,29 @@ const envSchema = z.object({
     blankToUndefined,
     z.coerce.number().int().min(1).max(10).default(5),
   ),
+  // Image uploads (resource covers). All three or none: without them uploads are off.
+  CLOUDINARY_CLOUD_NAME: z.preprocess(
+    blankToUndefined,
+    z
+      .string()
+      .regex(/^[a-z0-9_-]+$/i, 'Must be your Cloudinary cloud name.')
+      .optional(),
+  ),
+  CLOUDINARY_API_KEY: z.preprocess(
+    blankToUndefined,
+    z
+      .string()
+      .regex(/^\d{6,20}$/, 'Must be your Cloudinary API key (digits).')
+      .optional(),
+  ),
+  CLOUDINARY_API_SECRET: z.preprocess(blankToUndefined, z.string().min(10).optional()),
 })
+
+const CLOUDINARY_VARS = [
+  'CLOUDINARY_CLOUD_NAME',
+  'CLOUDINARY_API_KEY',
+  'CLOUDINARY_API_SECRET',
+] as const
 
 export type Config = {
   nodeEnv: 'development' | 'test' | 'production'
@@ -59,6 +81,8 @@ export type Config = {
     minSimilarity: number
     matchCount: number
   }
+  /** Null when image uploads aren't configured. */
+  cloudinary: { cloudName: string; apiKey: string; apiSecret: string } | null
 }
 
 /**
@@ -75,6 +99,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   }
 
   const e = parsed.data
+  // Some but not all Cloudinary variables is almost certainly a mistake, not a choice.
+  const missing = CLOUDINARY_VARS.filter((name) => !e[name])
+  if (missing.length > 0 && missing.length < CLOUDINARY_VARS.length) {
+    throw new Error(
+      `Invalid server configuration:\n  - set ${missing.join(', ')} too, or none of the CLOUDINARY_* variables to turn image uploads off.`,
+    )
+  }
+
   return {
     nodeEnv: e.NODE_ENV,
     port: e.PORT,
@@ -94,5 +126,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       minSimilarity: e.RAG_MIN_SIMILARITY,
       matchCount: e.RAG_MATCH_COUNT,
     },
+    cloudinary:
+      e.CLOUDINARY_CLOUD_NAME && e.CLOUDINARY_API_KEY && e.CLOUDINARY_API_SECRET
+        ? {
+            cloudName: e.CLOUDINARY_CLOUD_NAME,
+            apiKey: e.CLOUDINARY_API_KEY,
+            apiSecret: e.CLOUDINARY_API_SECRET,
+          }
+        : null,
   }
 }

@@ -1,11 +1,16 @@
 import type {
+  AdminResource,
+  Budget,
   ChatMessage,
   ChatStreamEvent,
   ConversationDetail,
   ConversationSummary,
   Goal,
+  Habit,
   InterviewQuestion,
+  JournalEntry,
   Me,
+  SavingsGoal,
 } from '@everguide/shared'
 import { vi } from 'vitest'
 
@@ -141,6 +146,184 @@ export const fakeApi = {
   decideMentorApplication: vi.fn(),
   listNotifications: vi.fn(),
   markNotificationsRead: vi.fn(),
+  listJournal: vi.fn(),
+  createJournalEntry: vi.fn(),
+  updateJournalEntry: vi.fn(),
+  deleteJournalEntry: vi.fn(),
+  listHabits: vi.fn(),
+  createHabit: vi.fn(),
+  updateHabit: vi.fn(),
+  deleteHabit: vi.fn(),
+  setHabitCheckin: vi.fn(),
+  getBudget: vi.fn(),
+  setBudgetIncome: vi.fn(),
+  addBudgetItem: vi.fn(),
+  copyPreviousBudget: vi.fn(),
+  updateBudgetItem: vi.fn(),
+  deleteBudgetItem: vi.fn(),
+  listSavingsGoals: vi.fn(),
+  createSavingsGoal: vi.fn(),
+  updateSavingsGoal: vi.fn(),
+  deleteSavingsGoal: vi.fn(),
+  addSavingsEntry: vi.fn(),
+  deleteSavingsEntry: vi.fn(),
+  listResources: vi.fn(),
+  getResource: vi.fn(),
+  listSavedResources: vi.fn(),
+  setResourceSaved: vi.fn(),
+  adminListResources: vi.fn(),
+  adminCreateResource: vi.fn(),
+  adminUpdateResource: vi.fn(),
+  adminDeleteResource: vi.fn(),
+  uploadResourceImage: vi.fn(),
+  adminOverview: vi.fn(),
+  adminListUsers: vi.fn(),
+  adminSetAdmin: vi.fn(),
+  adminListDocuments: vi.fn(),
+  adminUploadDocument: vi.fn(),
+  adminSetDocumentStatus: vi.fn(),
+  adminListFeedback: vi.fn(),
+  adminAuditLog: vi.fn(),
+}
+
+export const fakeOverview = {
+  users: { total: 42, newLast7Days: 5, newLast30Days: 12, onboarded: 30 },
+  ai: { messagesThisMonth: 120, failedThisMonth: 2, helpfulFeedback: 18, notHelpfulFeedback: 4 },
+  mentors: { verified: 3, pending: 1 },
+  bookings: { requested: 2, confirmed: 5 },
+  content: { publishedResources: 7, approvedKnowledgeDocuments: 10 },
+  signupsByWeek: Array.from({ length: 12 }, (_, i) => ({
+    weekStart: `2026-${String(8 + Math.floor(i / 4)).padStart(2, '0')}-${String(1 + (i % 4) * 7).padStart(2, '0')}`,
+    signups: i,
+  })),
+}
+
+export const fakeAdminUser = (overrides: Record<string, unknown> = {}) => ({
+  id: 'user-2',
+  email: 'ravi@example.com',
+  fullName: 'Ravi Kumar',
+  roles: ['user'],
+  createdAt: '2026-10-20T10:00:00Z',
+  lastSignInAt: null,
+  ...overrides,
+})
+
+/** What the server returns for an image the admin attached ({ publicId, alt }). */
+export function fakeImage(input: { publicId: string; alt: string }) {
+  const src = `https://res.cloudinary.com/demo/image/upload/w_800/${input.publicId}`
+  return { ...input, src, srcSet: `${src} 800w` }
+}
+export const uploadedImageId = 'everguide/resources/2f1c2b4a-5d6e-4f70-8a9b-0c1d2e3f4a5b'
+
+export function fakeResource(overrides: Partial<AdminResource> = {}): AdminResource {
+  return {
+    id: 'resource-1',
+    slug: 'how-to-budget',
+    title: 'How to budget',
+    summary: 'A short guide to planning a monthly budget and sticking to it.',
+    kind: 'article',
+    domain: 'finance',
+    url: 'https://example.org/budget',
+    sourceName: 'Example Money',
+    youtubeId: null,
+    durationMinutes: 8,
+    level: 'beginner',
+    publishedAt: '2026-10-20T10:00:00Z',
+    image: null,
+    status: 'published',
+    createdAt: '2026-10-20T10:00:00Z',
+    updatedAt: '2026-10-20T10:00:00Z',
+    ...overrides,
+  }
+}
+
+export const fakeVideo = () =>
+  fakeResource({
+    id: 'resource-2',
+    slug: 'interview-stories',
+    title: 'Telling interview stories',
+    summary: 'How to structure answers with situation, task, action and result.',
+    kind: 'video',
+    domain: 'interview',
+    url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    sourceName: 'Example channel',
+    youtubeId: 'dQw4w9WgXcQ',
+  })
+
+export function fakeBudget(month: string, overrides: Partial<Budget> = {}): Budget {
+  return {
+    month,
+    exists: true,
+    incomePaise: 5_000_000,
+    items: [
+      {
+        id: 'item-rent',
+        label: 'Rent',
+        kind: 'need',
+        plannedPaise: 2_000_000,
+        spentPaise: 2_000_000,
+      },
+      {
+        id: 'item-food',
+        label: 'Eating out',
+        kind: 'want',
+        plannedPaise: 300_000,
+        spentPaise: 380_000,
+      },
+    ],
+    ...overrides,
+  }
+}
+
+export function fakeSavingsGoal(overrides: Partial<SavingsGoal> = {}): SavingsGoal {
+  return {
+    id: 'goal-1',
+    name: 'Emergency fund',
+    targetPaise: 10_000_000,
+    targetDate: null,
+    archived: false,
+    createdAt: '2026-10-01T10:00:00Z',
+    savedPaise: 2_500_000,
+    entries: [
+      {
+        id: 'entry-a',
+        amountPaise: 2_500_000,
+        note: 'Bonus',
+        entryDate: '2026-10-05',
+        createdAt: '2026-10-05T10:00:00Z',
+      },
+    ],
+    ...overrides,
+  }
+}
+
+/** "Today" for wellness fakes: a Wednesday, so the week has days before and after it. */
+export const wellnessToday = '2026-10-28'
+
+export function fakeJournalEntry(overrides: Partial<JournalEntry> = {}): JournalEntry {
+  return {
+    id: 'entry-1',
+    entryDate: '2026-10-27',
+    mood: 4,
+    title: 'A good walk',
+    body: 'Walked by the lake and felt calmer.',
+    createdAt: '2026-10-27T18:00:00Z',
+    updatedAt: '2026-10-27T18:00:00Z',
+    ...overrides,
+  }
+}
+
+export function fakeHabit(overrides: Partial<Habit> = {}): Habit {
+  return {
+    id: 'habit-1',
+    name: 'Walk',
+    targetPerWeek: 7,
+    archived: false,
+    createdAt: '2026-10-01T10:00:00Z',
+    checkins: ['2026-10-27', '2026-10-26'],
+    stats: { streak: 2, streakUnit: 'day', thisWeek: 2 },
+    ...overrides,
+  }
 }
 
 export const mentorId = '9c8b7a6f-5e4d-4c3b-8a2f-1e0d9c8b7a6f'
@@ -385,6 +568,157 @@ export function resetFakeApi() {
   fakeApi.decideMentorApplication.mockResolvedValue(undefined)
   fakeApi.listNotifications.mockResolvedValue([])
   fakeApi.markNotificationsRead.mockResolvedValue(undefined)
+  fakeApi.getBudget.mockImplementation(async (month: string) => fakeBudget(month))
+  fakeApi.setBudgetIncome.mockImplementation(async (month: string, incomePaise: number) =>
+    fakeBudget(month, { incomePaise }),
+  )
+  fakeApi.addBudgetItem.mockImplementation(async (month: string) => fakeBudget(month))
+  fakeApi.copyPreviousBudget.mockImplementation(async (month: string) => fakeBudget(month))
+  fakeApi.updateBudgetItem.mockResolvedValue(fakeBudget('2026-10'))
+  fakeApi.deleteBudgetItem.mockResolvedValue(fakeBudget('2026-10'))
+  fakeApi.listSavingsGoals.mockResolvedValue([fakeSavingsGoal()])
+  fakeApi.createSavingsGoal.mockImplementation(async (input) =>
+    fakeSavingsGoal({ id: 'goal-new', savedPaise: 0, entries: [], ...input }),
+  )
+  fakeApi.updateSavingsGoal.mockImplementation(async (id, patch) =>
+    fakeSavingsGoal({ id, ...(patch.archived === undefined ? {} : { archived: patch.archived }) }),
+  )
+  fakeApi.deleteSavingsGoal.mockResolvedValue(undefined)
+  fakeApi.addSavingsEntry.mockImplementation(async (id, input) => {
+    const goal = fakeSavingsGoal({ id })
+    return { ...goal, savedPaise: goal.savedPaise + input.amountPaise }
+  })
+  fakeApi.deleteSavingsEntry.mockResolvedValue(fakeSavingsGoal({ savedPaise: 0, entries: [] }))
+  fakeApi.listResources.mockResolvedValue({
+    resources: [fakeResource(), fakeVideo()],
+    nextOffset: null,
+  })
+  fakeApi.getResource.mockImplementation(async (slug: string) =>
+    slug === 'interview-stories' ? fakeVideo() : fakeResource({ slug }),
+  )
+  fakeApi.listSavedResources.mockResolvedValue([])
+  fakeApi.setResourceSaved.mockImplementation(async (_id: string, saved: boolean) => ({ saved }))
+  fakeApi.adminListResources.mockResolvedValue([
+    fakeResource(),
+    fakeResource({
+      id: 'resource-3',
+      slug: 'draft-one',
+      title: 'Draft guide',
+      status: 'draft',
+      publishedAt: null,
+    }),
+  ])
+  fakeApi.adminCreateResource.mockImplementation(async (input) =>
+    fakeResource({
+      ...input,
+      id: 'resource-new',
+      status: input.status ?? 'draft',
+      image: input.image ? fakeImage(input.image) : null,
+    }),
+  )
+  fakeApi.adminUpdateResource.mockImplementation(async (id, patch) =>
+    fakeResource({ id, ...patch, image: patch.image ? fakeImage(patch.image) : null }),
+  )
+  fakeApi.uploadResourceImage.mockResolvedValue({
+    publicId: uploadedImageId,
+    previewUrl: `https://res.cloudinary.com/demo/image/upload/${uploadedImageId}.png`,
+  })
+  fakeApi.adminDeleteResource.mockResolvedValue(undefined)
+  fakeApi.adminOverview.mockResolvedValue(fakeOverview)
+  fakeApi.adminListUsers.mockResolvedValue([
+    fakeAdminUser({
+      id: 'user-1',
+      email: 'asha@example.com',
+      fullName: 'Asha Rao',
+      roles: ['user', 'admin'],
+    }),
+    fakeAdminUser(),
+  ])
+  fakeApi.adminSetAdmin.mockImplementation(async (id: string, admin: boolean) =>
+    fakeAdminUser({ id, roles: admin ? ['user', 'admin'] : ['user'] }),
+  )
+  fakeApi.adminListDocuments.mockResolvedValue([
+    {
+      id: 'doc-1',
+      slug: 'switching-careers',
+      title: 'Switching careers',
+      domain: 'career',
+      sourceName: 'EverGuide starter guide',
+      status: 'approved',
+      chunks: 5,
+      updatedAt: '2026-10-24T10:00:00Z',
+    },
+  ])
+  fakeApi.adminUploadDocument.mockResolvedValue({
+    id: 'doc-2',
+    slug: 'exam-stress',
+    title: 'Managing exam stress',
+    domain: 'mental_wellness',
+    sourceName: 'Example',
+    status: 'draft',
+    chunks: 3,
+    updatedAt: '2026-10-27T10:00:00Z',
+  })
+  fakeApi.adminSetDocumentStatus.mockResolvedValue({})
+  fakeApi.adminListFeedback.mockResolvedValue([
+    {
+      id: 'fb-1',
+      rating: 'not_helpful',
+      comment: 'It ignored my city.',
+      createdAt: '2026-10-26T10:00:00Z',
+      answer: 'Rent varies by city…',
+      grounded: true,
+    },
+  ])
+  fakeApi.adminAuditLog.mockResolvedValue({
+    entries: [
+      {
+        id: 2,
+        action: 'role.admin_granted',
+        actorName: 'Asha Rao',
+        targetType: 'user',
+        targetId: 'user-2',
+        metadata: {},
+        createdAt: '2026-10-27T09:00:00Z',
+      },
+      {
+        id: 1,
+        action: 'resource.deleted',
+        actorName: null,
+        targetType: 'learning_resource',
+        targetId: 'r',
+        metadata: { slug: 'old-guide' },
+        createdAt: '2026-10-26T09:00:00Z',
+      },
+    ],
+    nextOffset: 50,
+  })
+  fakeApi.listJournal.mockResolvedValue({ entries: [fakeJournalEntry()], nextOffset: null })
+  fakeApi.createJournalEntry.mockImplementation(async (input) =>
+    fakeJournalEntry({ id: 'entry-new', ...input, title: input.title || null }),
+  )
+  fakeApi.updateJournalEntry.mockImplementation(async (id, patch) =>
+    fakeJournalEntry({ id, ...patch }),
+  )
+  fakeApi.deleteJournalEntry.mockResolvedValue(undefined)
+  fakeApi.listHabits.mockResolvedValue({ today: wellnessToday, habits: [fakeHabit()] })
+  fakeApi.createHabit.mockImplementation(async (input) =>
+    fakeHabit({
+      id: 'habit-new',
+      checkins: [],
+      stats: { streak: 0, streakUnit: 'day', thisWeek: 0 },
+      ...input,
+    }),
+  )
+  fakeApi.updateHabit.mockImplementation(async (id, patch) =>
+    fakeHabit({ id, ...(patch.archived === undefined ? {} : { archived: patch.archived }) }),
+  )
+  fakeApi.deleteHabit.mockResolvedValue(undefined)
+  fakeApi.setHabitCheckin.mockImplementation(async (id, date, done) => {
+    const base = fakeHabit({ id })
+    const checkins = done ? [date, ...base.checkins] : base.checkins.filter((d) => d !== date)
+    return { ...base, checkins }
+  })
   fakeApi.analyseResume.mockImplementation(async (_id, input) => ({
     id: 'analysis-1',
     targetRole: input.targetRole || null,

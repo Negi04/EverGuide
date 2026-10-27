@@ -5,9 +5,9 @@
 
 ## Current status
 
-- **Active phase:** Phase 4 (branch `phase-4-career-mentors`). All features built and verified; the phase wrap-up is next.
-- **Last updated:** 2026-10-25
-- **Next step:** Phase 4 wrap-up (learning doc, quiz), then the user opens the PR. The user's admin-role insert matched 0 rows (as of 2026-10-25, no admin exists); a corrected query was given.
+- **Active phase:** Phase 5 (branch `phase-5-wellness-finance-admin`, branched from the Phase 4 tip; the Phase 4 PR is awaiting the user's merge).
+- **Last updated:** 2026-10-26
+- **Next step:** The user opens and merges the Phase 5 PR; then Phase 6 (Razorpay, n8n, hardening, deploy).
 
 ---
 
@@ -61,14 +61,14 @@
 - [x] Mentor database: profiles, verification states, availability, bookings (exclusion constraints), reviews, booking functions (migration `20261025000003_career_and_mentors.sql`, applied by the user)
 - [x] Mentor marketplace API + UI (directory, profiles, booking, sessions, reviews, applications, availability, admin review queue, notifications)
 - [x] Tests: booking conflicts, review eligibility, document isolation
-- [ ] Phase wrap-up ritual
+- [x] Phase wrap-up: explanation, company practices, `docs/learning/phase-4.md` (quiz 1/4)
 
 ### Phase 5 — Wellness, Finance, Resources & Admin Portal
-- [ ] Wellness tools (breathing, journal, habits, resources)
-- [ ] Finance tools (budget, savings goals, glossary, calculators)
-- [ ] Resource library + Cloudinary
-- [ ] Admin portal (users, mentor verification, content, KB docs, feedback, analytics, audit log)
-- [ ] Phase wrap-up ritual
+- [x] Wellness tools (breathing, journal, habits, support)
+- [x] Finance tools (budget, savings goals, glossary, calculators)
+- [x] Resource library (links + video embeds) and Cloudinary cover images
+- [x] Admin portal (overview analytics, users and roles, mentor verification, resources, knowledge-base documents, AI feedback, audit log)
+- [x] Phase wrap-up: `docs/learning/phase-5.md` (quiz skipped at the user's request on 2026-10-27; topics carried forward)
 
 ### Phase 6 — Payments, Automation & Production Launch
 - [ ] Razorpay subscriptions + verified webhooks + idempotency
@@ -81,7 +81,29 @@
 
 ## Phase log
 
-### Phase 4 (in progress)
+### Phase 5 (in progress)
+- **2026-10-26 (5a database):** Migration `20261026000004_wellness_finance_admin.sql`: journal (writer-only, excluded from admin/analytics/AI), habits + check-ins (composite key to the owner), monthly budgets + items, savings goals with a ledger (`record_savings_entry` locks the goal row, so balances can't go negative), learning resources (published-only for visitors, full-text search via a generated `tsvector` + GIN index, https-only links) + private bookmarks, and server-only admin functions (`admin_overview`, `admin_signups_by_week`, `set_admin_role` with an advisory lock). Money stored as integer paise. **20 new PGlite tests** + a new guard that every `public` table has RLS on; mutation-tested (4 deliberate bugs, all caught). `db:verify` extended with Phase 5 checks (to run after the user applies the migration).
+  - Found while writing it: a `current_date` CHECK would break restoring backups (moved to the server); a "keep at least one admin" check was unreachable (the caller must be an admin and can't remove themselves); the `has_role` backlog item had already been done in migration 2.
+- **2026-10-26 (5b Wellness):** The user applied migration 4; `db:verify` passes on Supabase with 16 new Phase 5 checks. API: `services/wellness-service.ts`, `routes/wellness.ts` (journal CRUD + search + paging; habits, idempotent PUT/DELETE check-ins, archive). Date logic in `shared/src/dates.ts` and `habitStats` (pure, tested: "today" per time zone, unfinished days don't break streaks, weekly targets count weeks). UI: `/app/wellness` tabs Breathe (two patterns, reduced-motion aware, step changes announced to screen readers), Journal (privacy notice, mood, search, gentle support pointer after a "very low" entry), Habits (7-day grid, optimistic ticks with rollback, archive/restore), Support (helplines + AI-drafted labelled guides).
+  - **Verified:** typecheck 0, lint clean, client 125, server 150, database 49, shared 27; wellness integration 7/7 on real Supabase; real-browser E2E 14/14 (desktop + 390 px phone).
+  - Bugs caught: Supabase's API silently caps responses at 1000 rows, so streaks for many habits would quietly be wrong (now paged; an integration test with 1200 check-ins showed 167 instead of 200 without the fix); journal search flashed a spinner on every pause in typing (now keeps previous results, dimmed); uneven wrapping of day labels on phones; a false claim in my own copy ("reviewed sources") corrected; an old test that used Wellness as its "coming soon" example.
+- **2026-10-26 (5c Finance):** `shared/src/finance.ts`: money as integer paise parsed from text (`parseRupees`, exact where `1.15 × 100` isn't), `budgetSummary` (needs/wants/savings vs the 50/30/20 rule of thumb), SIP/EMI/compound-interest functions tested against values computed independently in Python. API (`services/finance-service.ts`, `routes/finance.ts`): monthly budgets (income, items, copy last month's plan with spending reset), savings goals on the ledger (deposits/withdrawals through `record_savings_entry`; deleting a deposit that would take a goal below zero is refused). Shared `lib/paging.ts` reads past the 1000-row cap (Wellness now uses it too). UI `/app/finance`: Budget, Savings goals, Calculators, Glossary (AI-drafted, labelled), "education, not advice" notices, `MoneyInput`. Removed the unused module placeholder page (every module is built).
+  - **Verified:** typecheck 0, lint clean, client 136, server 155, database 54, shared 38; finance integration 8/8 on real Supabase; real-browser E2E 14/14 (desktop + 390 px).
+  - Bugs caught: **upsert needs UPDATE permission on every column it writes**, so setting income as the signed-in user failed with 42501 (Postgres's hint, "GRANT UPDATE ON budgets", would have let users move budgets between months or users; fixed in code instead); a screen-reader-only table heading escaped its scroll box (absolute positioning) and widened phone pages to 481 px, found by measuring positioned elements; the "Spent" column was off-screen on phones (rows are now responsive); calculator labels pointed at a wrapper `div`, so clicking them didn't focus the input; over-budget shown only in red (now also in words); every row's name field was announced as "Item name".
+  - Process: an `i` typed into the open migration file got committed with `git add -A`. Restored, and `database/test/migration-lock.test.ts` now fingerprints applied migrations (SHA-256), proven to fail on a one-space edit. I now read the staged diff before every commit; doing so immediately kept an unrelated deletion out of a content commit.
+  - Honesty fixes: several Phase 1/3 pages said the AI Guide uses "reviewed" sources; the guides are AI-drafted and pending expert review, so the wording is now "curated". Feature statuses on public pages were updated to match what's built, and a promised mentor "availability" filter (never built) was removed from the list.
+- **2026-10-26 (5d Resource library):** `shared/src/resources.ts` (`youtubeId` accepts only exact YouTube hosts, `slugify`, validation with https-only links; the update schema is written out because `.partial()` of a schema with defaults would reset level/status on every PATCH; a minimal `url.d.ts` keeps the shared package free of DOM/Node types). API (`services/resources-service.ts`, `routes/resources.ts`): public list/search (stored `tsvector` + websearch syntax) and detail, saved resources, admin create/update/publish/unpublish/archive/delete with unique slugs and an audit entry for every change. Public reads use a new **anonymous (publishable-key) client** so RLS hides drafts even if a filter is missing. UI: `/resources` (public) and `/app/resources` with search, filters, Save (optimistic with rollback) and "Saved only"; detail pages with a **click-to-load** YouTube player (nothing requested from YouTube before play; then youtube-nocookie.com) and `noopener noreferrer` links; admin area is now tabbed (`/app/admin` → Mentor applications, Resources) with a resource form (per-field errors, YouTube detection) that sends only changed fields.
+  - **Verified:** typecheck 0, lint clean, client 151, server 162, database 54, shared 45; resources integration 6/6 on real Supabase; real-browser E2E 16/16 (admin, reader and anonymous visitor; desktop + 390 px).
+  - Defence in depth demonstrated: with the code's "published only" filter removed, drafts stayed hidden (RLS via the anonymous client); with the filter removed **and** RLS bypassed (service-role client), the integration test caught the leak.
+  - Mutation checks: removing the optimistic rollback (and refetch) fails the "undo the save if the request fails" test.
+- **2026-10-27 (Cloudinary cover images):** Migration 5 (`20261027000005_resource_images.sql`, applied by the user): `image_public_id` (only `everguide/resources/<uuid>`) and `image_alt` (required with an image). `server/src/lib/cloudinary.ts` (no SDK): signed upload tickets that fix the id and allowed formats (signature verified against Cloudinary's documented example), server-side inspection of every upload before saving (format, ≤ 5 MB, ≥ 400 px wide; rejected uploads are deleted), deletion of replaced/removed images after the database change, 16:9 responsive delivery URLs with `f_auto,q_auto`. Config is all-or-nothing. Browser uploads straight to Cloudinary without our login token; admin form previews and requires alt text; cards use `srcset`/`sizes` + lazy loading, article pages load the cover first.
+  - **Verified:** client 155, server 175, database 58, shared 46; image integration 6/6 against the real Cloudinary account (signed upload, tampered upload refused with 401, too-small image refused and deleted, replace/delete clean up); real-browser E2E 6/6; Cloudinary folder empty afterwards.
+  - Found on the way: the user's first API key had no permissions (403 "missing permissions (actions=["create"])": new Cloudinary keys start with no role), which a connection-only check missed, so `cloudinary:check` now does a real upload/read/delete; later an "api_secret mismatch" from a key and secret of different pairs. Also: an image-test URL pattern was wrong (my test, not the product).
+- **2026-10-27 (5e Admin portal):** Ingestion core moved to `server/src/rag/ingest.ts` (shared by `npm run kb:ingest` and browser uploads; re-run is idempotent and retrieval metrics are unchanged: hit@1 20/20, margin 0.535–0.670). `services/admin-service.ts` + `routes/admin.ts` (every route admin-only): overview from `admin_overview()`/`admin_signups_by_week()`; users with roles and admin grant/removal through `set_admin_role` (self-removal refused); knowledge upload **always stored as draft** (even if the file says approved), approve/draft/archive; AI feedback returning only answer + rating + comment (no user identity or question); paginated audit log with actor names. Every change is audited. UI: `/app/admin` tabs Overview (stat tiles + single-series bar chart with per-bar tooltip and table view, built per the dataviz guide; brand blue validated), Users, Mentors, Resources, Knowledge base, AI feedback, Audit log.
+  - **Verified:** client 162, server 179, database 58, shared 46; admin integration 6/6 on real Supabase + Gemini (an uploaded draft is not retrievable and becomes the top match once approved); real-browser E2E 13/13 (desktop + 390 px).
+  - Found on the way: the JSON body limit (100 KB) would have rejected the 200 KB documents the schema allowed (now 80,000 characters); screenshots showed the chart tooltip covering "Show as table", a duplicate "3" label on phones, and a long one-column phone layout (all fixed).
+
+### Phase 4 — complete (2026-10-25)
 - **2026-10-25 (database):** Built an offline test harness: PGlite (Postgres 18 in WebAssembly) + Supabase stubs (`database/test/harness.ts`) runs every migration and tests SQL in seconds without Docker. Migration 3: goals/milestones, resumes (private bucket), interview practice, mentor profiles/verifications/availability, bookings with two exclusion constraints (no mentor or mentee overlaps), reviews, and SECURITY DEFINER booking functions (`mentor_open_slots`, `request_booking`, `respond_to_booking`, `cancel_booking`, `reschedule_booking`, `submit_mentor_review`). Wrapped in `begin/commit`. **29 PGlite tests**, incl. a daylight-saving test (US clocks change 1 Nov 2026) and mutation testing (deleting the overlap constraint or weakening the 12-hour rule makes tests fail). The user applied the migration; `db:verify` extended to **69 checks** on Supabase (btree_gist overlap confirmed via error 23P01, private bucket, direct uploads refused).
 - **2026-10-25 (Career Studio):** Roadmap API/UI (`services/career-service.ts`, `pages/career/`); interview practice with a 32-question bank (`database/interview/questions.json`, `npm run interview:seed -w @everguide/server`) and structured AI feedback; resume analyser (`lib/pdf.ts`, `services/resume-service.ts`, raw-body upload after auth). Shared `usage-meter.ts` (one allowance for every AI feature) and `ChatModel.generateJson` with zod validation of model output.
   - **Verified:** typecheck 0, lint clean, 267 unit/DB tests, integration (career 6, interview 6, resumes 6 with real Gemini + Storage), real-browser E2E **12/12** (goal + milestones, optimistic ticking, recommendations, real AI feedback, PDF upload + real report, dashboard progress + usage 2/30, deletion removes the stored file).
@@ -90,6 +112,8 @@
 - **2026-10-25 (mentor marketplace):** API in `routes/mentors.ts`, `services/mentor-service.ts`, `services/notification-service.ts`: public directory/profile/slots (verified mentors only), mentor application + profile + weekly availability (replace with rollback on failure), booking request/respond/cancel/reschedule/review through the SQL functions (rule errors mapped: P0001→409, P0002→404, 28000→401), admin review queue behind `requireRole('admin')` (decides only still-pending applications, grants the mentor role, notifies, audits), notifications list/mark-read. UI: `/mentors` + `/mentors/:id` (public), `/app/mentors` tabs (Find, My sessions, Mentor profile), `/app/admin/mentors`, notification bell (Radix Popover, 60 s polling).
   - **Verified:** typecheck 0, lint clean, client 110, server 132, database 29, shared 16; integration mentors 9 (real Supabase); real-browser E2E **13/13** with three separate people (apply → admin verifies → availability → mentee books → mentor confirms with link → mentee notified and sees Join; public profile on a phone). Career E2E re-run 12/12.
   - Bugs caught and fixed: passing `api.applyAsMentor` / `api.uploadResume` straight to `mutationFn` leaked TanStack's context object as a second argument (now wrapped, plus a convention test that fails if the pattern returns, checked by reintroducing it); `Date.now()` during render (new `useNow` hook); on phones the booking panel widened the page to 1458 px because a grid item's default `min-width: auto` let the two-week day row stretch it (`minmax(0,1fr)` + `min-w-0`); the "Request sent" banner reappeared on reload because browsers keep history state (now shown once and cleared, with a test confirmed to fail without the fix); first-load JS hit 190 kB (budget 185) because the notification bell's Popover sat in the eagerly loaded app shell; the app shell is now lazy-loaded (177.7 kB).
+
+- **2026-10-25 (user testing):** The user's resume analysis failed twice ("couldn't analyse"). Reproduced with a long synthetic resume: 6/6 runs failed validation, because Gemini returned 8 gaps (limit 6) and suggestions over 400 characters. Our Gemini schema had no limits, and Gemini ignores `maxLength` anyway. Fix: limits live once in `shared` (`RESUME_REPORT_LIMITS`, `INTERVIEW_FEEDBACK_LIMITS`), the model schema gets `maxItems` + length hints (6/6 raw replies then valid), and `fitReport`/`fitFeedback` (`server/src/lib/ai-output.ts`) trim over-long content before strict validation; wrong shapes are still rejected. 8 new tests; resume + interview integration 12/12. Lesson: test AI features with realistic, long inputs, not just short fixtures.
 
 ### Phase 3 — complete (2026-10-24)
 - **2026-10-24 (workspace UI):** `client/src/lib/sse.ts` (stream parser, handles split events and multi-byte characters), `lib/api.ts` (`streamMessage` + conversation endpoints), `hooks/use-ai.ts`, `pages/guide/` (layout with history sidebar, new-conversation page with starter questions, conversation page, streaming hook, safe Markdown renderer, source panel, composer). The AI Guide route is full-height (`handle.fullBleed`). The dashboard shows recent conversations and an AI usage meter.
@@ -192,6 +216,17 @@
 | 2026-10-25 | Notifications by polling every 60 s (not realtime) | Simple and cheap at this scale; no websocket infrastructure | Up to a minute's delay; revisit with Supabase Realtime or n8n push in Phase 6 |
 | 2026-10-25 | Signed-in app shell lazy-loaded | Public visitors shouldn't download the sidebar and notification code | One extra request when entering `/app` |
 | 2026-10-25 | Convention test for `mutationFn: api.x` | A lint rule can't express it; a cheap grep test stops a known bug coming back | Text-based, so it can be fooled by unusual formatting |
+| 2026-10-26 | Cloudinary deferred; resources use links and YouTube embeds | No account needed yet; images are optional | Admins can't upload cover images until it's added |
+| 2026-10-26 | Journal private via RLS only (no app-level encryption); never shown to admins, analytics or AI | Standard protection, keeps search, no key-loss risk | A full database leak would expose entries; revisit before launch |
+| 2026-10-26 | Wellness/finance content AI-drafted and labelled "pending expert review" | Same approach as the knowledge base | Needs expert review before launch |
+| 2026-10-26 | Money as integer paise; parse typed rupees as text | Floats can't represent 0.1 or 1.15 exactly; text parsing avoids `x × 100` errors | Convert at the edges (input and display) |
+| 2026-10-26 | Applied migrations are fingerprinted and must never change | A database never re-runs an applied migration, so edits silently split the repo from the real schema | New fingerprint to add after each applied migration |
+| 2026-10-26 | Read the staged diff before every commit (no blind `git add -A`) | A stray character reached a migration through a blind commit | A few seconds per commit |
+| 2026-10-26 | Public reads use an anonymous (publishable-key) Supabase client, not the service role | RLS still applies, so a missing filter can't expose drafts | A third client type to keep in mind |
+| 2026-10-26 | YouTube videos are click-to-load, from youtube-nocookie.com | No third-party requests (or tracking) until the person chooses to play; faster pages | One extra click to start a video |
+| 2026-10-26 | Admin edits send only changed fields | Meaningful audit entries; a stale form can't overwrite another admin's newer change | Diffing in the client |
+| 2026-10-27 | Signed direct uploads to Cloudinary; the server picks the id and verifies each upload | Files never pass through our server; nobody can upload or overwrite without our signature; client claims aren't trusted | Abandoned uploads can leave orphan images |
+| 2026-10-27 | No Cloudinary SDK: signing and three API calls written with `fetch` | Small surface, fully tested, no extra dependency | Must follow Cloudinary API changes ourselves |
 | 2026-10-24 | Light theme only for now | Focus on one polished theme first; semantic tokens make dark mode a later remap | No dark mode yet |
 
 ---
@@ -207,7 +242,7 @@
 | Supabase Auth URL configuration (Site URL + redirect URLs) | Set by user for `http://localhost:5173` | Add production URLs at deploy |
 | Supabase dev project (URL, publishable key, secret key) | ✅ Configured in `.env` / `client/.env.local`. The Supabase connector in Claude is linked to a different account, so migrations are run by the user in the SQL Editor. | Phase 2 |
 | Razorpay (key id/secret, webhook secret, plan IDs) | Not configured | Phase 6 |
-| Cloudinary | Not configured | Phase 5 |
+| Cloudinary | ✅ Configured in `.env` (2026-10-27); `npm run cloudinary:check -w @everguide/server` uploads, reads and deletes a test image. Use a separate Cloudinary product environment for production | Phase 5 |
 | n8n instance + webhook secret | Not configured | Phase 6 |
 | Real logo asset | Not provided (placeholder in use) | Any time |
 | Contact email, legal entity name/address for Privacy/Terms | Not provided | Before launch |
@@ -219,14 +254,23 @@
 - Phase 2 (3/4): correct on defence in depth (user-scoped client + RLS), account enumeration and 401 vs 503. Missed again: why the main bundle matters (every visitor downloads it; route chunks load on demand; critical path). Ask about it again in Phase 3.
 - Phase 3 (4/4): citation validation, measured threshold, race conditions / atomic reservation, and the code-splitting critical path (third attempt) all correct. Next quiz: mix in Phase 2 security concepts as spaced repetition.
 - Phase 4 (1/4): correct on the booking race (check-then-insert gap). Missed: DST is why recurring times are stored as local time + IANA zone; client role checks are UX only, the server check is the security (Phase 2 concept); lazy-loading helps because public visitors stop downloading the code, not compression (bundle/critical path again). Re-ask all three in the Phase 5 quiz.
+- Phase 5: quiz skipped (the user found the phase a lot to take in). `docs/learning/phase-5.md` now starts with a plain-words summary. Before the next quiz, walk through it slowly; then re-ask the Phase 4 topics (DST, server-side role checks, bundle) plus Phase 5 basics (RLS, integer money, signed uploads).
 
 ## Open questions / backlog
 - Notifications are polled; consider realtime/push (Phase 6). Email copies of booking notifications come with n8n (Phase 6).
 - `npm run format:check` flags existing docs/JSON/tsconfig files; decide whether to format them or add a `.prettierignore`.
 - Mentor E2E scripts live in the session scratchpad; move them into the repo as Playwright tests in Phase 6.
+- Deleting a savings entry is checked in the server, not locked in SQL, so two simultaneous deletes of a person's own entries could leave their goal below zero. Only affects their own record; a `delete_savings_entry` SQL function with a row lock would close it (next migration).
+- Mentor directory has no availability filter (search covers name, headline, job title, company, plus expertise).
+- Resource search results are ordered by publish date, not relevance (ranking with `ts_rank` needs an SQL function).
+- When deploying (Phase 6), the site's Content Security Policy must allow `frame-src https://www.youtube-nocookie.com`, `img-src https://res.cloudinary.com` and `connect-src https://api.cloudinary.com`.
+- Images uploaded in a form that is then cancelled stay in Cloudinary: add a periodic cleanup (Phase 6 job) that deletes unreferenced images in `everguide/resources/`.
+- Cloudinary hardening before launch: strict transformations (only our sizes) so nobody can generate unlimited variants on our quota.
+- Resource recommendations based on the roadmap are still planned.
+- The admin user list reads up to 10,000 accounts from Supabase Auth and filters in memory; move to server-side search before that scale.
+- AI feedback has no "reviewed" state yet; add one (and a link to the knowledge document to fix) when feedback volume grows.
 - Changing the sign-in email address (needs Supabase email-change confirmation flow).
 - JWTs stay valid until expiry (~1h) after sign-out/deletion; consider shorter expiry when going live.
 - Generate DB types with the Supabase CLI and apply migrations via CI.
 - PKCE + custom email templates; captcha on signup/login.
-- Next migration: `revoke execute on function public.has_role from public, anon` (harmless today, since it returns false for anonymous callers, but tighter).
 - Pricing for Pro/Premium plans: not decided. The pricing UI reads from config and says "coming soon" until it's set.

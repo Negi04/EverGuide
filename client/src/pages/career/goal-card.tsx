@@ -27,8 +27,9 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { goalCategoryLabels } from '@/config/career'
-import { careerKeys, formatDate, goalProgress, isOverdue, useReplaceGoal } from '@/hooks/use-career'
+import { careerKeys, goalProgress, isOverdue, useReplaceGoal } from '@/hooks/use-career'
 import { api } from '@/lib/api'
+import { formatDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { GoalFormDialog } from './goal-form-dialog'
 

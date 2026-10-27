@@ -21,7 +21,7 @@ function AppNavList({ onNavigate }: { onNavigate?: () => void }) {
   const { data: me } = useMe()
   // Shown only to admins for convenience; the server enforces the role on every request.
   const items = me?.roles.includes('admin')
-    ? [...appNav, { label: 'Admin: mentors', to: '/app/admin/mentors', icon: ShieldCheck }]
+    ? [...appNav, { label: 'Admin', to: '/app/admin', icon: ShieldCheck }]
     : appNav
   return (
     <ul className="space-y-0.5">

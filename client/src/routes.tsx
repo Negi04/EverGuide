@@ -4,7 +4,6 @@ import { RedirectIfSignedIn, RequireAuth, RequireOnboarding } from '@/auth/guard
 import { RequireRole } from '@/auth/require-role'
 import { AuthLayout } from '@/components/layout/auth-layout'
 import { PublicLayout } from '@/components/layout/public-layout'
-import { appNav } from '@/config/app-nav'
 import LandingPage from '@/pages/landing/landing-page'
 import NotFoundPage from '@/pages/not-found-page'
 import RouteErrorPage from '@/pages/route-error-page'
@@ -13,14 +12,6 @@ import RouteErrorPage from '@/pages/route-error-page'
 const page = (load: () => Promise<{ default: ComponentType }>) => async () => ({
   Component: (await load()).default,
 })
-
-const builtAppPages = new Set([
-  '/app',
-  '/app/settings',
-  '/app/guide',
-  '/app/career',
-  '/app/mentors',
-])
 
 export const routes: RouteObject[] = [
   {
@@ -36,6 +27,10 @@ export const routes: RouteObject[] = [
           { path: 'mentors', lazy: page(() => import('@/pages/mentors-page')) },
           { path: 'mentors/:mentorId', lazy: page(() => import('@/pages/mentor-detail-page')) },
           { path: 'resources', lazy: page(() => import('@/pages/resources-page')) },
+          {
+            path: 'resources/:slug',
+            lazy: page(() => import('@/pages/resource-detail-page')),
+          },
           { path: 'about', lazy: page(() => import('@/pages/about-page')) },
           { path: 'contact', lazy: page(() => import('@/pages/contact-page')) },
           { path: 'privacy', lazy: page(() => import('@/pages/legal/privacy-page')) },
@@ -98,12 +93,72 @@ export const routes: RouteObject[] = [
                     ],
                   },
                   {
+                    path: 'wellness',
+                    lazy: page(() => import('@/pages/wellness/wellness-layout')),
+                    children: [
+                      { index: true, lazy: page(() => import('@/pages/wellness/breathing-page')) },
+                      {
+                        path: 'journal',
+                        lazy: page(() => import('@/pages/wellness/journal-page')),
+                      },
+                      { path: 'habits', lazy: page(() => import('@/pages/wellness/habits-page')) },
+                      {
+                        path: 'support',
+                        lazy: page(() => import('@/pages/wellness/support-page')),
+                      },
+                    ],
+                  },
+                  {
+                    path: 'finance',
+                    lazy: page(() => import('@/pages/finance/finance-layout')),
+                    children: [
+                      { index: true, lazy: page(() => import('@/pages/finance/budget-page')) },
+                      { path: 'savings', lazy: page(() => import('@/pages/finance/savings-page')) },
+                      {
+                        path: 'calculators',
+                        lazy: page(() => import('@/pages/finance/calculators-page')),
+                      },
+                      {
+                        path: 'glossary',
+                        lazy: page(() => import('@/pages/finance/glossary-page')),
+                      },
+                    ],
+                  },
+                  {
+                    path: 'resources',
+                    lazy: page(() => import('@/pages/resources/app-resources-page')),
+                  },
+                  {
+                    path: 'resources/:slug',
+                    lazy: page(() => import('@/pages/resources/app-resource-detail-page')),
+                  },
+                  {
                     path: 'admin',
                     element: <RequireRole role="admin" />,
                     children: [
                       {
-                        path: 'mentors',
-                        lazy: page(() => import('@/pages/admin/mentor-applications-page')),
+                        lazy: page(() => import('@/pages/admin/admin-layout')),
+                        children: [
+                          { index: true, lazy: page(() => import('@/pages/admin/overview-page')) },
+                          { path: 'users', lazy: page(() => import('@/pages/admin/users-page')) },
+                          {
+                            path: 'knowledge',
+                            lazy: page(() => import('@/pages/admin/knowledge-page')),
+                          },
+                          {
+                            path: 'feedback',
+                            lazy: page(() => import('@/pages/admin/feedback-page')),
+                          },
+                          { path: 'audit', lazy: page(() => import('@/pages/admin/audit-page')) },
+                          {
+                            path: 'mentors',
+                            lazy: page(() => import('@/pages/admin/mentor-applications-page')),
+                          },
+                          {
+                            path: 'resources',
+                            lazy: page(() => import('@/pages/admin/resources-admin-page')),
+                          },
+                        ],
                       },
                     ],
                   },
@@ -145,12 +200,6 @@ export const routes: RouteObject[] = [
                       },
                     ],
                   },
-                  ...appNav
-                    .filter((item) => !builtAppPages.has(item.to))
-                    .map((item) => ({
-                      path: item.to.replace('/app/', ''),
-                      lazy: page(() => import('@/pages/app/module-placeholder-page')),
-                    })),
                 ],
               },
             ],
