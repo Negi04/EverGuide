@@ -22,6 +22,8 @@ const APPLIED: Record<string, string> = {
     '128508a53391f235a0f9ddf16f5faa10ff81dfb6c9ce529b9607235136a1838b',
   '20261027000006_demo_billing.sql':
     'd78ac18cb81264fbdc023217ff30e832afb93e68f0ab9cbb8da40886c1f68f8b',
+  '20261027000007_automation_outbox.sql':
+    'c123d887082f31ea2ca6897baa995906e2a722793d0c2b6bef6c92c9f913acfb',
 }
 
 const sha256 = (file: string) =>
