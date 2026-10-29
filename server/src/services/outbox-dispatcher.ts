@@ -4,6 +4,8 @@ import { signEvent } from '../lib/event-signing.ts'
 import type { Db } from '../lib/supabase.ts'
 
 const DELIVERY_TIMEOUT_MS = 10_000
+/** How often old events are purged (see purge_outbox_events). */
+const PURGE_EVERY_MS = 60 * 60 * 1000
 
 export type OutboxDispatcher = {
   /** Deliver one batch of due events. Returns how many were delivered. */
@@ -40,6 +42,7 @@ export function createOutboxDispatcher(options: {
   const send = options.fetch ?? fetch
   const nowSeconds = options.nowSeconds ?? (() => Math.floor(Date.now() / 1000))
   let running = false
+  let lastPurge = 0
 
   async function deliver(event: {
     dedupe_key: string
@@ -79,6 +82,13 @@ export function createOutboxDispatcher(options: {
     if (running) return 0
     running = true
     try {
+      // Retention: delivered and failed events don't stay forever.
+      if (Date.now() - lastPurge >= PURGE_EVERY_MS) {
+        lastPurge = Date.now()
+        const purged = await admin.rpc('purge_outbox_events')
+        if (purged.error) logger.error({ err: purged.error }, 'Could not purge old events')
+      }
+
       // Queue reminders for sessions starting soon; they then go out like any event.
       const reminders = await admin.rpc('enqueue_due_reminders')
       if (reminders.error) logger.error({ err: reminders.error }, 'Could not queue reminders')

@@ -78,6 +78,7 @@ function SignupsChart({ weeks }: { weeks: AdminOverview['signupsByWeek'] }) {
                 <div
                   key={w.weekStart}
                   tabIndex={0}
+                  role="img"
                   aria-label={`Week of ${formatDate(w.weekStart)}: ${w.signups} sign-ups`}
                   onMouseEnter={() => setActive(i)}
                   onMouseLeave={() => setActive(null)}

@@ -897,6 +897,7 @@ export type Database = {
         Returns: Database['public']['Tables']['plan_subscriptions']['Row']
       }
       enqueue_due_reminders: { Args: Record<string, never>; Returns: number }
+      purge_outbox_events: { Args: Record<string, never>; Returns: number }
       claim_outbox_events: {
         Args: { p_limit: number; p_lease_seconds: number }
         Returns: Database['public']['Tables']['outbox_events']['Row'][]

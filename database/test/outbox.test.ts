@@ -261,3 +261,67 @@ describe('delivery', () => {
     expect(row!.status).toBe('sent')
   })
 })
+
+describe('retention', () => {
+  it("deleting an account deletes the events that mention it, and its bookings' events", async () => {
+    const mentor = await createMentor('Forget Mentor')
+    const mentee = await t.createUser('Forget Mentee')
+    const starts = new Date(Date.now() + 72 * 3_600_000)
+    const booking = await t.db.query<{ id: string }>(
+      `insert into bookings (mentor_id, mentee_id, starts_at, ends_at, topic)
+       values ($1, $2, $3, $4, 'A topic for the session') returning id`,
+      [mentor, mentee, starts, new Date(starts.getTime() + 30 * 60_000)],
+    )
+    const bookingId = booking.rows[0]!.id
+    expect(await eventsFor(mentee)).toHaveLength(1)
+    expect(await eventsFor(bookingId)).toHaveLength(1)
+
+    await t.db.query('delete from auth.users where id = $1', [mentee])
+    expect(await eventsFor(mentee)).toEqual([])
+    expect(await eventsFor(bookingId)).toEqual([])
+    // The mentor's own events stay.
+    expect((await eventsFor(mentor)).length).toBeGreaterThan(0)
+
+    await t.db.query('delete from auth.users where id = $1', [mentor])
+    expect(await eventsFor(mentor)).toEqual([])
+  })
+
+  it('purges delivered events after 30 days and failed ones after 90, nothing newer', async () => {
+    const user = await t.createUser('Old Events')
+    const [event] = await eventsFor(user)
+    const purge = () =>
+      t.asService(
+        async (tx) =>
+          (await tx.query<{ n: number }>('select purge_outbox_events() as n')).rows[0]!.n,
+      )
+
+    await t.db.query(
+      "update outbox_events set status = 'sent', sent_at = now() - interval '29 days' where id = $1",
+      [event!.id],
+    )
+    await purge()
+    expect(await eventsFor(user)).toHaveLength(1)
+
+    await t.db.query(
+      "update outbox_events set sent_at = now() - interval '31 days' where id = $1",
+      [event!.id],
+    )
+    expect(await purge()).toBeGreaterThanOrEqual(1)
+    expect(await eventsFor(user)).toEqual([])
+
+    const other = await t.createUser('Failed Long Ago')
+    const [failed] = await eventsFor(other)
+    await t.db.query(
+      "update outbox_events set status = 'failed', created_at = now() - interval '91 days' where id = $1",
+      [failed!.id],
+    )
+    await purge()
+    expect(await eventsFor(other)).toEqual([])
+  })
+
+  it('only the server can purge', async () => {
+    const user = await t.createUser('Not Allowed')
+    const error = await rejects(t.asUser(user, (tx) => tx.query('select purge_outbox_events()')))
+    expect(error.message).toMatch(/permission denied/)
+  })
+})

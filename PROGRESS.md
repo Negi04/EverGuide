@@ -5,9 +5,9 @@
 
 ## Current status
 
-- **Active phase:** UI refresh on branch `ui-refresh` (landing redesign + new palette); Phase 6 starts only after the user's explicit go-ahead.
-- **Last updated:** 2026-10-27
-- **Next step:** Continue the UI refresh as the user directs (login/sign-up and dashboard were suggested), then open the `ui-refresh` PR.
+- **Active phase:** Phase 6 on branch `phase-6-payments-automation` (built on `ui-refresh`, which must be merged first). 6a, 6b and 6c are built.
+- **Last updated:** 2026-10-29
+- **Next step:** The user applies migration 8 (`20261029000008_outbox_retention.sql`); then lock its fingerprint and do the Phase 6 wrap-up (learning doc, optional quiz, PR descriptions for `ui-refresh` and Phase 6).
 
 ---
 
@@ -72,14 +72,23 @@
 
 ### Phase 6 — Demo payments, Automation & Hardening (revised 2026-10-27)
 EverGuide is the user's college major project, shown to professors. Payments are a **demo**: Razorpay Test Mode only, no real money. Deployment is out of scope (the user will deploy later).
-- [ ] 6a Razorpay Test Mode: one-time "1 month of Pro/Premium" (demo prices ₹199 / ₹499), signature verification, signed webhooks + idempotency, plan limits applied to the AI allowance, live keys refused, "demo" labels
-- [ ] 6b n8n (local, demo-friendly): signed outbound events with dedupe keys and minimal personal data, an outbox for retries, ready-made workflows (booking confirmations, reminders, payment receipt, admin alerts)
-- [ ] 6c Hardening: browser tests moved into the repo (Playwright), accessibility audit, security review
+- [x] 6a Razorpay Test Mode: one-time "1 month of Pro/Premium" (demo prices ₹199 / ₹499), signature verification, signed webhooks + idempotency, plan limits applied to the AI allowance, live keys refused, "demo" labels
+- [x] 6b n8n (local, demo-friendly): signed outbound events with dedupe keys and minimal personal data, an outbox for retries, ready-made workflows (booking confirmations, reminders, payment receipt, admin alerts)
+- [x] 6c Hardening: browser tests moved into the repo (Playwright), accessibility audit, security review, Content Security Policy, outbox retention
 - [ ] Phase wrap-up
 
 ---
 
 ## Phase log
+
+### Phase 6 (in progress)
+- **2026-10-27 (6a demo payments):** Migration 6 (`billing_orders`, `plan_subscriptions`, `payment_events`; `confirm_plan_payment()` locks the order so the checkout callback and the webhook grant exactly one month; `apply_payment_event()` dedupes by event id). Server refuses live keys at startup; prices come from `shared/src/plans.ts`; checkout signature (HMAC-SHA256 of `order|payment`) and raw-body webhook signature checked in constant time; only the buyer can confirm their order. The monthly AI allowance now follows the plan (Free from config, Pro 150, Premium 400). UI: `/app/billing` (Razorpay Checkout, Razorpay's published test card/UPI, "demo" labels), pricing shows demo prices and lists only what plans really change (removed two unbuilt Premium claims). The plan table is a zod-free shared entry to keep first-load JS at 177.6 kB.
+  - **Verified:** database 70, server 209 (two deliberate bugs, both caught), client 170; billing integration 4/4 on real Supabase; the user's Test Mode keys accepted by Razorpay; a real Test Mode order opened Checkout in a browser.
+- **2026-10-27 (6b automation):** Migration 7: `outbox_events` written by triggers in the same transaction as sign-ups, booking changes, demo payments and mentor applications; `enqueue_due_reminders()` (confirmed sessions within the hour only); `claim_outbox_events` (SKIP LOCKED + lease) and `finish_outbox_event` (backoff 30 s → 1 h, failed after 8 tries). The server dispatcher signs each event (`v1=` HMAC-SHA256 of `timestamp.body`) and delivers at least once. n8n workflow (`automation/n8n/`): verify signature (401 and a 5-minute replay window), skip repeats by event id, compose one email per event type, send to a local test inbox. Admin → Automation shows queue counts and retries failed events.
+  - **Verified:** database 82, server 236; against a real n8n 2.35.7 + MailDev: two signed events emailed, repeats skipped, a forged one rejected with 401. The user applied migration 7; its integration test passes.
+- **2026-10-29 (6c hardening):** New `e2e/` workspace (Playwright, the installed Chrome): public site on a phone, sign-in, mentor marketplace end to end, wellness/finance, billing + automation, and an accessibility sweep (axe WCAG 2.1 A/AA + the measured contrast check) on 32 pages × 2 themes, one test per page. Migration 8: deleting an account or booking deletes the events that mention it; delivered events purged after 30 days, failed after 90 (dispatcher hourly). Content Security Policy as a build-time `<meta>` (inline theme script allowed by hash). Security review in `docs/security-review.md`. In development the general API rate limit is 3,000 per 15 min (one address runs every test).
+  - **Verified:** 86 of 87 browser tests passed against the production build with the CSP on (axe found one real issue, the admin chart bars' labels, fixed). npm audit: 0 vulnerabilities; no real key in git history. Not verified: real Razorpay Checkout under the CSP, because Razorpay's API timed out from this network (10 s) during the run; the only CSP block it ever hit (`cdn.razorpay.com`) is now allowed. Database 86, server 236, client 172, shared 46.
+  - Bugs caught: browser contexts left open by a test helper kept polling after their accounts were deleted (and likely caused a Chrome crash); a booking test that failed late in the evening (too few slots left today).
 
 ### Phase 5 (in progress)
 - **2026-10-26 (5a database):** Migration `20261026000004_wellness_finance_admin.sql`: journal (writer-only, excluded from admin/analytics/AI), habits + check-ins (composite key to the owner), monthly budgets + items, savings goals with a ledger (`record_savings_entry` locks the goal row, so balances can't go negative), learning resources (published-only for visitors, full-text search via a generated `tsvector` + GIN index, https-only links) + private bookmarks, and server-only admin functions (`admin_overview`, `admin_signups_by_week`, `set_admin_role` with an advisory lock). Money stored as integer paise. **20 new PGlite tests** + a new guard that every `public` table has RLS on; mutation-tested (4 deliberate bugs, all caught). `db:verify` extended with Phase 5 checks (to run after the user applies the migration).
@@ -229,6 +238,10 @@ EverGuide is the user's college major project, shown to professors. Payments are
 | 2026-10-27 | No Cloudinary SDK: signing and three API calls written with `fetch` | Small surface, fully tested, no extra dependency | Must follow Cloudinary API changes ourselves |
 | 2026-10-27 | Payments are a demo: Razorpay Test Mode only, live keys refused | College major project shown to professors; no real money should ever move | Real billing would need live keys, KYC and legal review |
 | 2026-10-27 | One-time "1 month" purchases instead of recurring subscriptions | Simple and reliable to demonstrate end to end on a laptop | No automatic renewals |
+| 2026-10-27 | Transactional outbox (triggers) for automation events, delivered at least once with dedupe keys | An event exists exactly when its change was saved; n8n can be down without losing anything | Receivers must ignore repeats (n8n's Remove Duplicates node does) |
+| 2026-10-27 | Session reminders queued by the database, not an n8n "Wait" | A cancelled or moved session never gets a stale reminder | Needs the dispatcher running |
+| 2026-10-29 | CSP as a build-time `<meta>` tag, production only | Travels with the static files; dev hot reload needs inline scripts | Can't set frame-ancestors; add a header when deploying |
+| 2026-10-29 | Looser general API rate limit in development only (3,000/15 min) | All browser tests come from one address | Production keeps 300/15 min |
 | 2026-10-27 | Deployment removed from Claude's scope | The user will deploy later themselves | Deployment notes stay in the backlog for them |
 | 2026-10-27 | UI refresh: Apple-style landing (CSS 3D scroll/tilt, no 3D library) and the Off-White + Slate + Teal palette chosen by the user | Premium, clean look for the demo; CSS 3D adds almost no download size | Effects are calm/off under reduced motion |
 | 2026-10-27 | Accent teal #0D9488 for icons, large text, charts; deeper #0F766E for buttons and small text | #0D9488 with white text is 3.7:1, below WCAG AA's 4.5:1 | Two teal shades to keep straight (documented in index.css) |
@@ -246,9 +259,9 @@ EverGuide is the user's college major project, shown to professors. Payments are
 | Custom SMTP for Supabase Auth emails (e.g. Resend, Postmark, SendGrid) | Not configured. Supabase's built-in sender is for testing only (heavily rate-limited) | Before real users |
 | Supabase Auth URL configuration (Site URL + redirect URLs) | Set by user for `http://localhost:5173` | Add production URLs at deploy |
 | Supabase dev project (URL, publishable key, secret key) | ✅ Configured in `.env` / `client/.env.local`. The Supabase connector in Claude is linked to a different account, so migrations are run by the user in the SQL Editor. | Phase 2 |
-| Razorpay (key id/secret, webhook secret, plan IDs) | Not configured | Phase 6 |
+| Razorpay Test Mode (key id + secret) | ✅ Configured in `.env` (2026-10-27), checked against Razorpay. Live keys are refused. Webhook secret optional (webhooks can't reach localhost) | Phase 6 |
 | Cloudinary | ✅ Configured in `.env` (2026-10-27); `npm run cloudinary:check -w @everguide/server` uploads, reads and deletes a test image. Use a separate Cloudinary product environment for production | Phase 5 |
-| n8n instance + webhook secret | Not configured | Phase 6 |
+| n8n (local) + `N8N_WEBHOOK_URL` / `N8N_WEBHOOK_SECRET` | ✅ Secret and URL in `.env` (2026-10-28). The user runs n8n and the test inbox with `automation/n8n/n8n.sh` | Phase 6 |
 | Real logo asset | Not provided (placeholder in use) | Any time |
 | Contact email, legal entity name/address for Privacy/Terms | Not provided | Before launch |
 
@@ -264,19 +277,16 @@ EverGuide is the user's college major project, shown to professors. Payments are
 ## Open questions / backlog
 - Notifications are polled; consider realtime/push (Phase 6). Email copies of booking notifications come with n8n (Phase 6).
 - `npm run format:check` flags existing docs/JSON/tsconfig files; decide whether to format them or add a `.prettierignore`.
-- Mentor E2E scripts live in the session scratchpad; move them into the repo as Playwright tests in Phase 6.
 - Deleting a savings entry is checked in the server, not locked in SQL, so two simultaneous deletes of a person's own entries could leave their goal below zero. Only affects their own record; a `delete_savings_entry` SQL function with a row lock would close it (next migration).
 - Mentor directory has no availability filter (search covers name, headline, job title, company, plus expertise).
 - Resource search results are ordered by publish date, not relevance (ranking with `ts_rank` needs an SQL function).
-- When deploying (Phase 6), the site's Content Security Policy must allow `frame-src https://www.youtube-nocookie.com`, `img-src https://res.cloudinary.com` and `connect-src https://api.cloudinary.com`.
+- When deploying: send the Content Security Policy from `client/csp.ts` as an HTTP header too, adding `frame-ancestors 'none'` (a `<meta>` tag can't set it). See `docs/security-review.md` for the other open items.
 - Images uploaded in a form that is then cancelled stay in Cloudinary: add a periodic cleanup (Phase 6 job) that deletes unreferenced images in `everguide/resources/`.
 - Cloudinary hardening before launch: strict transformations (only our sizes) so nobody can generate unlimited variants on our quota.
 - Resource recommendations based on the roadmap are still planned.
-- The browser contrast audit (scratchpad `contrast-audit.mjs`, 30 pages) should move into the repo with the Playwright tests in 6c.
 - The admin user list reads up to 10,000 accounts from Supabase Auth and filters in memory; move to server-side search before that scale.
 - AI feedback has no "reviewed" state yet; add one (and a link to the knowledge document to fix) when feedback volume grows.
 - Changing the sign-in email address (needs Supabase email-change confirmation flow).
 - JWTs stay valid until expiry (~1h) after sign-out/deletion; consider shorter expiry when going live.
 - Generate DB types with the Supabase CLI and apply migrations via CI.
 - PKCE + custom email templates; captcha on signup/login.
-- Pricing for Pro/Premium plans: not decided. The pricing UI reads from config and says "coming soon" until it's set.

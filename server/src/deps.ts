@@ -1,3 +1,4 @@
+import { MINUTE } from 'express-rate-limit'
 import type { Logger } from 'pino'
 import type { AppDeps } from './app.ts'
 import type { Config } from './config/env.ts'
@@ -50,6 +51,12 @@ export function createDeps(config: Config, logger: Logger): AppDeps {
   return {
     config,
     logger,
+    // On a developer's machine everything (browser tests included) comes from one
+    // address, so the general limit is looser there. The tight limits on AI answers,
+    // uploads, bookings and checkout stay the same everywhere.
+    ...(config.nodeEnv === 'development' && {
+      rateLimits: { api: { windowMs: 15 * MINUTE, limit: 3_000 } },
+    }),
     auth: createAuthService(admin),
     profiles: createProfileService(clientFor),
     accounts: createAccountService(admin),

@@ -86,7 +86,9 @@ function fakeOutbox(events: object[]) {
   let claims = 0
   const db = {
     rpc: async (name: string, args: Finish) => {
-      if (name === 'enqueue_due_reminders') return { data: 0, error: null }
+      if (name === 'enqueue_due_reminders' || name === 'purge_outbox_events') {
+        return { data: 0, error: null }
+      }
       if (name === 'claim_outbox_events') {
         claims++
         return { data: claims === 1 ? events : [], error: null }
