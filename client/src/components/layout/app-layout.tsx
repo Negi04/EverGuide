@@ -14,6 +14,7 @@ import { useAuth } from '@/auth/use-auth'
 import { appNav } from '@/config/app-nav'
 import { useMe } from '@/hooks/use-me'
 import { cn } from '@/lib/utils'
+import { ThemeToggle } from '@/components/layout/theme-toggle'
 import { NotificationBell } from './notification-bell'
 import { SkipLink } from './skip-link'
 
@@ -34,7 +35,8 @@ function AppNavList({ onNavigate }: { onNavigate?: () => void }) {
             className={({ isActive }) =>
               cn(
                 'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground',
-                isActive && 'bg-blue-50 text-blue-700 hover:bg-blue-50 hover:text-blue-700',
+                isActive &&
+                  'bg-accent-subtle text-accent-fg hover:bg-accent-subtle hover:text-accent-fg',
               )
             }
           >
@@ -84,7 +86,10 @@ export function AppLayout() {
           <Link to="/" aria-label="EverGuide home" className="rounded-md">
             <Logo />
           </Link>
-          <NotificationBell />
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <NotificationBell />
+          </div>
         </div>
         <nav aria-label="App" className="flex-1 px-3 py-4">
           <AppNavList />
@@ -98,7 +103,10 @@ export function AppLayout() {
             <Logo />
           </Link>
           <div className="flex items-center gap-1">
-            <NotificationBell />
+            <div className="flex items-center gap-1">
+              <ThemeToggle />
+              <NotificationBell />
+            </div>
             <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" aria-label="Open navigation">

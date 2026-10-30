@@ -13,10 +13,9 @@ import {
 import { Type, type Schema } from '@google/genai'
 import { clampList, clampText, isRecord } from '../lib/ai-output.ts'
 import { AppError, databaseError, serviceUnavailable } from '../lib/errors.ts'
-import type { ChatModel } from '../lib/gemini.ts'
 import type { Db } from '../lib/supabase.ts'
 import type { UserContext } from './profile-service.ts'
-import type { UsageMeter } from './usage-meter.ts'
+import type { AiTools } from './usage-meter.ts'
 
 export type QuestionFilters = {
   role?: InterviewRole
@@ -100,7 +99,7 @@ export function fitFeedback(raw: unknown): unknown {
 export function createInterviewService(
   admin: Db,
   clientFor: (accessToken: string) => Db,
-  ai: { chat: ChatModel; meter: UsageMeter; monthlyLimit: number } | null,
+  ai: AiTools | null,
 ): InterviewService {
   /** Saved flags and practice history for the user, keyed by question. */
   async function progressFor(db: Db) {
@@ -156,12 +155,13 @@ export function createInterviewService(
       throw serviceUnavailable(
         'AI feedback is not available right now. Your answer can still be saved.',
       )
-    const reservation = await ai.meter.reserve(userId, ai.monthlyLimit)
+    const limit = await ai.monthlyLimitFor(userId)
+    const reservation = await ai.meter.reserve(userId, limit)
     if (!reservation.reservationId) {
       throw new AppError(
         429,
         'quota_exceeded',
-        `You’ve used all ${ai.monthlyLimit} AI answers for this month. You can still save practice answers without feedback.`,
+        `You’ve used all ${limit} AI answers for this month. You can still save practice answers without feedback.`,
       )
     }
     try {

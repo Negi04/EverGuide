@@ -32,7 +32,7 @@ export function SaveButton({ resource, size = 'sm' }: { resource: Resource; size
       onClick={() => toggle.mutate({ resource, saved: !isSaved })}
     >
       {isSaved ? (
-        <BookmarkCheck className="size-4 text-blue-700" aria-hidden />
+        <BookmarkCheck className="size-4 text-accent-fg" aria-hidden />
       ) : (
         <Bookmark className="size-4" aria-hidden />
       )}

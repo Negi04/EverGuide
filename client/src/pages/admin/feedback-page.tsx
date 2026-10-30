@@ -47,11 +47,11 @@ export default function FeedbackPage() {
             <li key={f.id} className="rounded-lg border border-border bg-surface p-4">
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 {f.rating === 'helpful' ? (
-                  <Badge tone="blue">
+                  <Badge tone="brand">
                     <ThumbsUp aria-hidden /> Helpful
                   </Badge>
                 ) : (
-                  <Badge tone="gold">
+                  <Badge tone="amber">
                     <ThumbsDown aria-hidden /> Not helpful
                   </Badge>
                 )}
@@ -59,7 +59,7 @@ export default function FeedbackPage() {
                 <span className="text-xs text-muted-foreground">{formatRelative(f.createdAt)}</span>
               </div>
               {f.comment && (
-                <blockquote className="mt-3 border-l-2 border-gold-400 pl-3 text-sm text-foreground">
+                <blockquote className="mt-3 border-l-2 border-brand-300 pl-3 text-sm text-foreground">
                   {f.comment}
                 </blockquote>
               )}

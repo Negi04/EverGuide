@@ -2,10 +2,11 @@
   "name": "everguide",
   "private": true,
   "version": "0.1.0",
-  "description": "EverGuide \u2014 Guidance for a Brighter Tomorrow.",
+  "description": "EverGuide — Guidance for a Brighter Tomorrow.",
   "workspaces": [
     "client",
     "database",
+    "e2e",
     "server",
     "shared"
   ],
@@ -22,7 +23,8 @@
     "test:integration": "npm run test:integration -w @everguide/server",
     "db:verify": "node database/tests/verify-rls.mjs .env",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test:e2e": "npm test -w @everguide/e2e"
   },
   "devDependencies": {
     "prettier": "^3.9.10"

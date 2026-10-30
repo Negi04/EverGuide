@@ -27,7 +27,7 @@ export function MessageContent({ content, citationNumbers = [], onCite }: Props)
             key={i}
             type="button"
             onClick={() => onCite(n)}
-            className="mx-0.5 inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-sm bg-blue-100 px-1 align-[0.15em] text-[0.68rem] font-semibold text-blue-700 hover:bg-blue-600 hover:text-white"
+            className="mx-0.5 inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-sm bg-accent-subtle-strong px-1 align-[0.15em] text-[0.68rem] font-semibold text-accent-fg hover:bg-primary hover:text-primary-foreground"
             aria-label={`Source ${n}`}
           >
             {n}

@@ -1,7 +1,9 @@
+import { MINUTE } from 'express-rate-limit'
 import type { Logger } from 'pino'
 import type { AppDeps } from './app.ts'
 import type { Config } from './config/env.ts'
 import { createImageStore } from './lib/cloudinary.ts'
+import { createPaymentGateway } from './lib/razorpay.ts'
 import {
   createGeminiChatModel,
   createGeminiEmbedder,
@@ -16,6 +18,8 @@ import { createAdminService } from './services/admin-service.ts'
 import { createAiGuideService } from './services/ai-guide-service.ts'
 import { createAiStore } from './services/ai-store.ts'
 import { createAuthService } from './services/auth-service.ts'
+import { createAutomationService } from './services/automation-service.ts'
+import { createBillingService } from './services/billing-service.ts'
 import { createCareerService } from './services/career-service.ts'
 import { createContactService } from './services/contact-service.ts'
 import { createFinanceService } from './services/finance-service.ts'
@@ -33,21 +37,33 @@ export function createDeps(config: Config, logger: Logger): AppDeps {
   const admin = createAdminClient(config)
   const clientFor = (accessToken: string) => createUserClient(config, accessToken)
   const ai = createAiComponents(config, admin, logger)
-  // Structured-output AI features share the chat model and the monthly allowance.
-  const aiTools = ai
-    ? { chat: ai.chat, meter: createUsageMeter(admin), monthlyLimit: config.ai.monthlyMessageLimit }
-    : null
+  if (!config.razorpay) logger.warn('Razorpay Test Mode keys are not set: demo payments are off')
+  const billing = createBillingService(
+    admin,
+    clientFor,
+    config.razorpay ? createPaymentGateway(config.razorpay) : null,
+    { freeMonthlyAiLimit: config.ai.monthlyMessageLimit, logger },
+  )
+  // Every AI feature shares one monthly allowance, sized by the user's plan.
+  const monthlyLimitFor = (userId: string) => billing.monthlyAiLimit(userId)
+  const aiTools = ai ? { chat: ai.chat, meter: createUsageMeter(admin), monthlyLimitFor } : null
 
   return {
     config,
     logger,
+    // On a developer's machine everything (browser tests included) comes from one
+    // address, so the general limit is looser there. The tight limits on AI answers,
+    // uploads, bookings and checkout stay the same everywhere.
+    ...(config.nodeEnv === 'development' && {
+      rateLimits: { api: { windowMs: 15 * MINUTE, limit: 3_000 } },
+    }),
     auth: createAuthService(admin),
     profiles: createProfileService(clientFor),
     accounts: createAccountService(admin),
     contact: createContactService(admin),
     aiGuide: ai
       ? createAiGuideService(createAiStore(admin, clientFor), ai.retriever, ai.chat, {
-          monthlyMessageLimit: config.ai.monthlyMessageLimit,
+          monthlyLimitFor,
           minSimilarity: config.ai.minSimilarity,
         })
       : null,
@@ -69,6 +85,8 @@ export function createDeps(config: Config, logger: Logger): AppDeps {
       config.cloudinary ? createImageStore(config.cloudinary) : null,
       logger,
     ),
+    billing,
+    automation: createAutomationService(admin, config.automation !== null),
     checkDatabase: async () => {
       const { error } = await admin
         .from('profiles')

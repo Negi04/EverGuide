@@ -13,7 +13,7 @@ export function AuthLayout() {
           <Outlet />
         </div>
       </main>
-      <aside className="on-ink relative hidden flex-col justify-center overflow-hidden bg-ink p-12 lg:flex">
+      <aside className="on-ink relative hidden flex-col justify-center overflow-hidden bg-band p-12 lg:flex">
         <GuidanceMap />
         <p className="mx-auto mt-10 max-w-sm text-center text-lg leading-relaxed text-ink-muted">
           Career, AI guidance, mentors, wellness and money — connected around your goals.

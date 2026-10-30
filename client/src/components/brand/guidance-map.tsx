@@ -24,8 +24,8 @@ export function GuidanceMap() {
       <svg viewBox="0 0 520 460" className="absolute inset-0 size-full" fill="none">
         <defs>
           <radialGradient id="eg-glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#2563EB" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="#2563EB" stopOpacity="0" />
+            <stop offset="0%" stopColor="#0D9488" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="#0D9488" stopOpacity="0" />
           </radialGradient>
         </defs>
 
@@ -47,7 +47,7 @@ export function GuidanceMap() {
             y1={center.y}
             x2={node.x}
             y2={node.y}
-            stroke="#38BDF8"
+            stroke="#5EEAD4"
             strokeOpacity="0.28"
             strokeWidth="1.25"
           />
@@ -55,15 +55,15 @@ export function GuidanceMap() {
 
         <path
           d={`M${center.x} ${center.y} C 320 180, 360 150, 404 92 S 470 210, 452 288`}
-          stroke="#F4B860"
+          stroke="#2DD4BF"
           strokeWidth="2"
           strokeLinecap="round"
           strokeDasharray="6 8"
           className="motion-safe:animate-[eg-dash_14s_linear_infinite]"
         />
 
-        <circle cx={center.x} cy={center.y} r="50" stroke="#38BDF8" strokeOpacity="0.35" />
-        <circle cx={center.x} cy={center.y} r="36" fill="#174EA6" />
+        <circle cx={center.x} cy={center.y} r="50" stroke="#5EEAD4" strokeOpacity="0.35" />
+        <circle cx={center.x} cy={center.y} r="36" fill="#0F766E" />
         <text
           x={center.x}
           y={center.y + 5}
@@ -84,11 +84,11 @@ export function GuidanceMap() {
           className={
             'absolute inline-flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium whitespace-nowrap shadow-lg sm:text-sm ' +
             (accent
-              ? 'border-gold-400/60 bg-navy-800 text-white'
-              : 'border-white/15 bg-navy-800/90 text-ink-foreground')
+              ? 'border-brand-300/60 bg-slate-800 text-white'
+              : 'border-white/15 bg-slate-800/90 text-ink-foreground')
           }
         >
-          <Icon className={accent ? 'size-4 text-gold-400' : 'size-4 text-sky-400'} />
+          <Icon className={accent ? 'size-4 text-brand-300' : 'size-4 text-brand-200'} />
           {label}
         </span>
       ))}

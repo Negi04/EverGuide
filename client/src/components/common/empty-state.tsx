@@ -19,7 +19,7 @@ export function EmptyState({ icon: Icon, title, children, action, className }: E
         className,
       )}
     >
-      <span className="inline-flex size-10 items-center justify-center rounded-md bg-blue-50 text-blue-700">
+      <span className="inline-flex size-10 items-center justify-center rounded-md bg-accent-subtle text-accent-fg">
         <Icon className="size-5" aria-hidden />
       </span>
       <h3 className="text-lg font-semibold text-ink">{title}</h3>

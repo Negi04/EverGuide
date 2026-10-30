@@ -42,7 +42,7 @@ export default function AboutPage() {
             {principles.map((principle, index) => (
               <div key={principle.title} className="border-t-2 border-ink pt-5">
                 <dt className="flex items-baseline gap-3">
-                  <span className="font-display text-sm font-semibold text-accent-text">
+                  <span className="font-display text-sm font-semibold text-accent-fg">
                     {String(index + 1).padStart(2, '0')}
                   </span>
                   <span className="text-lg font-semibold text-ink">{principle.title}</span>

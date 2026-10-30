@@ -60,7 +60,7 @@ export function ConversationSidebar({ onNavigate }: { onNavigate?: () => void })
                   className={({ isActive }) =>
                     cn(
                       'block rounded-md px-3 py-2 hover:bg-surface-muted',
-                      isActive && 'bg-blue-50 hover:bg-blue-50',
+                      isActive && 'bg-accent-subtle hover:bg-accent-subtle',
                     )
                   }
                 >
@@ -69,7 +69,7 @@ export function ConversationSidebar({ onNavigate }: { onNavigate?: () => void })
                       <span
                         className={cn(
                           'block truncate text-sm font-medium',
-                          isActive ? 'text-blue-700' : 'text-foreground',
+                          isActive ? 'text-accent-fg' : 'text-foreground',
                         )}
                       >
                         {conversation.title}

@@ -7,7 +7,7 @@ export function Notice({ children, className }: { children: ReactNode; className
   return (
     <div
       className={cn(
-        'flex gap-3 rounded-md border border-gold-400/50 bg-gold-100 px-4 py-3 text-sm text-accent-text',
+        'flex gap-3 rounded-md border border-accent-border bg-accent-subtle px-4 py-3 text-sm text-foreground',
         className,
       )}
     >

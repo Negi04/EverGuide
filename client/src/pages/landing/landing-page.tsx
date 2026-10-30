@@ -1,3 +1,4 @@
+import { Reveal } from '@/components/motion/reveal'
 import { usePageTitle } from '@/hooks/use-page-title'
 import { ClosingCta } from './closing-cta'
 import { DomainsSection } from './domains-section'
@@ -17,10 +18,18 @@ export default function LandingPage() {
       <DomainsSection />
       <ProductPreview />
       <HowItWorks />
-      <GroundedAiSection />
-      <MentorshipSection />
-      <PricingPreview />
-      <ClosingCta />
+      <Reveal>
+        <GroundedAiSection />
+      </Reveal>
+      <Reveal>
+        <MentorshipSection />
+      </Reveal>
+      <Reveal>
+        <PricingPreview />
+      </Reveal>
+      <Reveal>
+        <ClosingCta />
+      </Reveal>
     </>
   )
 }

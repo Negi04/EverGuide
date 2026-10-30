@@ -1,77 +1,90 @@
-import { ArrowRight } from 'lucide-react'
-import { Tabs } from 'radix-ui'
+import { ArrowUpRight, Check } from 'lucide-react'
 import { Link } from 'react-router'
 import { SectionHeading } from '@/components/common/section-heading'
-import { StatusBadge } from '@/components/common/status-badge'
+import { Reveal } from '@/components/motion/reveal'
+import { Tilt } from '@/components/motion/tilt'
 import { domains } from '@/config/features'
+import { cn } from '@/lib/utils'
 
-/** The guidance domains as an accessible tab set instead of a repetitive card grid. */
+/** Column spans for a bento layout on large screens (six columns). */
+const spans = [
+  'lg:col-span-4',
+  'lg:col-span-2',
+  'lg:col-span-2',
+  'lg:col-span-2',
+  'lg:col-span-2',
+  'lg:col-span-6',
+]
+
+/** The guidance areas as a bento grid of cards that lean towards the pointer. */
 export function DomainsSection() {
-  const firstDomain = domains[0]
-  if (!firstDomain) return null
-
   return (
     <section aria-labelledby="domains-title" className="py-20 sm:py-28">
       <div className="container-page">
-        <SectionHeading
-          id="domains-title"
-          eyebrow="One ecosystem"
-          title="Every part of growing up and moving forward, in one place."
-          lead="Decisions about work, wellbeing and money affect each other. EverGuide keeps them connected, so the advice you get reflects the whole picture."
-        />
+        <Reveal>
+          <SectionHeading
+            id="domains-title"
+            eyebrow="One ecosystem"
+            title="Every part of growing up and moving forward, in one place."
+            lead="Decisions about work, wellbeing and money affect each other. EverGuide keeps them connected, so the advice you get reflects the whole picture."
+          />
+        </Reveal>
 
-        <Tabs.Root
-          defaultValue={firstDomain.id}
-          orientation="vertical"
-          className="mt-14 grid gap-8 lg:grid-cols-[18rem_1fr] lg:gap-12"
-        >
-          <Tabs.List
-            aria-label="Guidance domains"
-            className="flex gap-2 overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:border-l lg:border-border lg:pb-0"
-          >
-            {domains.map(({ id, name, icon: Icon }) => (
-              <Tabs.Trigger
-                key={id}
-                value={id}
-                className="group flex shrink-0 items-center gap-3 rounded-md border border-border bg-surface px-4 py-3 text-left text-sm font-medium text-muted-foreground transition-colors hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-ink lg:-ml-px lg:rounded-none lg:border-0 lg:border-l-2 lg:border-transparent lg:bg-transparent lg:py-3.5 lg:data-[state=active]:border-primary"
-              >
-                <Icon className="size-4 text-blue-600" aria-hidden />
-                {name}
-              </Tabs.Trigger>
-            ))}
-          </Tabs.List>
-
-          {domains.map((domain) => (
-            <Tabs.Content
-              key={domain.id}
-              value={domain.id}
-              className="rounded-lg border border-border bg-surface p-6 shadow-md sm:p-10"
-            >
-              <h3 className="text-2xl font-semibold text-ink sm:text-3xl">{domain.summary}</h3>
-              <p className="mt-4 max-w-2xl leading-relaxed text-muted-foreground">
-                {domain.description}
-              </p>
-              <ul className="mt-8 divide-y divide-border border-y border-border">
-                {domain.capabilities.map((capability) => (
-                  <li
-                    key={capability.label}
-                    className="flex flex-col gap-2 py-3.5 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <span className="text-sm text-foreground">{capability.label}</span>
-                    <StatusBadge status={capability.status} />
-                  </li>
-                ))}
-              </ul>
-              <Link
-                to={`/features#${domain.id}`}
-                className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
-              >
-                More about {domain.name}
-                <ArrowRight className="size-4" aria-hidden />
-              </Link>
-            </Tabs.Content>
-          ))}
-        </Tabs.Root>
+        <ul className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+          {domains.map((domain, index) => {
+            const Icon = domain.icon
+            const available = domain.capabilities.filter((c) => c.status === 'available')
+            const large = index === 0
+            return (
+              <li key={domain.id} className={cn(spans[index], index === 0 && 'sm:col-span-2')}>
+                <Reveal delay={index * 70} className="h-full">
+                  <Tilt className="h-full rounded-2xl">
+                    <Link
+                      to={`/features#${domain.id}`}
+                      className={cn(
+                        'group flex h-full flex-col rounded-2xl border border-border bg-surface p-6 shadow-sm transition-shadow [transform-style:preserve-3d] hover:shadow-lg sm:p-8',
+                        large && 'bg-gradient-to-br from-surface via-surface to-accent-subtle',
+                      )}
+                    >
+                      <span className="inline-flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-500 text-white shadow-md [transform:translateZ(30px)]">
+                        <Icon className="size-5" aria-hidden />
+                      </span>
+                      <h3
+                        className={cn(
+                          'mt-5 font-semibold text-ink',
+                          large ? 'text-2xl sm:text-3xl' : 'text-xl',
+                        )}
+                      >
+                        {domain.name}
+                      </h3>
+                      <p className="mt-2 leading-relaxed text-muted-foreground">{domain.summary}</p>
+                      {available.length > 0 && (
+                        <ul className="mt-5 space-y-1.5 text-sm text-foreground">
+                          {available.slice(0, large ? 4 : 2).map((c) => (
+                            <li key={c.label} className="flex items-start gap-2">
+                              <Check
+                                className="mt-0.5 size-4 shrink-0 text-accent-fg"
+                                aria-hidden
+                              />
+                              {c.label}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      <span className="mt-auto inline-flex items-center gap-1 pt-6 text-sm font-medium text-primary">
+                        Explore
+                        <ArrowUpRight
+                          className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                          aria-hidden
+                        />
+                      </span>
+                    </Link>
+                  </Tilt>
+                </Reveal>
+              </li>
+            )
+          })}
+        </ul>
       </div>
     </section>
   )

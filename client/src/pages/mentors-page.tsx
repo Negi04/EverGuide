@@ -46,7 +46,7 @@ export default function MentorsPage() {
           <ul className="mt-10 grid gap-10 md:grid-cols-3">
             {principles.map(({ icon: Icon, title, body }) => (
               <li key={title}>
-                <Icon className="size-6 text-blue-600" aria-hidden />
+                <Icon className="size-6 text-accent-fg" aria-hidden />
                 <h3 className="mt-4 text-lg font-semibold text-ink">{title}</h3>
                 <p className="mt-2 leading-relaxed text-muted-foreground">{body}</p>
               </li>
@@ -56,7 +56,7 @@ export default function MentorsPage() {
 
         <section
           aria-labelledby="apply-title"
-          className="on-ink flex flex-col gap-6 rounded-lg bg-ink p-8 sm:p-10 lg:flex-row lg:items-center lg:justify-between"
+          className="on-ink flex flex-col gap-6 rounded-lg bg-band p-8 sm:p-10 lg:flex-row lg:items-center lg:justify-between"
         >
           <div className="max-w-xl">
             <p className="eyebrow">For experienced professionals</p>

@@ -48,14 +48,14 @@ export function ResourceDetail({ slug, basePath }: { slug: string; basePath: str
       {back}
       <header>
         <p className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
-          <KindIcon className="size-4 text-blue-600" aria-hidden />
+          <KindIcon className="size-4 text-accent-fg" aria-hidden />
           {kind}
           {duration && <span aria-hidden>·</span>}
           {duration}
         </p>
         <h1 className="mt-2 text-3xl font-semibold text-ink">{r.title}</h1>
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <Badge tone="blue">{domainLabels[r.domain]}</Badge>
+          <Badge tone="brand">{domainLabels[r.domain]}</Badge>
           <Badge>{resourceLevelLabels[r.level]}</Badge>
           <span className="text-sm text-muted-foreground">From {r.sourceName}</span>
         </div>

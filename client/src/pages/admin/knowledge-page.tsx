@@ -14,9 +14,9 @@ import { usePageTitle } from '@/hooks/use-page-title'
 import { api } from '@/lib/api'
 import { formatRelative } from '@/lib/format'
 
-const statusTone: Record<KnowledgeStatus, 'blue' | 'gold' | 'neutral'> = {
-  approved: 'blue',
-  draft: 'gold',
+const statusTone: Record<KnowledgeStatus, 'brand' | 'amber' | 'neutral'> = {
+  approved: 'brand',
+  draft: 'amber',
   archived: 'neutral',
 }
 const statusLabel: Record<KnowledgeStatus, string> = {

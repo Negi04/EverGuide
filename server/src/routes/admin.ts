@@ -11,6 +11,7 @@ import { parse } from '../lib/validation.ts'
 import { requireAuth, requireRole, userContext } from '../middleware/auth.ts'
 import type { AdminService } from '../services/admin-service.ts'
 import type { AuthService } from '../services/auth-service.ts'
+import type { AutomationService } from '../services/automation-service.ts'
 
 const uuid = z.uuid()
 function idParam(value: unknown, what: string): string {
@@ -22,7 +23,12 @@ const userSearch = z.object({ q: z.string().trim().max(100).optional() })
 const feedbackQuery = z.object({ rating: z.enum(['helpful', 'not_helpful']).optional() })
 
 /** Admin portal. Every route checks the admin role in the database first. */
-export function registerAdminRoutes(api: Router, auth: AuthService, admin: AdminService) {
+export function registerAdminRoutes(
+  api: Router,
+  auth: AuthService,
+  admin: AdminService,
+  automation: AutomationService,
+) {
   const adminOnly = [requireAuth(auth), requireRole(auth, 'admin')]
 
   api.get('/admin/overview', ...adminOnly, async (_req, res) => {
@@ -74,5 +80,16 @@ export function registerAdminRoutes(api: Router, auth: AuthService, admin: Admin
 
   api.get('/admin/audit-events', ...adminOnly, async (req, res) => {
     res.json(await admin.auditLog(parse(auditQuerySchema, req.query)))
+  })
+
+  api.get('/admin/automation', ...adminOnly, async (_req, res) => {
+    res.json(await automation.overview())
+  })
+
+  api.post('/admin/automation/:id/retry', ...adminOnly, async (req, res) => {
+    const id = z.coerce.number().int().positive().safeParse(req.params.id)
+    if (!id.success) throw new AppError(404, 'not_found', 'Event not found.')
+    await automation.retry(id.data)
+    res.status(204).end()
   })
 }

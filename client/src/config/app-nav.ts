@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 import {
   BookOpen,
+  CreditCard,
   Compass,
   HeartPulse,
   LayoutDashboard,
@@ -24,5 +25,6 @@ export const appNav: AppNavItem[] = [
   { label: 'Wellness', to: '/app/wellness', icon: HeartPulse },
   { label: 'Finance', to: '/app/finance', icon: PiggyBank },
   { label: 'Resources', to: '/app/resources', icon: BookOpen },
+  { label: 'Plan & billing', to: '/app/billing', icon: CreditCard },
   { label: 'Settings', to: '/app/settings', icon: Settings },
 ]

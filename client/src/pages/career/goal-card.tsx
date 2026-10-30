@@ -86,7 +86,7 @@ export function GoalCard({ goal }: { goal: Goal }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge tone="blue">{goalCategoryLabels[goal.category]}</Badge>
+            <Badge tone="brand">{goalCategoryLabels[goal.category]}</Badge>
             {completed && (
               <Badge tone="neutral">
                 <Check aria-hidden /> Completed
@@ -156,7 +156,7 @@ export function GoalCard({ goal }: { goal: Goal }) {
           aria-valuenow={progress.percent}
         >
           <div
-            className={cn('h-full', completed ? 'bg-success' : 'bg-primary')}
+            className={cn('h-full', completed ? 'bg-success' : 'bg-fill')}
             style={{ width: `${progress.percent}%` }}
           />
         </div>

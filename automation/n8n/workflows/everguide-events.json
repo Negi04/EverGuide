@@ -1,0 +1,236 @@
+{
+  "id": "EverGuideEvents1",
+  "name": "EverGuide events (demo)",
+  "nodes": [
+    {
+      "id": "everguide-webhook",
+      "name": "EverGuide webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "everguide",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "6f3b2a10-5c1e-4c8a-9f3e-2d7a1b0c9e44"
+    },
+    {
+      "id": "verify-signature",
+      "name": "Verify signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// EverGuide → n8n: check each event's signature before acting on it.\n// Runs in the \"Verify signature\" Code node. Needs the n8n settings\n// NODE_FUNCTION_ALLOW_BUILTIN=crypto and EVERGUIDE_WEBHOOK_SECRET (see README).\n//\n// The signature is HMAC-SHA256 over \"<timestamp>.<body>\", sent as \"v1=<hex>\".\n// Events older than 5 minutes are refused, so a captured request can't be replayed.\n// The body is rebuilt with JSON.stringify: EverGuide sends compact JSON made by\n// JSON.stringify, which parses and re-serialises to exactly the same text.\nconst crypto = require('crypto')\n\nconst secret = $env.EVERGUIDE_WEBHOOK_SECRET\nconst now = Math.floor(Date.now() / 1000)\n\nreturn $input.all().map((item) => {\n  const headers = item.json.headers || {}\n  const body = JSON.stringify(item.json.body)\n  const timestamp = Number(headers['x-everguide-timestamp'])\n  let valid = false\n  if (secret && Number.isInteger(timestamp) && Math.abs(now - timestamp) <= 300) {\n    const expected =\n      'v1=' +\n      crypto\n        .createHmac('sha256', secret)\n        .update(timestamp + '.' + body)\n        .digest('hex')\n    const received = String(headers['x-everguide-signature'] || '')\n    valid =\n      expected.length === received.length &&\n      crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(received))\n  }\n  return { json: { valid, event: valid ? item.json.body : null } }\n})\n"
+      }
+    },
+    {
+      "id": "signature-valid-",
+      "name": "Signature valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "valid",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "accept",
+      "name": "Accept",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        -100
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"received\": true } }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "reject",
+      "name": "Reject",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        100
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"error\": \"invalid signature\" } }}",
+        "options": {
+          "responseCode": 401
+        }
+      }
+    },
+    {
+      "id": "skip-repeats",
+      "name": "Skip repeats",
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        880,
+        -100
+      ],
+      "parameters": {
+        "operation": "removeItemsSeenInPreviousExecutions",
+        "dedupeValue": "={{ $json.event.id }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "compose-email",
+      "name": "Compose email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        -100
+      ],
+      "parameters": {
+        "jsCode": "// EverGuide → n8n: turn each verified event into an email for the demo test inbox.\n// Runs in the \"Compose email\" Code node. Events of unknown types are skipped.\n//\n// Every email goes to one test inbox: events carry first names, not addresses,\n// so nothing here can reach a real person by mistake.\nconst INBOX = 'demo-inbox@everguide.test'\nconst ADMIN_INBOX = 'admin-inbox@everguide.test'\n\nfunction when(iso, zone) {\n  try {\n    return new Date(iso).toLocaleString('en-IN', {\n      timeZone: zone || 'Asia/Kolkata',\n      weekday: 'short',\n      day: 'numeric',\n      month: 'short',\n      hour: 'numeric',\n      minute: '2-digit',\n      timeZoneName: 'short',\n    })\n  } catch {\n    return iso\n  }\n}\n\nconst templates = {\n  'user.welcome': (d) => ({\n    subject: 'Welcome to EverGuide',\n    text: `Hi ${d.firstName},\\n\\nWelcome to EverGuide. Start with the AI Guide or set your first career goal.\\n\\nThe EverGuide team`,\n  }),\n  'booking.requested': (d) => ({\n    subject: `Session requested with ${d.mentorFirstName}`,\n    text: `Hi ${d.menteeFirstName},\\n\\nYou asked ${d.mentorFirstName} for a session on ${when(d.startsAt, d.menteeTimezone)}. We'll email you when they reply.`,\n  }),\n  'booking.confirmed': (d) => ({\n    subject: `Confirmed: your session with ${d.mentorFirstName}`,\n    text: `Hi ${d.menteeFirstName},\\n\\n${d.mentorFirstName} confirmed your session on ${when(d.startsAt, d.menteeTimezone)}. You'll find the meeting link under Mentors → Sessions.`,\n  }),\n  'booking.declined': (d) => ({\n    subject: `${d.mentorFirstName} couldn't take your session`,\n    text: `Hi ${d.menteeFirstName},\\n\\n${d.mentorFirstName} can't make ${when(d.startsAt, d.menteeTimezone)}. You can pick another time or another mentor.`,\n  }),\n  'booking.cancelled': (d) => ({\n    subject: 'Session cancelled',\n    text: `Hi ${d.menteeFirstName},\\n\\nYour session with ${d.mentorFirstName} on ${when(d.startsAt, d.menteeTimezone)} was cancelled.`,\n  }),\n  'booking.rescheduled': (d) => ({\n    subject: 'Session moved',\n    text: `Hi ${d.menteeFirstName},\\n\\nYour session with ${d.mentorFirstName} is now requested for ${when(d.startsAt, d.menteeTimezone)}.`,\n  }),\n  'booking.reminder': (d) => ({\n    subject: `Starting soon: your session with ${d.mentorFirstName}`,\n    text: `Hi ${d.menteeFirstName},\\n\\nA reminder: your session with ${d.mentorFirstName} starts at ${when(d.startsAt, d.menteeTimezone)}.`,\n  }),\n  'payment.succeeded': (d) => ({\n    subject: `Receipt: EverGuide ${d.plan === 'premium' ? 'Premium' : 'Pro'} (demo)`,\n    text: `Hi ${d.firstName},\\n\\nThanks! This is a DEMO receipt: the payment ran in Razorpay Test Mode and no real money was charged.\\n\\nPlan: ${d.plan}\\nAmount: ₹${(d.amountPaise / 100).toFixed(2)} (test)\\nActive until: ${when(d.periodEnd)}`,\n  }),\n  'admin.mentor_application': (d) => ({\n    to: ADMIN_INBOX,\n    subject: '[Admin] New mentor application to review',\n    text: `${d.firstName} applied to be a mentor. Review it in Admin → Mentors.`,\n  }),\n}\n\nreturn $input.all().flatMap((item) => {\n  const event = item.json.event\n  const template = templates[event.type]\n  if (!template) return []\n  const email = template(event.data)\n  return [\n    {\n      json: { to: email.to || INBOX, subject: email.subject, text: email.text, eventId: event.id },\n    },\n  ]\n})\n"
+      }
+    },
+    {
+      "id": "send-to-test-inbox",
+      "name": "Send to test inbox",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1320,
+        -100
+      ],
+      "parameters": {
+        "fromEmail": "EverGuide (demo) <no-reply@everguide.test>",
+        "toEmail": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "smtp": {
+          "id": "everguide-test-inbox",
+          "name": "EverGuide test inbox"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "EverGuide webhook": {
+      "main": [
+        [
+          {
+            "node": "Verify signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify signature": {
+      "main": [
+        [
+          {
+            "node": "Signature valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Signature valid?": {
+      "main": [
+        [
+          {
+            "node": "Accept",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reject",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Accept": {
+      "main": [
+        [
+          {
+            "node": "Skip repeats",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip repeats": {
+      "main": [
+        [
+          {
+            "node": "Compose email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compose email": {
+      "main": [
+        [
+          {
+            "node": "Send to test inbox",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false
+}

@@ -25,7 +25,7 @@ export default function CareerLayout() {
               cn(
                 '-mb-px border-b-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-colors',
                 isActive
-                  ? 'border-primary text-blue-700'
+                  ? 'border-primary text-accent-fg'
                   : 'border-transparent text-muted-foreground hover:text-foreground',
               )
             }

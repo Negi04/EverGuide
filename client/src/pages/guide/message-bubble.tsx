@@ -20,7 +20,7 @@ import { MessageContent } from './message-content'
 export function UserBubble({ content }: { content: string }) {
   return (
     <div className="flex justify-end">
-      <div className="max-w-[85%] rounded-lg rounded-br-sm bg-ink px-4 py-3 text-[0.95rem] leading-relaxed whitespace-pre-wrap text-ink-foreground">
+      <div className="max-w-[85%] rounded-lg rounded-br-sm bg-primary px-4 py-3 text-[0.95rem] leading-relaxed whitespace-pre-wrap text-primary-foreground">
         {content}
       </div>
     </div>
@@ -46,7 +46,7 @@ export function AssistantMessage({ message, conversationId, onCite }: AssistantP
       aria-label="AI Guide answer"
       className={cn(
         'max-w-[92%] rounded-lg border bg-surface p-4 sm:p-5',
-        crisis ? 'border-gold-400/70 bg-gold-100/40' : 'border-border',
+        crisis ? 'border-amber-400/70 bg-warn-bg' : 'border-border',
       )}
     >
       <AnswerLabel message={message} />
@@ -67,7 +67,7 @@ export function AssistantMessage({ message, conversationId, onCite }: AssistantP
                   onClick={() => onCite(citation)}
                   className="inline-flex max-w-full items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5 text-left text-xs text-muted-foreground hover:border-primary hover:text-foreground"
                 >
-                  <span className="font-semibold text-blue-700">{citation.number}</span>
+                  <span className="font-semibold text-accent-fg">{citation.number}</span>
                   <span className="truncate">{citation.title}</span>
                 </button>
               </li>
@@ -84,14 +84,14 @@ export function AssistantMessage({ message, conversationId, onCite }: AssistantP
 function AnswerLabel({ message }: { message: ChatMessage }) {
   if (message.safetyFlag === 'crisis') {
     return (
-      <p className="flex items-center gap-1.5 text-xs font-semibold text-accent-text">
+      <p className="flex items-center gap-1.5 text-xs font-semibold text-warn-fg">
         <HeartHandshake className="size-3.5" aria-hidden /> Support information
       </p>
     )
   }
   return (
     <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-      <span className="flex items-center gap-1.5 font-semibold text-blue-700">
+      <span className="flex items-center gap-1.5 font-semibold text-accent-fg">
         <Sparkles className="size-3.5" aria-hidden /> AI-generated
       </span>
       {message.grounded ? (
@@ -100,7 +100,7 @@ function AnswerLabel({ message }: { message: ChatMessage }) {
           {groundingLabel(message)}
         </span>
       ) : (
-        <span className="flex items-center gap-1 text-accent-text">
+        <span className="flex items-center gap-1 text-warn-fg">
           <Info className="size-3.5" aria-hidden />
           Not based on EverGuide sources — check important information
         </span>
@@ -175,7 +175,7 @@ function MessageActions({
             onClick={() => rate.mutate(rating)}
             className={cn(
               'inline-flex size-8 items-center justify-center rounded-md hover:bg-surface-muted hover:text-foreground',
-              selected && 'bg-blue-50 text-blue-700',
+              selected && 'bg-accent-subtle text-accent-fg',
             )}
           >
             <Icon className="size-4" aria-hidden />
@@ -194,7 +194,7 @@ export function StreamingMessage({ text }: { text: string }) {
       aria-busy="true"
       className="max-w-[92%] rounded-lg border border-border bg-surface p-4 sm:p-5"
     >
-      <p className="flex items-center gap-1.5 text-xs font-semibold text-blue-700">
+      <p className="flex items-center gap-1.5 text-xs font-semibold text-accent-fg">
         <Sparkles className="size-3.5" aria-hidden /> AI-generated
       </p>
       <div className="mt-3">

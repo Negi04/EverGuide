@@ -30,7 +30,7 @@ export function ResourceCard({ resource, basePath }: { resource: Resource; baseP
       )}
       <div className="flex flex-1 flex-col p-5">
         <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-          <KindIcon className="size-4 text-blue-600" aria-hidden />
+          <KindIcon className="size-4 text-accent-fg" aria-hidden />
           {kind}
           {duration && <span aria-hidden>·</span>}
           {duration}
@@ -48,7 +48,7 @@ export function ResourceCard({ resource, basePath }: { resource: Resource; baseP
         </p>
         <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-4">
           <div className="flex flex-wrap items-center gap-1.5">
-            <Badge tone="blue">{domainLabels[resource.domain]}</Badge>
+            <Badge tone="brand">{domainLabels[resource.domain]}</Badge>
             <Badge>{resourceLevelLabels[resource.level]}</Badge>
           </div>
           <SaveButton resource={resource} />

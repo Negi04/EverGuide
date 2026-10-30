@@ -750,6 +750,76 @@ export type Database = {
         Update: never
         Relationships: []
       }
+      billing_orders: {
+        Row: {
+          id: string
+          user_id: string
+          plan: 'pro' | 'premium'
+          amount_paise: number
+          currency: 'INR'
+          razorpay_order_id: string
+          razorpay_payment_id: string | null
+          status: 'created' | 'paid'
+          created_at: string
+          paid_at: string | null
+        }
+        Insert: {
+          user_id: string
+          plan: 'pro' | 'premium'
+          amount_paise: number
+          razorpay_order_id: string
+        }
+        Update: never
+        Relationships: []
+      }
+      plan_subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          plan: 'pro' | 'premium'
+          order_id: string
+          starts_at: string
+          ends_at: string
+          created_at: string
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      outbox_events: {
+        Row: {
+          id: number
+          event_type: string
+          dedupe_key: string
+          payload: unknown
+          status: 'pending' | 'sending' | 'sent' | 'failed'
+          attempts: number
+          next_attempt_at: string
+          locked_until: string | null
+          last_error: string | null
+          created_at: string
+          sent_at: string | null
+        }
+        Insert: never
+        Update: {
+          status?: 'pending'
+          attempts?: number
+          next_attempt_at?: string
+          last_error?: string | null
+        }
+        Relationships: []
+      }
+      payment_events: {
+        Row: {
+          event_id: string
+          event_type: string
+          razorpay_order_id: string | null
+          received_at: string
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
     }
     Views: { [_ in never]: never }
     Functions: {
@@ -817,6 +887,34 @@ export type Database = {
       set_admin_role: {
         Args: { p_actor: string; p_target: string; p_grant: boolean }
         Returns: undefined
+      }
+      confirm_plan_payment: {
+        Args: {
+          p_razorpay_order_id: string
+          p_razorpay_payment_id: string
+          p_amount_paise?: number | null
+        }
+        Returns: Database['public']['Tables']['plan_subscriptions']['Row']
+      }
+      enqueue_due_reminders: { Args: Record<string, never>; Returns: number }
+      purge_outbox_events: { Args: Record<string, never>; Returns: number }
+      claim_outbox_events: {
+        Args: { p_limit: number; p_lease_seconds: number }
+        Returns: Database['public']['Tables']['outbox_events']['Row'][]
+      }
+      finish_outbox_event: {
+        Args: { p_id: number; p_ok: boolean; p_error?: string | null; p_max_attempts?: number }
+        Returns: undefined
+      }
+      apply_payment_event: {
+        Args: {
+          p_event_id: string
+          p_event_type: string
+          p_razorpay_order_id: string | null
+          p_razorpay_payment_id: string | null
+          p_amount_paise: number | null
+        }
+        Returns: boolean
       }
     }
     Enums: { app_role: AppRoleEnum }

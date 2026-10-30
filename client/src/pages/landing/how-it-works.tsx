@@ -1,4 +1,5 @@
 import { SectionHeading } from '@/components/common/section-heading'
+import { Reveal } from '@/components/motion/reveal'
 
 const steps = [
   {
@@ -27,9 +28,9 @@ export function HowItWorks() {
 
         <ol className="mt-14 grid gap-10 md:grid-cols-3 md:gap-8">
           {steps.map((step, index) => (
-            <li key={step.title} className="relative">
+            <Reveal as="li" key={step.title} delay={index * 120} className="relative">
               <div className="flex items-center gap-4">
-                <span className="font-display text-5xl leading-none font-semibold text-blue-100">
+                <span className="font-display text-5xl leading-none font-semibold bg-gradient-to-b from-brand-600 to-brand-500 bg-clip-text text-transparent">
                   {String(index + 1).padStart(2, '0')}
                 </span>
                 {index < steps.length - 1 && (
@@ -38,7 +39,7 @@ export function HowItWorks() {
               </div>
               <h3 className="mt-5 text-xl font-semibold text-ink">{step.title}</h3>
               <p className="mt-3 leading-relaxed text-muted-foreground">{step.body}</p>
-            </li>
+            </Reveal>
           ))}
         </ol>
       </div>

@@ -105,3 +105,28 @@ describe('audit log', () => {
     )
   })
 })
+
+describe('automation', () => {
+  it('shows the queue in plain words and retries a failed event', async () => {
+    const user = userEvent.setup()
+    renderRoute('/app/admin/automation')
+    const list = await screen.findByRole('list', { name: 'Recent events' })
+    expect(within(list).getByText('Payment receipt (demo)')).toBeInTheDocument()
+    expect(within(list).getByText(/last error: n8n returned 500/)).toBeInTheDocument()
+    expect(within(list).getByText('Welcome email')).toBeInTheDocument()
+    // Only the failed event can be retried.
+    await user.click(within(list).getByRole('button', { name: 'Retry' }))
+    await waitFor(() => expect(fakeApi.adminRetryEvent).toHaveBeenCalledWith(2))
+  })
+
+  it('explains that events wait when n8n is not connected', async () => {
+    fakeApi.adminAutomation.mockResolvedValue({
+      configured: false,
+      counts: { pending: 0, sending: 0, sent: 0, failed: 0 },
+      recent: [],
+    })
+    renderRoute('/app/admin/automation')
+    expect(await screen.findByText(/isn’t connected to this server yet/)).toBeInTheDocument()
+    expect(screen.getByText('No events yet')).toBeInTheDocument()
+  })
+})
