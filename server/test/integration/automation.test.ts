@@ -14,31 +14,36 @@ const config = loadConfig({ ...process.env, NODE_ENV: 'test' })
 const admin = createAdminClient(config)
 const userIds: string[] = []
 
+// Deleting an account also deletes its events (migration 8), so this is all the cleanup needed.
 afterAll(async () => {
-  for (const id of userIds) {
-    await admin.from('outbox_events').delete().eq('dedupe_key', `user.welcome:${id}`)
-    await admin.auth.admin.deleteUser(id)
-  }
+  for (const id of userIds) await admin.auth.admin.deleteUser(id)
 })
+
+async function createAccount(fullName: string) {
+  const email = `everguide-outbox-${Date.now()}@example.com`
+  const password = `Outbox-${crypto.randomUUID()}`
+  const created = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: fullName },
+  })
+  if (created.error) throw created.error
+  userIds.push(created.data.user.id)
+  return { id: created.data.user.id, email, password }
+}
+
+const welcomeEvents = (id: string) =>
+  admin
+    .from('outbox_events')
+    .select('event_type, status, payload')
+    .eq('dedupe_key', `user.welcome:${id}`)
 
 describe('outbox', () => {
   it('a sign-up queues one welcome event, which the user cannot read', async () => {
-    const email = `everguide-outbox-${Date.now()}@example.com`
-    const password = `Outbox-${crypto.randomUUID()}`
-    const created = await admin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: { full_name: 'Outbox Tester' },
-    })
-    if (created.error) throw created.error
-    const id = created.data.user.id
-    userIds.push(id)
+    const { id, email, password } = await createAccount('Outbox Tester')
 
-    const { data: queued, error } = await admin
-      .from('outbox_events')
-      .select('event_type, status, payload')
-      .eq('dedupe_key', `user.welcome:${id}`)
+    const { data: queued, error } = await welcomeEvents(id)
     expect(error).toBeNull()
     expect(queued).toHaveLength(1)
     expect(queued![0]).toMatchObject({
@@ -54,5 +59,14 @@ describe('outbox', () => {
     await browser.auth.signInWithPassword({ email, password })
     const peek = await browser.from('outbox_events').select('id').limit(1)
     expect(peek.error?.message).toMatch(/permission denied/)
+  })
+
+  it('deleting the account deletes its events', async () => {
+    const { id } = await createAccount('Forget Me')
+    expect((await welcomeEvents(id)).data).toHaveLength(1)
+
+    const deleted = await admin.auth.admin.deleteUser(id)
+    expect(deleted.error).toBeNull()
+    expect((await welcomeEvents(id)).data).toEqual([])
   })
 })

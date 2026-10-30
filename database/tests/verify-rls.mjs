@@ -1,4 +1,4 @@
-// Database security regression test (Phase 2, 3, 4 and 5 tables).
+// Database security regression test (Phase 2–6 tables).
 //
 // Run with:  npm run db:verify
 //
@@ -849,6 +849,82 @@ try {
     denied(selfAdmin.status) || selfAdmin.status === 404,
     `HTTP ${selfAdmin.status}`,
   )
+
+  console.log('\n— Phase 6: demo billing and the automation outbox')
+  const userOrder = await rest('billing_orders', {
+    token: a.token,
+    method: 'POST',
+    body: {
+      user_id: a.id,
+      plan: 'premium',
+      amount_paise: 1,
+      razorpay_order_id: `order_Rls${stamp}a`,
+    },
+  })
+  check('Users cannot create orders', denied(userOrder.status), `HTTP ${userOrder.status}`)
+
+  // The server records and confirms an order for B, the way checkout does.
+  const orderId = `order_Rls${stamp}b`
+  const order = await rest('billing_orders', {
+    key: sec,
+    method: 'POST',
+    body: { user_id: b.id, plan: 'pro', amount_paise: 19900, razorpay_order_id: orderId },
+    prefer: 'return=representation',
+  })
+  const confirmed = await rest('rpc/confirm_plan_payment', {
+    key: sec,
+    method: 'POST',
+    body: { p_razorpay_order_id: orderId, p_razorpay_payment_id: `pay_Rls${stamp}` },
+  })
+  check(
+    'The server can confirm a payment',
+    order.status === 201 && confirmed.status === 200 && confirmed.data?.plan === 'pro',
+    `HTTP ${order.status}/${confirmed.status}`,
+  )
+  const bPlans = await rest('plan_subscriptions?select=plan', { token: b.token })
+  check('B can see their own plan', bPlans.status === 200 && bPlans.data?.length === 1)
+  const aSeesB = await rest(`plan_subscriptions?user_id=eq.${b.id}&select=id`, { token: a.token })
+  check("A cannot see B's plan", aSeesB.status === 200 && aSeesB.data?.length === 0)
+  const markPaid = await rest(`billing_orders?razorpay_order_id=eq.${orderId}`, {
+    token: b.token,
+    method: 'PATCH',
+    body: { amount_paise: 1 },
+  })
+  check('Users cannot change an order', denied(markPaid.status), `HTTP ${markPaid.status}`)
+  const selfGrant = await rest('rpc/confirm_plan_payment', {
+    token: a.token,
+    method: 'POST',
+    body: { p_razorpay_order_id: orderId, p_razorpay_payment_id: `pay_Rls${stamp}` },
+  })
+  check(
+    'Users cannot confirm payments themselves',
+    denied(selfGrant.status) || selfGrant.status === 404,
+    `HTTP ${selfGrant.status}`,
+  )
+  for (const table of ['payment_events', 'outbox_events']) {
+    const read = await rest(`${table}?select=*&limit=1`, { token: a.token })
+    check(`Users cannot read ${table}`, denied(read.status), `HTTP ${read.status}`)
+  }
+  // Real arguments, so a "no such function" 404 can't hide a missing permission check.
+  const serverOnly = {
+    claim_outbox_events: { p_limit: 1, p_lease_seconds: 1 },
+    purge_outbox_events: {},
+    apply_payment_event: {
+      p_event_id: `evt_rls_${stamp}`,
+      p_event_type: 'payment.captured',
+      p_razorpay_order_id: 'order_RlsMissing',
+      p_razorpay_payment_id: 'pay_RlsMissing',
+      p_amount_paise: 1,
+    },
+  }
+  for (const [fn, body] of Object.entries(serverOnly)) {
+    const call = await rest(`rpc/${fn}`, { token: a.token, method: 'POST', body })
+    check(`Users cannot call ${fn}`, denied(call.status), `HTTP ${call.status}`)
+  }
+  const welcome = await rest(`outbox_events?dedupe_key=eq.user.welcome:${a.id}&select=id`, {
+    key: sec,
+  })
+  check('Signing up queued a welcome event', welcome.data?.length === 1)
 } catch (error) {
   failures++
   console.log(`\nERROR  ${error.message}`)
@@ -864,6 +940,10 @@ try {
       res.ok && left.data?.length === 0,
       `HTTP ${res.status}`,
     )
+    const events = await rest(`outbox_events?payload->>userId=eq.${user.id}&select=id`, {
+      key: sec,
+    })
+    check('…and deletes the automation events that mention them', events.data?.length === 0)
   }
   console.log(`\n${failures === 0 ? 'ALL CHECKS PASSED' : `${failures} CHECK(S) FAILED`}`)
   process.exitCode = failures === 0 ? 0 : 1
