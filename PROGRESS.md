@@ -5,9 +5,9 @@
 
 ## Current status
 
-- **Active phase:** Phase 6 on branch `phase-6-payments-automation` (built on `ui-refresh`, which must be merged first). 6a, 6b and 6c are built.
-- **Last updated:** 2026-10-29
-- **Next step:** The user applies migration 8 (`20261029000008_outbox_retention.sql`); then lock its fingerprint and do the Phase 6 wrap-up (learning doc, optional quiz, PR descriptions for `ui-refresh` and Phase 6).
+- **Active phase:** Phase 6 is complete on branch `phase-6-payments-automation`, built on `ui-refresh`. Neither branch is pushed yet.
+- **Last updated:** 2026-10-30
+- **Next step:** The user pushes `ui-refresh`, opens and merges its PR (merge commit), then does the same for `phase-6-payments-automation`. All six planned phases are then done; anything next starts only on the user's go-ahead.
 
 ---
 
@@ -75,13 +75,13 @@ EverGuide is the user's college major project, shown to professors. Payments are
 - [x] 6a Razorpay Test Mode: one-time "1 month of Pro/Premium" (demo prices ₹199 / ₹499), signature verification, signed webhooks + idempotency, plan limits applied to the AI allowance, live keys refused, "demo" labels
 - [x] 6b n8n (local, demo-friendly): signed outbound events with dedupe keys and minimal personal data, an outbox for retries, ready-made workflows (booking confirmations, reminders, payment receipt, admin alerts)
 - [x] 6c Hardening: browser tests moved into the repo (Playwright), accessibility audit, security review, Content Security Policy, outbox retention
-- [ ] Phase wrap-up
+- [x] Phase wrap-up: `docs/learning/phase-6.md` (quiz skipped at the user's request on 2026-10-30)
 
 ---
 
 ## Phase log
 
-### Phase 6 (in progress)
+### Phase 6 — complete (2026-10-30)
 - **2026-10-27 (6a demo payments):** Migration 6 (`billing_orders`, `plan_subscriptions`, `payment_events`; `confirm_plan_payment()` locks the order so the checkout callback and the webhook grant exactly one month; `apply_payment_event()` dedupes by event id). Server refuses live keys at startup; prices come from `shared/src/plans.ts`; checkout signature (HMAC-SHA256 of `order|payment`) and raw-body webhook signature checked in constant time; only the buyer can confirm their order. The monthly AI allowance now follows the plan (Free from config, Pro 150, Premium 400). UI: `/app/billing` (Razorpay Checkout, Razorpay's published test card/UPI, "demo" labels), pricing shows demo prices and lists only what plans really change (removed two unbuilt Premium claims). The plan table is a zod-free shared entry to keep first-load JS at 177.6 kB.
   - **Verified:** database 70, server 209 (two deliberate bugs, both caught), client 170; billing integration 4/4 on real Supabase; the user's Test Mode keys accepted by Razorpay; a real Test Mode order opened Checkout in a browser.
 - **2026-10-27 (6b automation):** Migration 7: `outbox_events` written by triggers in the same transaction as sign-ups, booking changes, demo payments and mentor applications; `enqueue_due_reminders()` (confirmed sessions within the hour only); `claim_outbox_events` (SKIP LOCKED + lease) and `finish_outbox_event` (backoff 30 s → 1 h, failed after 8 tries). The server dispatcher signs each event (`v1=` HMAC-SHA256 of `timestamp.body`) and delivers at least once. n8n workflow (`automation/n8n/`): verify signature (401 and a 5-minute replay window), skip repeats by event id, compose one email per event type, send to a local test inbox. Admin → Automation shows queue counts and retries failed events.
@@ -89,6 +89,7 @@ EverGuide is the user's college major project, shown to professors. Payments are
 - **2026-10-29 (6c hardening):** New `e2e/` workspace (Playwright, the installed Chrome): public site on a phone, sign-in, mentor marketplace end to end, wellness/finance, billing + automation, and an accessibility sweep (axe WCAG 2.1 A/AA + the measured contrast check) on 32 pages × 2 themes, one test per page. Migration 8: deleting an account or booking deletes the events that mention it; delivered events purged after 30 days, failed after 90 (dispatcher hourly). Content Security Policy as a build-time `<meta>` (inline theme script allowed by hash). Security review in `docs/security-review.md`. In development the general API rate limit is 3,000 per 15 min (one address runs every test).
   - **Verified:** 86 of 87 browser tests passed against the production build with the CSP on (axe found one real issue, the admin chart bars' labels, fixed). npm audit: 0 vulnerabilities; no real key in git history. Not verified: real Razorpay Checkout under the CSP, because Razorpay's API timed out from this network (10 s) during the run; the only CSP block it ever hit (`cdn.razorpay.com`) is now allowed. Database 86, server 236, client 172, shared 46.
   - Bugs caught: browser contexts left open by a test helper kept polling after their accounts were deleted (and likely caused a Chrome crash); a booking test that failed late in the evening (too few slots left today).
+- **2026-10-30 (verification and wrap-up):** The user applied migration 8 (locked). `db:verify` gained a Phase 6 section: users can't create, change or confirm orders, can't see others' plans, can't read `payment_events`/`outbox_events` or call the server-only functions (called with real arguments so a 404 can't hide a missing check); deleting an account deletes its events. **97 checks pass on the real project.** With the user's approval, deleted 3 leftover test accounts (from a crashed run, a network-dropped run and an interrupted `db:verify`) and 113 events of already-deleted test accounts; checked first that every name in them was a test persona. Now 1 account (the user's) and 0 events.
 
 ### Phase 5 (in progress)
 - **2026-10-26 (5a database):** Migration `20261026000004_wellness_finance_admin.sql`: journal (writer-only, excluded from admin/analytics/AI), habits + check-ins (composite key to the owner), monthly budgets + items, savings goals with a ledger (`record_savings_entry` locks the goal row, so balances can't go negative), learning resources (published-only for visitors, full-text search via a generated `tsvector` + GIN index, https-only links) + private bookmarks, and server-only admin functions (`admin_overview`, `admin_signups_by_week`, `set_admin_role` with an advisory lock). Money stored as integer paise. **20 new PGlite tests** + a new guard that every `public` table has RLS on; mutation-tested (4 deliberate bugs, all caught). `db:verify` extended with Phase 5 checks (to run after the user applies the migration).
@@ -273,8 +274,10 @@ EverGuide is the user's college major project, shown to professors. Payments are
 - Phase 3 (4/4): citation validation, measured threshold, race conditions / atomic reservation, and the code-splitting critical path (third attempt) all correct. Next quiz: mix in Phase 2 security concepts as spaced repetition.
 - Phase 4 (1/4): correct on the booking race (check-then-insert gap). Missed: DST is why recurring times are stored as local time + IANA zone; client role checks are UX only, the server check is the security (Phase 2 concept); lazy-loading helps because public visitors stop downloading the code, not compression (bundle/critical path again). Re-ask all three in the Phase 5 quiz.
 - Phase 5: quiz skipped (the user found the phase a lot to take in). `docs/learning/phase-5.md` now starts with a plain-words summary. Before the next quiz, walk through it slowly; then re-ask the Phase 4 topics (DST, server-side role checks, bundle) plus Phase 5 basics (RLS, integer money, signed uploads).
+- Phase 6: quiz skipped at the user's request (2026-10-30). `docs/learning/phase-6.md` starts with a plain-words summary. Topics still waiting for a quiz: the Phase 4 three (DST, server-side role checks, bundle), Phase 5 basics (RLS, integer money, signed uploads) and Phase 6 basics (server-side prices + signature checks, idempotency, the outbox, CSP). Offer the quiz; don't push it.
 
 ## Open questions / backlog
+- Re-run the Razorpay Checkout browser test under the CSP (`E2E_RAZORPAY=1`) when Razorpay's API responds normally: on 2026-10-29 order creation timed out (10 s) from this network.
 - Notifications are polled; consider realtime/push (Phase 6). Email copies of booking notifications come with n8n (Phase 6).
 - `npm run format:check` flags existing docs/JSON/tsconfig files; decide whether to format them or add a `.prettierignore`.
 - Deleting a savings entry is checked in the server, not locked in SQL, so two simultaneous deletes of a person's own entries could leave their goal below zero. Only affects their own record; a `delete_savings_entry` SQL function with a row lock would close it (next migration).
